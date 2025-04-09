@@ -19,7 +19,7 @@ export default function ChatScreen({ navigation }) {
   const [messages, setMessages] = useState([
     {
       id: "1",
-      text: "Hello! I'm your GigBoost assistant. How can I help you today?",
+      text: "Hello! I'm your GrabMerchant assistant. How can I help you today?",
       sender: "ai",
       timestamp: new Date(),
     },
@@ -28,10 +28,10 @@ export default function ChatScreen({ navigation }) {
   const flatListRef = useRef(null)
 
   const quickReplies = [
-    "Show my earnings insights",
-    "Best time to work today?",
-    "How can I increase my income?",
-    "Tips for better ratings",
+    "Show my sales insights",
+    "Best selling items?",
+    "How can I increase my revenue?",
+    "Tips for customer retention",
   ]
 
   const handleSend = () => {
@@ -52,18 +52,21 @@ export default function ChatScreen({ navigation }) {
     setTimeout(() => {
       let responseText = ""
 
-      if (message.toLowerCase().includes("earning") || message.toLowerCase().includes("income")) {
+      if (message.toLowerCase().includes("sale") || message.toLowerCase().includes("revenue")) {
         responseText =
-          "Your earnings this week are 15% higher than last week. Would you like to see your detailed insights?"
-      } else if (message.toLowerCase().includes("time") || message.toLowerCase().includes("work")) {
+          "Your sales this week are 15% higher than last week. Would you like to see your detailed insights?"
+      } else if (message.toLowerCase().includes("item") || message.toLowerCase().includes("product")) {
         responseText =
-          "Based on historical data, the best times to work today are 7-9 AM and 5-8 PM. These hours typically have higher demand in your area."
-      } else if (message.toLowerCase().includes("tip") || message.toLowerCase().includes("rating")) {
+          "Based on your data, your best selling items are Nasi Lemak, Ayam Goreng, and Mee Goreng. These items account for 60% of your total sales."
+      } else if (message.toLowerCase().includes("customer") || message.toLowerCase().includes("retention")) {
         responseText =
-          "To improve your ratings, try greeting customers by name, keeping your vehicle clean, and offering a bottle of water on hot days."
+          "To improve customer retention, try implementing a loyalty program, responding to reviews promptly, and offering occasional discounts to returning customers."
+      } else if (message.toLowerCase().includes("inventory") || message.toLowerCase().includes("stock")) {
+        responseText =
+          "You currently have 3 items that are running low on stock: chicken, rice, and cooking oil. Would you like to place an order with your suppliers?"
       } else {
         responseText =
-          "I can help you with earnings insights, work scheduling advice, and tips to maximize your income. What would you like to know?"
+          "I can help you with sales insights, inventory management, and tips to maximize your business growth. What would you like to know?"
       }
 
       const aiMessage = {
@@ -100,7 +103,7 @@ export default function ChatScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Chat with AI Assistant</Text>
+        <Text style={styles.headerTitle}>Chat with Business Assistant</Text>
       </View>
 
       <FlatList

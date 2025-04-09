@@ -7,7 +7,7 @@ export default function HomeScreen({ navigation }) {
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.greeting}>Hello, Driver!</Text>
+          <Text style={styles.greeting}>Hello, Merchant!</Text>
           <TouchableOpacity style={styles.notificationIcon}>
             <Ionicons name="notifications-outline" size={24} color="#333" />
           </TouchableOpacity>
@@ -17,13 +17,18 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.summaryTitle}>Today's Summary</Text>
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryValue}>RM125</Text>
-              <Text style={styles.summaryLabel}>Today's Earnings</Text>
+              <Text style={styles.summaryValue}>RM1,250</Text>
+              <Text style={styles.summaryLabel}>Today's Sales</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryValue}>70%</Text>
-              <Text style={styles.summaryLabel}>Weekly Goal</Text>
+              <Text style={styles.summaryValue}>42</Text>
+              <Text style={styles.summaryLabel}>Orders</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryValue}>4.8</Text>
+              <Text style={styles.summaryLabel}>Rating</Text>
             </View>
           </View>
         </View>
@@ -33,7 +38,9 @@ export default function HomeScreen({ navigation }) {
             <Ionicons name="bulb" size={24} color="#FFD700" />
             <Text style={styles.tipTitle}>Tip of the Day</Text>
           </View>
-          <Text style={styles.tipText}>Try working during 12-2PM for better incentives in downtown areas.</Text>
+          <Text style={styles.tipText}>
+            Consider offering a 10% discount during 2-4PM to boost your off-peak sales.
+          </Text>
         </View>
 
         <Text style={styles.sectionTitle}>Quick Access</Text>
@@ -72,23 +79,33 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.sectionTitle}>Recent Activity</Text>
           <View style={styles.activityItem}>
             <View style={styles.activityIcon}>
-              <Ionicons name="car" size={20} color="#2FAE60" />
+              <Ionicons name="cart" size={20} color="#2FAE60" />
             </View>
             <View style={styles.activityContent}>
-              <Text style={styles.activityTitle}>Completed 12 trips</Text>
+              <Text style={styles.activityTitle}>Completed 42 orders</Text>
               <Text style={styles.activityTime}>Today, 5:30 PM</Text>
             </View>
-            <Text style={styles.activityValue}>RM125</Text>
+            <Text style={styles.activityValue}>RM1,250</Text>
           </View>
           <View style={styles.activityItem}>
             <View style={styles.activityIcon}>
-              <Ionicons name="time" size={20} color="#2D9CDB" />
+              <Ionicons name="trending-up" size={20} color="#2D9CDB" />
             </View>
             <View style={styles.activityContent}>
-              <Text style={styles.activityTitle}>Active hours</Text>
+              <Text style={styles.activityTitle}>Sales milestone</Text>
               <Text style={styles.activityTime}>Today</Text>
             </View>
-            <Text style={styles.activityValue}>6.5 hrs</Text>
+            <Text style={styles.activityValue}>+15%</Text>
+          </View>
+          <View style={styles.activityItem}>
+            <View style={styles.activityIcon}>
+              <Ionicons name="star" size={20} color="#F2994A" />
+            </View>
+            <View style={styles.activityContent}>
+              <Text style={styles.activityTitle}>New customer review</Text>
+              <Text style={styles.activityTime}>1 hour ago</Text>
+            </View>
+            <Text style={styles.activityValue}>5★</Text>
           </View>
         </View>
       </ScrollView>

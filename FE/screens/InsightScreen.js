@@ -7,22 +7,22 @@ const { width } = Dimensions.get("window")
 
 export default function InsightScreen() {
   // Sample data for charts
-  const weeklyEarnings = {
+  const weeklySales = {
     labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     datasets: [
       {
-        data: [85, 120, 95, 110, 140, 180, 150],
+        data: [850, 1200, 950, 1100, 1400, 1800, 1500],
         color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
         strokeWidth: 2,
       },
     ],
   }
 
-  const hourlyEarnings = {
-    labels: ["6-8", "8-10", "10-12", "12-2", "2-4", "4-6", "6-8", "8-10"],
+  const popularItems = {
+    labels: ["Nasi L.", "Ayam G.", "Mee G.", "Roti C.", "Teh T."],
     datasets: [
       {
-        data: [25, 45, 35, 55, 40, 60, 70, 50],
+        data: [85, 75, 65, 55, 45],
       },
     ],
   }
@@ -42,7 +42,7 @@ export default function InsightScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Your Insights</Text>
+        <Text style={styles.headerTitle}>Business Insights</Text>
       </View>
 
       <ScrollView style={styles.container}>
@@ -50,26 +50,26 @@ export default function InsightScreen() {
           <Text style={styles.cardTitle}>Weekly Summary</Text>
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryValue}>RM880</Text>
-              <Text style={styles.summaryLabel}>Total Earnings</Text>
+              <Text style={styles.summaryValue}>RM8,800</Text>
+              <Text style={styles.summaryLabel}>Total Sales</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryValue}>42</Text>
-              <Text style={styles.summaryLabel}>Total Trips</Text>
+              <Text style={styles.summaryValue}>342</Text>
+              <Text style={styles.summaryLabel}>Total Orders</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryValue}>32h</Text>
-              <Text style={styles.summaryLabel}>Active Hours</Text>
+              <Text style={styles.summaryValue}>4.8</Text>
+              <Text style={styles.summaryLabel}>Rating</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.chartCard}>
-          <Text style={styles.chartTitle}>Weekly Earnings</Text>
+          <Text style={styles.chartTitle}>Weekly Sales</Text>
           <LineChart
-            data={weeklyEarnings}
+            data={weeklySales}
             width={width - 40}
             height={220}
             chartConfig={chartConfig}
@@ -83,9 +83,9 @@ export default function InsightScreen() {
         </View>
 
         <View style={styles.chartCard}>
-          <Text style={styles.chartTitle}>Hourly Performance</Text>
+          <Text style={styles.chartTitle}>Top Selling Items</Text>
           <BarChart
-            data={hourlyEarnings}
+            data={popularItems}
             width={width - 40}
             height={220}
             chartConfig={{
@@ -96,8 +96,8 @@ export default function InsightScreen() {
             showValuesOnTopOfBars
           />
           <View style={styles.insightBadge}>
-            <Ionicons name="time" size={16} color="#2FAE60" />
-            <Text style={styles.insightText}>Peak earnings: 6-8 PM</Text>
+            <Ionicons name="star" size={16} color="#2FAE60" />
+            <Text style={styles.insightText}>Nasi Lemak is your best seller</Text>
           </View>
         </View>
 
@@ -106,12 +106,12 @@ export default function InsightScreen() {
 
           <View style={styles.insightCard}>
             <View style={styles.insightIconContainer}>
-              <Ionicons name="location" size={24} color="#2FAE60" />
+              <Ionicons name="time" size={24} color="#2FAE60" />
             </View>
             <View style={styles.insightContent}>
-              <Text style={styles.insightTitle}>Location Analysis</Text>
+              <Text style={styles.insightTitle}>Peak Hours</Text>
               <Text style={styles.insightDescription}>
-                You earn 40% more in downtown areas compared to suburban areas.
+                Your busiest hours are 12-2PM and 6-8PM. Consider adding staff during these times.
               </Text>
             </View>
           </View>
@@ -123,18 +123,32 @@ export default function InsightScreen() {
             <View style={styles.insightContent}>
               <Text style={styles.insightTitle}>Day of Week</Text>
               <Text style={styles.insightDescription}>
-                Saturday is your most profitable day, with 30% higher earnings.
+                Saturday is your most profitable day, with 30% higher sales than weekdays.
               </Text>
             </View>
           </View>
 
           <View style={styles.insightCard}>
             <View style={styles.insightIconContainer}>
-              <Ionicons name="timer" size={24} color="#2FAE60" />
+              <Ionicons name="people" size={24} color="#2FAE60" />
             </View>
             <View style={styles.insightContent}>
-              <Text style={styles.insightTitle}>Efficiency</Text>
-              <Text style={styles.insightDescription}>Your average earnings per hour increased by 15% this month.</Text>
+              <Text style={styles.insightTitle}>Customer Retention</Text>
+              <Text style={styles.insightDescription}>
+                65% of your customers are returning customers. Your loyalty program is working well.
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.insightCard}>
+            <View style={styles.insightIconContainer}>
+              <Ionicons name="cart" size={24} color="#2FAE60" />
+            </View>
+            <View style={styles.insightContent}>
+              <Text style={styles.insightTitle}>Inventory Alert</Text>
+              <Text style={styles.insightDescription}>
+                3 popular items are running low. Check your inventory management page for details.
+              </Text>
             </View>
           </View>
         </View>

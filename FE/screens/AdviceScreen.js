@@ -6,19 +6,19 @@ export default function AdviceScreen() {
   const adviceCategories = [
     {
       id: "1",
-      title: "Earnings Optimization",
+      title: "Sales Optimization",
       icon: "cash-outline",
       color: "#2FAE60",
     },
     {
       id: "2",
-      title: "Time Management",
-      icon: "time-outline",
+      title: "Inventory Management",
+      icon: "cube-outline",
       color: "#2D9CDB",
     },
     {
       id: "3",
-      title: "Customer Service",
+      title: "Customer Engagement",
       icon: "people-outline",
       color: "#F2994A",
     },
@@ -33,28 +33,28 @@ export default function AdviceScreen() {
   const adviceItems = [
     {
       id: "1",
-      category: "Earnings Optimization",
-      title: "Work during peak hours",
+      category: "Sales Optimization",
+      title: "Optimize your peak hours",
       description:
-        "Based on your area, try working between 6-8 PM to maximize your earnings. Demand is typically 40% higher during these hours.",
+        "Based on your data, consider offering combo deals during 12-2 PM to maximize your lunch rush. This could increase your average order value by 20%.",
       icon: "trending-up",
       color: "#2FAE60",
     },
     {
       id: "2",
       category: "Location Strategy",
-      title: "Hot zones in your city",
+      title: "Expand your delivery radius",
       description:
-        "Downtown and business districts show higher demand on weekdays. Consider positioning yourself near these areas after 5 PM.",
+        "Data shows high demand for your cuisine in nearby neighborhoods. Consider expanding your delivery radius by 2km to reach more customers.",
       icon: "location",
       color: "#2D9CDB",
     },
     {
       id: "3",
-      category: "Customer Service",
+      category: "Customer Engagement",
       title: "Boost your ratings",
       description:
-        "Offering amenities like water bottles or phone chargers can increase your tips by up to 15% and improve your ratings.",
+        "Responding to customer reviews within 24 hours has been shown to increase repeat orders by 15%. Try to respond to all reviews this week.",
       icon: "star",
       color: "#F2994A",
     },
@@ -63,17 +63,17 @@ export default function AdviceScreen() {
       category: "Financial Planning",
       title: "Track your expenses",
       description:
-        "Remember to track fuel and maintenance costs. You can deduct these expenses from your taxes at the end of the year.",
+        "Your food cost percentage is 32%, which is slightly above industry average. Consider reviewing your suppliers or adjusting portion sizes.",
       icon: "calculator",
       color: "#9B51E0",
     },
     {
       id: "5",
-      category: "Time Management",
-      title: "Optimize your breaks",
+      category: "Inventory Management",
+      title: "Reduce food waste",
       description:
-        "Take strategic 15-minute breaks during low-demand periods rather than longer breaks that might cause you to miss peak hours.",
-      icon: "timer",
+        "Your data shows consistent overstock of certain ingredients. Consider implementing a just-in-time inventory system to reduce waste by up to 25%.",
+      icon: "cube",
       color: "#2D9CDB",
     },
   ]
@@ -81,7 +81,7 @@ export default function AdviceScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Personalized Advice</Text>
+        <Text style={styles.headerTitle}>Business Advice</Text>
       </View>
 
       <ScrollView style={styles.container}>
@@ -145,7 +145,7 @@ export default function AdviceScreen() {
               <Ionicons name="book" size={24} color="#2D9CDB" />
             </View>
             <View style={styles.resourceContent}>
-              <Text style={styles.resourceTitle}>Financial Literacy for Gig Workers</Text>
+              <Text style={styles.resourceTitle}>Financial Management for Small Businesses</Text>
               <Text style={styles.resourceDescription}>Free online course • 2 hours</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#999" />
@@ -156,7 +156,7 @@ export default function AdviceScreen() {
               <Ionicons name="videocam" size={24} color="#F2994A" />
             </View>
             <View style={styles.resourceContent}>
-              <Text style={styles.resourceTitle}>Maximizing Your Earnings</Text>
+              <Text style={styles.resourceTitle}>Maximizing Your Restaurant Sales</Text>
               <Text style={styles.resourceDescription}>Video tutorial • 15 minutes</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color="#999" />

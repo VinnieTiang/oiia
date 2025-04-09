@@ -12,33 +12,33 @@ export default function ProfileScreen() {
       <ScrollView style={styles.container}>
         <View style={styles.profileHeader}>
           <Image source={require("../assets/profile-placeholder.png")} style={styles.profileImage} />
-          <Text style={styles.profileName}>John Driver</Text>
-          <Text style={styles.profileBio}>Gig Worker since 2021</Text>
+          <Text style={styles.profileName}>Warung Makan Sedap</Text>
+          <Text style={styles.profileBio}>Restaurant • Since 2018</Text>
 
           <View style={styles.statsContainer}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>4.9</Text>
+              <Text style={styles.statValue}>4.8</Text>
               <Text style={styles.statLabel}>Rating</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>1,248</Text>
-              <Text style={styles.statLabel}>Trips</Text>
+              <Text style={styles.statValue}>12,480</Text>
+              <Text style={styles.statLabel}>Orders</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>2 yrs</Text>
-              <Text style={styles.statLabel}>Experience</Text>
+              <Text style={styles.statValue}>5 yrs</Text>
+              <Text style={styles.statLabel}>On Grab</Text>
             </View>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
+          <Text style={styles.sectionTitle}>Business</Text>
 
           <TouchableOpacity style={styles.menuItem}>
-            <Ionicons name="person-outline" size={22} color="#666" style={styles.menuIcon} />
-            <Text style={styles.menuText}>Personal Information</Text>
+            <Ionicons name="business-outline" size={22} color="#666" style={styles.menuIcon} />
+            <Text style={styles.menuText}>Store Information</Text>
             <Ionicons name="chevron-forward" size={20} color="#ccc" />
           </TouchableOpacity>
 
@@ -49,8 +49,8 @@ export default function ProfileScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.menuItem}>
-            <Ionicons name="car-outline" size={22} color="#666" style={styles.menuIcon} />
-            <Text style={styles.menuText}>Vehicle Information</Text>
+            <Ionicons name="restaurant-outline" size={22} color="#666" style={styles.menuIcon} />
+            <Text style={styles.menuText}>Menu Management</Text>
             <Ionicons name="chevron-forward" size={20} color="#ccc" />
           </TouchableOpacity>
         </View>

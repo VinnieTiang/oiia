@@ -6,8 +6,8 @@ export default function WelcomeScreen({ navigation }) {
     <LinearGradient colors={["#2FAE60", "#1E8449"]} style={styles.container}>
       <View style={styles.logoContainer}>
         <Image source={require("../assets/logo-placeholder.png")} style={styles.logo} resizeMode="contain" />
-        <Text style={styles.title}>GigBoost</Text>
-        <Text style={styles.tagline}>Empowering Gig Workers with AI</Text>
+        <Text style={styles.title}>GrabMerchant</Text>
+        <Text style={styles.tagline}>Empowering Businesses with AI Insights</Text>
       </View>
 
       <View style={styles.buttonContainer}>

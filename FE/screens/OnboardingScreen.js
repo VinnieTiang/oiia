@@ -9,20 +9,20 @@ const { width } = Dimensions.get("window")
 const slides = [
   {
     id: "1",
-    title: "Boost Your Earnings",
-    description: "Get personalized insights and advice to maximize your gig work income",
-    icon: "cash-outline",
+    title: "Grow Your Business",
+    description: "Get personalized insights and advice to maximize your sales and customer engagement",
+    icon: "trending-up-outline",
   },
   {
     id: "2",
     title: "Smart Insights",
-    description: "Track your performance and discover patterns to work smarter, not harder",
+    description: "Track your performance and discover patterns to make data-driven business decisions",
     icon: "analytics-outline",
   },
   {
     id: "3",
     title: "AI-Powered Advice",
-    description: "Receive tailored recommendations based on your work history and goals",
+    description: "Receive tailored recommendations based on your business history and goals",
     icon: "bulb-outline",
   },
 ]
