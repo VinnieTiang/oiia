@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { Text, Card, Button, DataTable, Chip, ActivityIndicator, Searchbar, Snackbar } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Notifications from 'expo-notifications';
 
 // Sample inventory data
 const inventoryData = [
@@ -15,6 +16,14 @@ const inventoryData = [
   { id: 7, name: "Curry Puff", current: 4, recommended: 20, status: "low", lastRestocked: "4 days ago" },
   { id: 8, name: "Iced Coffee", current: 18, recommended: 20, status: "medium", lastRestocked: "Yesterday" },
 ];
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
 
 export default function InventoryScreen() {
   const [inventory, setInventory] = useState(inventoryData);
@@ -38,6 +47,44 @@ export default function InventoryScreen() {
       showSnackbar('Inventory refreshed');
     }, 1000);
   };
+
+  const scheduleLowStockNotification = async (items) => {
+    const itemNames = items.map(item => item.name).join(', ');
+    
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Low Stock Alert',
+        body: `The following items are low on stock: ${itemNames}`,
+        data: { screen: 'Inventory' },
+      },
+      trigger: null, // Send immediately
+    });
+  };
+
+  // Check for notifications permission on component mount
+  useEffect(() => {
+    const requestNotificationPermission = async () => {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Please enable notifications for low stock alerts');
+      }
+    };
+
+    requestNotificationPermission();
+  }, []);
+
+  const checkLowStockAndNotify = async () => {
+    const lowStockItems = inventory.filter(item => item.status === 'low');
+    
+    if (lowStockItems.length > 0) {
+      await scheduleLowStockNotification(lowStockItems);
+    }
+  };
+
+  // Check for low stock whenever inventory changes
+  useEffect(() => {
+    checkLowStockAndNotify();
+  }, [inventory]);
 
   const onRefresh = () => {
     setRefreshing(true);
