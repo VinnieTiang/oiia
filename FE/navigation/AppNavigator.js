@@ -9,6 +9,7 @@ import ChatScreen from "../screens/ChatScreen"
 import InsightScreen from "../screens/InsightScreen"
 import AdviceScreen from "../screens/AdviceScreen"
 import ProfileScreen from "../screens/ProfileScreen"
+import InventoryScreen from "../screens/InventoryScreen"
 
 const Stack = createNativeStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -30,6 +31,8 @@ function MainTabNavigator() {
             iconName = focused ? "bulb" : "bulb-outline"
           } else if (route.name === "Profile") {
             iconName = focused ? "person" : "person-outline"
+          } else if (route.name === "Inventory") {
+            iconName = focused ? "cube" : "cube-outline"
           }
 
           return <Ionicons name={iconName} size={size} color={color} />
@@ -44,6 +47,7 @@ function MainTabNavigator() {
       <Tab.Screen name="Insight" component={InsightScreen} />
       <Tab.Screen name="Advice" component={AdviceScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
+      <Tab.Screen name="Inventory" component={InventoryScreen} />
     </Tab.Navigator>
   )
 }

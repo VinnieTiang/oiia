@@ -67,11 +67,11 @@ export default function HomeScreen({ navigation }) {
             <Text style={styles.menuText}>Get Advice</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("Profile")}>
+          <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate("Inventory")}>
             <View style={[styles.menuIcon, { backgroundColor: "#F3F0FF" }]}>
-              <Ionicons name="person" size={24} color="#9B51E0" />
+              <Ionicons name="cube" size={24} color="#9B51E0" />
             </View>
-            <Text style={styles.menuText}>Profile</Text>
+            <Text style={styles.menuText}>Inventory</Text>
           </TouchableOpacity>
         </View>
 
