@@ -139,16 +139,18 @@ export default function InventoryScreen() {
             <View style={styles.summaryHeader}>
               <Text style={styles.summaryTitle}>Inventory Summary</Text>
               <Button 
-                mode="outlined" 
+                mode="text" 
                 onPress={refreshInventory} 
                 disabled={isLoading}
                 style={styles.refreshButton}
-                labelStyle={styles.refreshButtonLabel}
+                labelStyle={{
+                  color: '#10B981',
+                }}
               >
                 {isLoading ? (
-                  <ActivityIndicator size={16} color="#10B981" />
+                  <ActivityIndicator size={13} color="#10B981" />
                 ) : (
-                  <Ionicons name="refresh" size={16} color="#10B981" />
+                  <Ionicons name="refresh" size={13} color="#10B981" />
                 )}
                 {' '}Refresh
               </Button>
@@ -373,7 +375,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 12,
     elevation: 2,
-    backgroundColor: '#f0f9f4',
   },
   summaryHeader: {
     flexDirection: 'row',
@@ -388,7 +389,7 @@ const styles = StyleSheet.create({
   },
   refreshButton: {
     borderColor: '#10B981',
-    borderRadius: 8,
+    borderRadius: 20,
   },
   refreshButtonLabel: {
     fontSize: 13,
@@ -434,7 +435,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 12,
     elevation: 2,
-    backgroundColor: '#f0f9f4',
   },
   searchBar: {
     marginBottom: 16,
@@ -572,7 +572,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 24,
     elevation: 2,
-    backgroundColor: '#f0f9f4',
   },
   actionsTitle: {
     fontSize: 16,
