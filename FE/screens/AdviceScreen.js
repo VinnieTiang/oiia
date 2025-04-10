@@ -215,11 +215,6 @@ export default function AdviceScreen() {
     : allCategoryResources.slice(0, 2)
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Business Insights</Text>
-      </View>
-
       <ScrollView style={styles.container}>
         {/* Personalized greeting */}
         <View style={styles.greetingCard}>
@@ -383,7 +378,6 @@ export default function AdviceScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
   )
 }
 

@@ -4,12 +4,9 @@ import { Ionicons } from "@expo/vector-icons"
 
 export default function ProfileScreen() {
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Profile</Text>
-      </View>
-
+    
       <ScrollView style={styles.container}>
+        
         <View style={styles.profileHeader}>
           <Image source={require("../assets/profile-placeholder.png")} style={styles.profileImage} />
           <Text style={styles.profileName}>Warung Makan Sedap</Text>
@@ -111,7 +108,6 @@ export default function ProfileScreen() {
 
         <Text style={styles.versionText}>Version 1.0.0</Text>
       </ScrollView>
-    </SafeAreaView>
   )
 }
 
@@ -119,6 +115,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#f8f9fa",
+    paddingTop:0,
   },
   header: {
     padding: 16,
