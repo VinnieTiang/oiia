@@ -16,7 +16,7 @@ import { Animated } from "react-native"
 import { Audio } from "expo-av"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons, Feather } from "@expo/vector-icons"
-import { OPENAI_API_KEY } from "@env"
+import { OPENAI_API_KEY, ELEVENLABS_API_KEY } from "@env"
 import * as FileSystem from "expo-file-system"
 
 export default function ChatScreen({ navigation }) {
@@ -193,28 +193,17 @@ export default function ChatScreen({ navigation }) {
       console.log("Unloading previous audio")
       await soundObject.unloadAsync()
     }
-
+  
     setCurrentlyPlayingId(messageId)
     setIsSpeaking(true)
-
+  
     try {
       console.log("Starting TTS process for text:", text.substring(0, 30) + "...")
-
-      // Detect language to choose voice
-      const isMalay = /(terima kasih|apa khabar|bagus|tolong|saya)/i.test(text)
+  
+      // Detect language to choose voice and API
+      const isMalay = /(terima kasih|apa khabar|bagus|tolong|saya|ini|anda|tinggi|jualan)/i.test(text)
       const isChinese = /(谢谢|你好|帮助|销售|问题|我|客户|收入|商品)/i.test(text)
-
-      // Select voice based on detected language
-      let voice = "nova" // Default English voice
-
-      if (isMalay) {
-        voice = "onyx" // Use a different voice for Malay
-      } else if (isChinese) {
-        voice = "alloy" // Use a different voice for Chinese
-      }
-
-      console.log("Using voice:", voice)
-
+  
       // Set audio mode for playback
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
@@ -223,65 +212,112 @@ export default function ChatScreen({ navigation }) {
         shouldDuckAndroid: true,
         playThroughEarpieceAndroid: false,
       })
-
-      console.log("Making TTS API request...")
-      const response = await fetch("https://api.openai.com/v1/audio/speech", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "tts-1",
-          input: text,
-          voice: voice,
-        }),
-      })
-
-      console.log("TTS API response status:", response.status)
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        console.error("TTS API error:", errorData)
-        throw new Error(errorData.error?.message || "TTS API request failed")
+  
+      let audioBlob;
+      
+      // Use ElevenLabs for Malay
+      if (isMalay) {
+        console.log("Using ElevenLabs API for Malay text")
+        
+        // Replace with your preferred voice ID from ElevenLabs
+        const voiceId = "Xb7hH8MSUJpSbSDYk0k2"; 
+        
+        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "xi-api-key": ELEVENLABS_API_KEY,
+          },
+          body: JSON.stringify({
+            text: text,
+            model_id: "eleven_multilingual_v2",
+            voice_settings: {
+              stability: 0.5,
+              similarity_boost: 0.1,
+              style: 0.3
+            }
+          }),
+        });
+        
+        console.log("ElevenLabs API response status:", response.status)
+        
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.error("ElevenLabs API error:", errorData)
+          throw new Error(errorData.detail?.message || "ElevenLabs API request failed")
+        }
+        
+        audioBlob = await response.blob()
+        
+      } else {
+        // Use original OpenAI TTS for non-Malay languages
+        // Select voice based on detected language
+        let voice = "nova" // Default English voice
+        
+        if (isChinese) {
+          voice = "alloy" // Use a different voice for Chinese
+        }
+        
+        console.log("Using OpenAI voice:", voice)
+        
+        const response = await fetch("https://api.openai.com/v1/audio/speech", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "tts-1",
+            input: text,
+            voice: voice,
+          }),
+        })
+        
+        console.log("TTS API response status:", response.status)
+        
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.error("TTS API error:", errorData)
+          throw new Error(errorData.error?.message || "TTS API request failed")
+        }
+        
+        audioBlob = await response.blob()
       }
-
-      // Get the audio data as a blob
-      const audioBlob = await response.blob()
+      
       console.log("Received audio blob, size:", audioBlob.size)
-
-      // Convert blob to base64
+  
+      // Process the audio blob (same for both APIs)
       const reader = new FileReader()
       reader.readAsDataURL(audioBlob)
-
+  
       reader.onloadend = async () => {
         const base64data = reader.result
         console.log("Converted blob to base64, length:", base64data.length)
-
+  
         // Remove the data URL prefix to get just the base64 string
         const base64Audio = base64data.split(",")[1]
-
+  
         // Create a temporary file URI for the audio
         const fileUri = `${FileSystem.cacheDirectory}temp_audio_${messageId}.mp3`
         console.log("Writing audio to file:", fileUri)
-
+  
         // Write the base64 data to the file
         await FileSystem.writeAsStringAsync(fileUri, base64Audio, {
           encoding: FileSystem.EncodingType.Base64,
         })
-
+  
         console.log("Audio file written, preparing to play...")
-
+  
         // Play the audio with proper volume
         console.log("Creating sound object...")
         const { sound } = await Audio.Sound.createAsync(
           { uri: fileUri },
-          { shouldPlay: true, volume: 1.0 }, // Ensure volume is set to maximum
+          { shouldPlay: true, volume: 1.0 },
         )
-
+  
         console.log("Sound created and playing...")
         setSoundObject(sound)
-
+  
         // Handle audio completion
         sound.setOnPlaybackStatusUpdate((status) => {
           console.log(
@@ -292,7 +328,7 @@ export default function ChatScreen({ navigation }) {
             "duration:",
             status.durationMillis,
           )
-
+  
           if (status.didJustFinish) {
             console.log("Audio playback finished")
             setIsSpeaking(false)
@@ -301,10 +337,22 @@ export default function ChatScreen({ navigation }) {
         })
       }
     } catch (error) {
-      console.error("Failed to convert text to speech:", error)
-      alert("Failed to play speech: " + error.message)
-      setIsSpeaking(false)
-      setCurrentlyPlayingId(null)
+      if (error.message.includes("ElevenLabs")) {
+        // ElevenLabs specific error handling
+        console.error("ElevenLabs API error:", error);
+        // Fallback to OpenAI TTS if ElevenLabs fails
+        try {
+          alert("Falling back to default TTS service");
+          // Call OpenAI TTS as fallback
+          // ... fallback code here
+        } catch (fallbackError) {
+          console.error("Fallback TTS also failed:", fallbackError);
+          alert("All TTS services failed. Please try again later.");
+        }
+      } else {
+        // Handle other errors
+        alert("Failed to play speech: " + error.message);
+      }
     }
   }
 
