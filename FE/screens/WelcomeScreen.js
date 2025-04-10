@@ -5,9 +5,16 @@ export default function WelcomeScreen({ navigation }) {
   return (
     <LinearGradient colors={["#2FAE60", "#1E8449"]} style={styles.container}>
       <View style={styles.logoContainer}>
-        <Image source={require("../assets/logo-placeholder.png")} style={styles.logo} resizeMode="contain" />
-        <Text style={styles.title}>GrabMerchant</Text>
-        <Text style={styles.tagline}>Empowering Businesses with AI Insights</Text>
+        <Text style={styles.title}>GRABLET</Text>
+        <Text style={styles.tagline}>Your Grab Business. Guided by Grablet.</Text>
+      </View>
+
+      <View style={styles.mascotContainer}>
+        <View style={styles.speechBubble}>
+          <Text style={styles.speechText}>Hi! I'm Grablet, your AI business assistant. Let me help you grow your business!</Text>
+        </View>
+        <Image source={require("../assets/mascot-avatar.png")} style={styles.mascotImage} resizeMode="contain" />
+        
       </View>
 
       <View style={styles.buttonContainer}>
@@ -15,7 +22,7 @@ export default function WelcomeScreen({ navigation }) {
           <Text style={styles.buttonText}>Get Started</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.button, styles.loginButton]} onPress={() => navigation.navigate("MainApp")}>
+        <TouchableOpacity style={[styles.button, styles.loginButton]} onPress={() => navigation.navigate("MainChat")}>
           <Text style={styles.loginButtonText}>Login</Text>
         </TouchableOpacity>
       </View>
@@ -28,10 +35,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 80,
+    paddingVertical: 60,
   },
   logoContainer: {
     alignItems: "center",
+    marginTop: 30,
   },
   logo: {
     width: 120,
@@ -39,7 +47,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   title: {
-    fontSize: 36,
+    fontSize: 50,
     fontWeight: "bold",
     color: "white",
     marginBottom: 10,
@@ -49,6 +57,31 @@ const styles = StyleSheet.create({
     color: "white",
     textAlign: "center",
     paddingHorizontal: 20,
+  },
+  mascotContainer: {
+    alignItems: "center",
+    position: "relative",
+  },
+  mascotImage: {
+    width: 250,
+    height: 250,
+    marginVertical: 20,
+    shadowColor:"#000",
+    shadowRadius:10,
+    shadowOpacity: 0.5,
+    shadowOffset: (10),
+  },
+  speechBubble: {
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 15,
+    maxWidth: 250,
+    position: "relative",
+  },
+  speechText: {
+    fontSize: 16,
+    color: "#333",
+    textAlign: "center",
   },
   buttonContainer: {
     width: "80%",
