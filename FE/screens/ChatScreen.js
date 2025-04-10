@@ -18,6 +18,7 @@ import { Audio } from "expo-av"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons, Feather } from "@expo/vector-icons"
 import {OPENAI_API_KEY} from "@env"
+import * as FileSystem from 'expo-file-system';
 
 export default function ChatScreen({ navigation }) {
   const [message, setMessage] = useState("")
@@ -36,6 +37,11 @@ export default function ChatScreen({ navigation }) {
   const [isRecording, setIsRecording] = useState(false)
   const [recording, setRecording] = useState(null)
   const [isLoadingTranscription, setIsLoadingTranscription] = useState(false)
+  
+  // TTS related states
+  const [currentlyPlayingId, setCurrentlyPlayingId] = useState(null)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [soundObject, setSoundObject] = useState(null)
 
   const flatListRef = useRef(null)
   // Refs to hold animation values per message
@@ -58,14 +64,24 @@ export default function ChatScreen({ navigation }) {
     "客户保留技巧",
   ];
 
-    const requestAudioPermission = async () => {
-      const { status } = await Audio.requestPermissionsAsync()
-      if (status !== 'granted') {
-        alert('Microphone permission is required!')
-        return false
+  // Initialize audio for playback on component mount
+  useEffect(() => {
+    return () => {
+      // Clean up any playing audio when component unmounts
+      if (soundObject) {
+        soundObject.unloadAsync();
       }
-      return true
+    };
+  }, []);
+
+  const requestAudioPermission = async () => {
+    const { status } = await Audio.requestPermissionsAsync()
+    if (status !== 'granted') {
+      alert('Microphone permission is required!')
+      return false
     }
+    return true
+  }
 
   const startRecording = async () => {
     const permission = await requestAudioPermission()
@@ -154,6 +170,113 @@ export default function ChatScreen({ navigation }) {
     }
   }
 
+  // Convert text to speech using OpenAI TTS API
+  const textToSpeech = async (text, messageId) => {
+    // Stop any currently playing audio
+    if (soundObject) {
+      await soundObject.unloadAsync();
+    }
+    
+    setCurrentlyPlayingId(messageId);
+    setIsSpeaking(true);
+    
+    try {
+      // Detect language to choose voice
+      console.log("Detecting language...");
+      const isMalay = /(terima kasih|apa khabar|bagus|tolong|saya)/i.test(text);
+      const isChinese = /(谢谢|你好|帮助|销售|问题|我|客户|收入|商品)/i.test(text);
+      
+      // Select voice based on detected language
+      // For OpenAI TTS, we'll use different voices for different languages
+      // alloy, echo, fable, onyx, nova, and shimmer are available voices
+      let voice = "nova"; // Default English voice
+      console.log("I AM HERE");
+
+      if (isMalay) {
+        voice = "onyx"; // Use a different voice for Malay
+      } else if (isChinese) {
+        voice = "alloy"; // Use a different voice for Chinese
+      }
+      
+      const response = await fetch("https://api.openai.com/v1/audio/speech", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "tts-1",
+          input: text,
+          voice: voice,
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("TTS API error:", errorData);
+        throw new Error(errorData.error?.message || "TTS API request failed");
+      }
+      
+      // Get the audio data as a blob
+      const audioBlob = await response.blob();
+      
+      // Convert blob to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(audioBlob);
+
+      console.log("I AM HERE 2")
+      
+      reader.onloadend = async () => {
+        const base64data = reader.result;
+        // Remove the data URL prefix to get just the base64 string
+        const base64Audio = base64data.split(',')[1];
+        
+        // Create a temporary file URI for the audio
+        const fileUri = `${FileSystem.cacheDirectory}temp_audio_${messageId}.mp3`;
+        
+        // Write the base64 data to the file
+        await FileSystem.writeAsStringAsync(fileUri, base64Audio, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+
+        console.log("I AM HERE 3 (Playing audio soon...)")
+        
+        // Play the audio
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: fileUri },
+          { shouldPlay: true }
+        );
+        
+        setSoundObject(sound);
+        console.log("I AM HERE 4 (Done playing audio)")
+        
+        // Handle audio completion
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.didJustFinish) {
+            setIsSpeaking(false);
+            setCurrentlyPlayingId(null);
+          }
+        });
+      };
+    } catch (error) {
+      console.error("Failed to convert text to speech:", error);
+      alert("Failed to play speech: " + error.message);
+      setIsSpeaking(false);
+      setCurrentlyPlayingId(null);
+    }
+  };
+
+  // Function to stop speech playback
+  const stopSpeech = async () => {
+    if (soundObject) {
+      await soundObject.stopAsync();
+      await soundObject.unloadAsync();
+      setSoundObject(null);
+    }
+    setIsSpeaking(false);
+    setCurrentlyPlayingId(null);
+  };
+
   const handleSend = () => {
     if (message.trim() === "") return;
   
@@ -234,14 +357,25 @@ export default function ChatScreen({ navigation }) {
         }
       }
   
+      const newMessageId = (Date.now() + 1).toString();
       const aiMessage = {
-        id: (Date.now() + 1).toString(),
+        id: newMessageId,
         text: responseText,
         sender: "ai",
         timestamp: new Date(),
+        feedback: null,
       };
   
       setMessages((prevMessages) => [...prevMessages, aiMessage]);
+      
+      // Auto-play the AI response if hands-free mode is detected
+      // (This could be based on a setting or if the user used voice input)
+      if (isRecording || isListening) {
+        // Wait a bit for the UI to update before playing
+        setTimeout(() => {
+          textToSpeech(responseText, newMessageId);
+        }, 500);
+      }
     }, 1000);
   };
 
@@ -279,6 +413,7 @@ export default function ChatScreen({ navigation }) {
 
   const renderMessage = ({ item }) => {
     const isAI = item.sender === "ai"
+    const isPlaying = currentlyPlayingId === item.id;
 
     // Create anim refs for this message if not exist
     if (!animationRefs.current[item.id]) {
@@ -297,6 +432,26 @@ export default function ChatScreen({ navigation }) {
               <Text style={isAI ? styles.messageText : styles.userMessageText}>
                 {item.text}
               </Text>
+              
+              {/* Speaker button for AI messages */}
+              {isAI && (
+                <TouchableOpacity 
+                  style={styles.speakerButton}
+                  onPress={() => isPlaying ? stopSpeech() : textToSpeech(item.text, item.id)}
+                >
+                  <Ionicons 
+                    name={isPlaying ? "volume-high" : "volume-medium-outline"} 
+                    size={18} 
+                    color={isPlaying ? "#2FAE60" : "#666"} 
+                  />
+                  {isPlaying && (
+                    <View style={styles.speakingIndicator}>
+                      <ActivityIndicator size="small" color="#2FAE60" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              )}
+              
               {/* Use userTimestamp for user messages */}
               <Text style={isAI ? styles.timestamp : styles.userTimestamp}>
                 {item.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -397,7 +552,7 @@ export default function ChatScreen({ navigation }) {
         />
 
         <TouchableOpacity style={styles.micButton} onPress={toggleRecording}>
-          <Ionicons name={isListening ? "mic" : "mic-outline"} size={20} color={isListening ? "#FF3B30" : "#666"} />
+          <Ionicons name={isRecording ? "mic" : "mic-outline"} size={20} color={isRecording ? "#FF3B30" : "#666"} />
           {isLoadingTranscription && (
             <View style={styles.listeningIndicator}>
               <ActivityIndicator size="small" color="#FF3B30" />
@@ -439,6 +594,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 16,
     marginBottom: 12,
+    position: "relative", // For positioning the speaker button
   },
   aiMessage: {
     backgroundColor: "#f0f9f4",
@@ -454,6 +610,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
     lineHeight: 22,
+    paddingRight: 26, // Make space for the speaker button
   },
   timestamp: {
     fontSize: 10,
@@ -471,6 +628,25 @@ const styles = StyleSheet.create({
     color: "rgba(255, 255, 255, 0.7)", // Semi-transparent white
     alignSelf: "flex-end",
     marginTop: 4,
+  },
+  speakerButton: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  speakingIndicator: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#2FAE60",
   },
   quickRepliesContainer: {
     paddingVertical: 10,
