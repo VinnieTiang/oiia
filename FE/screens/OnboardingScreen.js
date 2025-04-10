@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { View, Text, StyleSheet, FlatList, Dimensions, TouchableOpacity } from "react-native"
+import { View, Text, StyleSheet, FlatList, Dimensions, TouchableOpacity, Image } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 
 const { width } = Dimensions.get("window")
@@ -9,21 +9,21 @@ const { width } = Dimensions.get("window")
 const slides = [
   {
     id: "1",
-    title: "Grow Your Business",
-    description: "Get personalized insights and advice to maximize your sales and customer engagement",
-    icon: "trending-up-outline",
+    title: "Meet Grablet",
+    description: "Your AI-powered business assistant that helps you make data-driven decisions",
+    icon: "chatbubble-ellipses-outline",
   },
   {
     id: "2",
-    title: "Smart Insights",
-    description: "Track your performance and discover patterns to make data-driven business decisions",
+    title: "Chat for Insights",
+    description: "Simply chat with Boostie to get personalized business insights and advice",
     icon: "analytics-outline",
   },
   {
     id: "3",
-    title: "AI-Powered Advice",
-    description: "Receive tailored recommendations based on your business history and goals",
-    icon: "bulb-outline",
+    title: "Grow Your Business",
+    description: "Get recommendations based on your business data to maximize your success",
+    icon: "trending-up-outline",
   },
 ]
 
@@ -35,7 +35,11 @@ export default function OnboardingScreen({ navigation }) {
     return (
       <View style={styles.slide}>
         <View style={styles.iconContainer}>
-          <Ionicons name={item.icon} size={80} color="#2FAE60" />
+          {item.id === "1" ? (
+            <Image source={require("../assets/mascot-avatar.png")} style={styles.mascotImage} />
+          ) : (
+            <Ionicons name={item.icon} size={80} color="#2FAE60" />
+          )}
         </View>
         <Text style={styles.title}>{item.title}</Text>
         <Text style={styles.description}>{item.description}</Text>
@@ -48,12 +52,12 @@ export default function OnboardingScreen({ navigation }) {
       flatListRef.current.scrollToIndex({ index: currentIndex + 1 })
       setCurrentIndex(currentIndex + 1)
     } else {
-      navigation.navigate("MainApp")
+      navigation.navigate("MainChat")
     }
   }
 
   const handleSkip = () => {
-    navigation.navigate("MainApp")
+    navigation.navigate("MainChat")
   }
 
   return (
@@ -114,6 +118,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 40,
+  },
+  mascotImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
   },
   title: {
     fontSize: 28,
