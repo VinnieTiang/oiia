@@ -1,10 +1,12 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { SafeAreaView } from "react-native-safe-area-context"
+import FloatingChatButton from "../components/FloatingChatButton"
 
 export default function HomeScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.safeArea}>
+      <FloatingChatButton />
       <ScrollView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.greeting}>Hello, Merchant!</Text>
