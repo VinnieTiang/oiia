@@ -31,7 +31,7 @@ function MainTabNavigator() {
             iconName = focused ? "bulb" : "bulb-outline"
           } else if (route.name === "Inventory") {
             iconName = focused ? "cube" : "cube-outline"
-          }else if (route.name === "Profile") {
+          } else if (route.name === "Profile") {
             iconName = focused ? "person" : "person-outline"
           }
 
@@ -48,7 +48,6 @@ function MainTabNavigator() {
       <Tab.Screen name="Advice" component={AdviceScreen} />
       <Tab.Screen name="Inventory" component={InventoryScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
-      
     </Tab.Navigator>
   )
 }

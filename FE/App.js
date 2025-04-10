@@ -5,6 +5,7 @@ import AppNavigator from "./navigation/AppNavigator"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import * as Notifications from "expo-notifications"
 import { useEffect } from "react"
+import { Provider as PaperProvider } from "react-native-paper"; 
 
 export default function App() {
   useEffect(() => {
@@ -19,10 +20,12 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
+      <PaperProvider>
         <NavigationContainer>
           <AppNavigator />
           <StatusBar style="auto" />
         </NavigationContainer>
+        </PaperProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   )
