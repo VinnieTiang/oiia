@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
-import { Text, Card, Button, DataTable, Chip, ActivityIndicator, Searchbar, Snackbar } from 'react-native-paper';
+import { StyleSheet, View, ScrollView, TouchableOpacity, RefreshControl, Modal, TextInput} from 'react-native';
+import { Text, Card, Button, DataTable, Chip, ActivityIndicator, Searchbar, Snackbar, Portal, Dialog, TextInput as PaperTextInput  } from 'react-native-paper';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
@@ -35,6 +35,10 @@ export default function InventoryScreen() {
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [selectedItem, setSelectedItem] = useState(null);
+  const [restockModalVisible, setRestockModalVisible] = useState(false);
+  const [restockQuantity, setRestockQuantity] = useState('');
+  const [currentlyRestockingItem, setCurrentlyRestockingItem] = useState(null);
+
 
   const onChangeSearch = query => setSearchQuery(query);
 
@@ -98,9 +102,54 @@ export default function InventoryScreen() {
 
   const handleRestock = (item) => {
     setSelectedItem(item);
-    // In a real app, this would open a restock modal or navigation
+    setCurrentlyRestockingItem(item);
+    setRestockQuantity('');
+    setRestockModalVisible(true);
     showSnackbar(`Restock initiated for ${item.name}`);
   };
+
+  const confirmRestock = () => {
+    if (!restockQuantity || isNaN(restockQuantity)) {
+      showSnackbar('Please enter a valid quantity');
+      return;
+    }
+
+    const quantity = parseInt(restockQuantity, 10);
+    if (quantity <= 0) {
+      showSnackbar('Quantity must be greater than 0');
+      return;
+    }
+
+    // Update the inventory
+    const updatedInventory = inventory.map(item => {
+      if (item.id === currentlyRestockingItem.id) {
+        const newQuantity = item.current + quantity;
+        let newStatus = item.status;
+        
+        // Determine new status based on restocked quantity
+        if (newQuantity >= item.recommended * 0.7) {
+          newStatus = 'good';
+        } else if (newQuantity >= item.recommended * 0.3) {
+          newStatus = 'medium';
+        } else {
+          newStatus = 'low';
+        }
+
+        return {
+          ...item,
+          current: newQuantity,
+          status: newStatus,
+          lastRestocked: 'Today'
+        };
+      }
+      return item;
+    });
+
+    setInventory(updatedInventory);
+    showSnackbar(`Successfully restocked ${quantity} ${currentlyRestockingItem.name}`);
+    setRestockModalVisible(false);
+  };
+
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -381,6 +430,42 @@ export default function InventoryScreen() {
         </Card>
       </ScrollView>
 
+      {/* Restock Modal */}
+      <Portal>
+        <Dialog visible={restockModalVisible} onDismiss={() => setRestockModalVisible(false)}>
+          <Dialog.Title>Restock Item</Dialog.Title>
+          <Dialog.Content>
+            <Text style={styles.dialogText}>
+              {currentlyRestockingItem?.name} (Current: {currentlyRestockingItem?.current})
+            </Text>
+            <PaperTextInput
+              label="Quantity to add"
+              value={restockQuantity}
+              onChangeText={setRestockQuantity}
+              keyboardType="numeric"
+              mode="outlined"
+              style={styles.restockInput}
+              autoFocus
+            />
+            <Text style={styles.recommendedText}>
+              Recommended stock level: {currentlyRestockingItem?.recommended}
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setRestockModalVisible(false)}>
+              Cancel
+            </Button>
+            <Button 
+              mode="contained" 
+              onPress={confirmRestock}
+              style={styles.confirmRestockButton}
+            >
+              Confirm Restock
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
       {/* Snackbar for feedback */}
       <Snackbar
         visible={snackbarVisible}
@@ -642,5 +727,21 @@ const styles = StyleSheet.create({
   },
   snackbar: {
     backgroundColor: '#333',
+  },
+
+  dialogText: {
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  restockInput: {
+    marginBottom: 8,
+  },
+  recommendedText: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 8,
+  },
+  confirmRestockButton: {
+    backgroundColor: '#10B981',
   },
 });
