@@ -13,9 +13,10 @@ import {
   ActivityIndicator,
   PermissionsAndroid,
 } from "react-native"
+import { Animated } from "react-native"
 import { Audio } from "expo-av"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { Ionicons } from "@expo/vector-icons"
+import { Ionicons, Feather } from "@expo/vector-icons"
 import {OPENAI_API_KEY} from "@env"
 
 export default function ChatScreen({ navigation }) {
@@ -26,6 +27,7 @@ export default function ChatScreen({ navigation }) {
       text: "Hello! I'm your GrabMerchant assistant. How can I help you today?",
       sender: "ai",
       timestamp: new Date(),
+      feedback: null,
     },
   ])
 
@@ -36,6 +38,8 @@ export default function ChatScreen({ navigation }) {
   const [isLoadingTranscription, setIsLoadingTranscription] = useState(false)
 
   const flatListRef = useRef(null)
+  // Refs to hold animation values per message
+  const animationRefs = useRef({})
 
   const quickReplies = [
     "Show my sales insights",
@@ -53,18 +57,8 @@ export default function ChatScreen({ navigation }) {
       return true
     }
 
-  const requestMicrophonePermission = async () => {
-    if (Platform.OS === "android") {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO
-      )
-      return granted === PermissionsAndroid.RESULTS.GRANTED
-    }
-    return true
-  }
-
   const startRecording = async () => {
-    const permission = await requestMicrophonePermission()
+    const permission = await requestAudioPermission()
     if (!permission) return
 
     try {
@@ -200,16 +194,93 @@ export default function ChatScreen({ navigation }) {
     }, 100)
   }
 
+  const animateFeedback = (anim) => {
+    Animated.sequence([
+        Animated.timing(anim, {
+            toValue: 1.3,
+            duration: 100,
+            useNativeDriver: true,
+        }),
+        Animated.timing(anim, {
+            toValue: 1,
+            duration: 100,
+            useNativeDriver: true,
+        }),
+    ]).start()
+  }
+
+  const handleFeedback = (messageId, type) => {
+    setMessages((prevMessages) =>
+        prevMessages.map((msg) =>
+            msg.id === messageId && msg.sender === "ai"
+                ? { ...msg, feedback: type }
+                : msg
+        )
+    )
+  }
+
   const renderMessage = ({ item }) => {
     const isAI = item.sender === "ai"
 
+    // Create anim refs for this message if not exist
+    if (!animationRefs.current[item.id]) {
+        animationRefs.current[item.id] = {
+            like: new Animated.Value(1),
+            dislike: new Animated.Value(1),
+        }
+    }
+
+    const { like, dislike } = animationRefs.current[item.id]
+
     return (
-      <View style={[styles.messageBubble, isAI ? styles.aiMessage : styles.userMessage]}>
-        <Text style={styles.messageText}>{item.text}</Text>
-        <Text style={styles.timestamp}>
-          {item.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-        </Text>
-      </View>
+        <View>
+            <View style={[styles.messageBubble, isAI ? styles.aiMessage : styles.userMessage]}>
+                <Text style={styles.messageText}>{item.text}</Text>
+                <Text style={styles.timestamp}>
+                    {item.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </Text>
+            </View>
+            {isAI && (
+                <View style={styles.feedbackContainer}>
+                    <TouchableOpacity
+                        onPress={() => {
+                            animateFeedback(like);
+                            handleFeedback(item.id, "like");
+                        }}
+                        style={[
+                            styles.feedbackButton,
+                            item.feedback === "like" && styles.feedbackButtonActive,
+                        ]}
+                    >
+                        <Animated.View style={{ transform: [{ scale: like }] }}>
+                            <Feather
+                                name="thumbs-up"
+                                size={16}
+                                color={item.feedback === "like" ? "#2FAE60" : "#999"}
+                            />
+                        </Animated.View>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => {
+                            animateFeedback(dislike);
+                            handleFeedback(item.id, "dislike");
+                        }}
+                        style={[
+                            styles.feedbackButton,
+                            item.feedback === "dislike" && styles.feedbackButtonActive,
+                        ]}
+                    >
+                        <Animated.View style={{ transform: [{ scale: dislike }] }}>
+                            <Feather
+                                name="thumbs-down"
+                                size={16}
+                                color={item.feedback === "dislike" ? "#D9534F" : "#999"}
+                            />
+                        </Animated.View>
+                    </TouchableOpacity>
+                </View>
+            )}
+        </View>
     )
   }
 
@@ -225,7 +296,14 @@ export default function ChatScreen({ navigation }) {
         renderItem={renderMessage}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.messageList}
-        onContentSizeChange={() => flatListRef.current.scrollToEnd({ animated: true })}
+        onContentSizeChange={() => {
+            // Add a slightly longer delay to ensure feedback buttons are rendered
+            setTimeout(() => {
+                if (flatListRef.current) {
+                    flatListRef.current.scrollToEnd({ animated: true })
+                }
+            }, 300)
+        }}
       />
 
       <View style={styles.quickRepliesContainer}>
@@ -381,5 +459,18 @@ const styles = StyleSheet.create({
     top: -5,
     right: -5,
     backgroundColor: "transparent",
+  },
+  feedbackContainer: {
+    flexDirection: "row",
+    marginTop: -12,
+  },
+  feedbackButton: {
+    padding: 6,
+    marginRight: 10,
+    borderRadius: 20,
+    backgroundColor: "#f7f7f7",
+  },
+  feedbackButtonActive: {
+    backgroundColor: "#f5fff5",
   },
 })
