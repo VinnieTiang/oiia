@@ -14,10 +14,9 @@ import {
   PermissionsAndroid,
 } from "react-native"
 import { Audio } from "expo-av"
-import * as FileSystem from "expo-file-system"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
-import Voice from "@react-native-voice/voice"
+import {OPENAI_API_KEY} from "@env"
 
 export default function ChatScreen({ navigation }) {
   const [message, setMessage] = useState("")
@@ -126,7 +125,7 @@ export default function ChatScreen({ navigation }) {
       const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
         method: "POST",
         headers: {
-          Authorization: `Bearer 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`,
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
           "Content-Type": "multipart/form-data",
         },
         body: formData,
