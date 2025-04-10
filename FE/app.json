@@ -1,5 +1,15 @@
 {
   "expo": {
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#10B981",
+          "sounds": ["./assets/notification-sound.wav"]
+        }
+      ]
+    ],
     "name": "GigBoostApp",
     "slug": "GigBoostApp",
     "version": "1.0.0",
