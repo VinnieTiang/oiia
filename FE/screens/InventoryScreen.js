@@ -105,7 +105,6 @@ export default function InventoryScreen() {
     setCurrentlyRestockingItem(item);
     setRestockQuantity('');
     setRestockModalVisible(true);
-    showSnackbar(`Restock initiated for ${item.name}`);
   };
 
   const confirmRestock = () => {
@@ -212,8 +211,7 @@ export default function InventoryScreen() {
   }, { low: 0, medium: 0, good: 0 });
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView
+    <ScrollView
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -223,9 +221,10 @@ export default function InventoryScreen() {
           />
         }
       >
+    <ScrollView  style={styles.container}>
+      
         {/* Welcome Header */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Inventory Management</Text>
           <Text style={styles.headerSubtitle}>Track and manage your stock levels</Text>
         </View>
 
@@ -430,7 +429,6 @@ export default function InventoryScreen() {
         </Card>
       </ScrollView>
 
-      {/* Restock Modal */}
       <Portal>
         <Dialog visible={restockModalVisible} onDismiss={() => setRestockModalVisible(false)}>
           <Dialog.Title>Restock Item</Dialog.Title>
@@ -507,7 +505,7 @@ export default function InventoryScreen() {
       >
         {snackbarMessage}
       </Snackbar>
-    </SafeAreaView>
+    </ScrollView>
   );
 }
 

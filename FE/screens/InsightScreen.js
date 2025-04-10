@@ -3,7 +3,6 @@ import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import { LineChart, BarChart, PieChart, ProgressChart } from "react-native-chart-kit"
 import { useState } from "react"
-import FloatingChatButton from "../components/FloatingChatButton"
 
 export default function InsightScreen() {
   const [timePeriod, setTimePeriod] = useState("weekly")
@@ -136,11 +135,7 @@ export default function InsightScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <FloatingChatButton />
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Business Insights</Text>
-      </View>
+    
 
       <ScrollView style={styles.container}>
         {/* Time period selector */}
@@ -457,7 +452,6 @@ export default function InsightScreen() {
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
   )
 }
 
