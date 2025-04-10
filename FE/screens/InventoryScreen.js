@@ -438,15 +438,43 @@ export default function InventoryScreen() {
             <Text style={styles.dialogText}>
               {currentlyRestockingItem?.name} (Current: {currentlyRestockingItem?.current})
             </Text>
-            <PaperTextInput
-              label="Quantity to add"
+
+      {/* Quantity Controls */}
+      <View style={styles.quantityRow}>
+        <TouchableOpacity 
+          onPress={() => setRestockQuantity(Math.max(1, (parseInt(restockQuantity) || 0) - 1).toString())}
+          style={[styles.circleButton, styles.decrementButton]}
+          activeOpacity={0.5}
+        >
+          <Ionicons name="remove" size={40} color="#fff" />
+        </TouchableOpacity>
+        
+        {/* <PaperTextInput
+              label="Quantity"
               value={restockQuantity}
               onChangeText={setRestockQuantity}
               keyboardType="numeric"
               mode="outlined"
               style={styles.restockInput}
               autoFocus
-            />
+            /> */}
+
+        <TextInput
+          label="Quantity"
+          value={restockQuantity}
+          onChangeText={setRestockQuantity}
+          keyboardType="numeric"
+          style={styles.quantityInput}
+        />
+        
+        <TouchableOpacity 
+          onPress={() => setRestockQuantity(((parseInt(restockQuantity) || 0) + 1).toString())}
+          style={[styles.circleButton, styles.incrementButton]}
+          activeOpacity={0.5}
+        >
+          <Ionicons name="add" size={40} color="#fff" />
+        </TouchableOpacity>
+      </View>
             <Text style={styles.recommendedText}>
               Recommended stock level: {currentlyRestockingItem?.recommended}
             </Text>
@@ -743,5 +771,69 @@ const styles = StyleSheet.create({
   },
   confirmRestockButton: {
     backgroundColor: '#10B981',
+  },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginVertical: 16,
+  },
+  quantityButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quantityButtonText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    lineHeight: 28,
+  },
+  quantityInput: {
+    flex: 1,
+    marginHorizontal: 0,
+    textAlign: 'center',
+  },
+
+  quantityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginVertical: 20,
+  },
+  circleButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  decrementButton: {
+    backgroundColor: '#AFACE1', 
+  },
+  incrementButton: {
+    backgroundColor: '#AFACE1', 
+  },
+  quantityInput: {
+    flex: 1,
+    marginHorizontal: 15,
+    textAlign: 'center',
+    fontSize: 27,
+  },
+  confirmButton: {
+    backgroundColor: '#10B981',
+    borderRadius: 8,
+    paddingVertical: 5,
+  },
+  confirmButtonLabel: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
