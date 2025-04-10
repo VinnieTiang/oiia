@@ -6,7 +6,9 @@
         {
           "icon": "./assets/notification-icon.png",
           "color": "#10B981",
-          "sounds": ["./assets/notification-sound.wav"]
+          "sounds": [
+            "./assets/notification-sound.wav"
+          ]
         }
       ]
     ],
@@ -31,8 +33,10 @@
         "backgroundColor": "#ffffff"
       },
       "permissions": [
+        "RECORD_AUDIO",
         "RECORD_AUDIO"
-      ]
+      ],
+      "package": "com.anonymous.GigBoostApp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
