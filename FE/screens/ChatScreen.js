@@ -64,7 +64,7 @@ export default function ChatScreen({ navigation }) {
   }
 
   const startRecording = async () => {
-    const permission = await requestMicrophonePermission()
+    const permission = await requestAudioPermission()
     if (!permission) return
 
     try {
