@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import {
   View,
   Text,
@@ -10,9 +10,14 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
+  PermissionsAndroid,
 } from "react-native"
+import { Audio } from "expo-av"
+import * as FileSystem from "expo-file-system"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
+import Voice from "@react-native-voice/voice"
 
 export default function ChatScreen({ navigation }) {
   const [message, setMessage] = useState("")
@@ -25,6 +30,12 @@ export default function ChatScreen({ navigation }) {
     },
   ])
 
+  const [isListening, setIsListening] = useState(false)
+  const [speechError, setSpeechError] = useState("")
+  const [isRecording, setIsRecording] = useState(false)
+  const [recording, setRecording] = useState(null)
+  const [isLoadingTranscription, setIsLoadingTranscription] = useState(false)
+
   const flatListRef = useRef(null)
 
   const quickReplies = [
@@ -33,6 +44,109 @@ export default function ChatScreen({ navigation }) {
     "How can I increase my revenue?",
     "Tips for customer retention",
   ]
+
+    const requestAudioPermission = async () => {
+      const { status } = await Audio.requestPermissionsAsync()
+      if (status !== 'granted') {
+        alert('Microphone permission is required!')
+        return false
+      }
+      return true
+    }
+
+  const requestMicrophonePermission = async () => {
+    if (Platform.OS === "android") {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO
+      )
+      return granted === PermissionsAndroid.RESULTS.GRANTED
+    }
+    return true
+  }
+
+  const startRecording = async () => {
+    const permission = await requestMicrophonePermission()
+    if (!permission) return
+
+    try {
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      })
+
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      )
+      setRecording(recording)
+      setIsRecording(true)
+    } catch (err) {
+      console.error("Failed to start recording", err)
+    }
+  }
+
+  const stopRecording = async () => {
+    try {
+      if (!recording) return
+      await recording.stopAndUnloadAsync()
+      setIsRecording(false)
+
+      const uri = recording.getURI()
+      console.log("Recording URI:", uri)
+      setRecording(null)
+      if (uri) {
+        await transcribeWithWhisper(uri)
+      }
+    } catch (err) {
+      console.error("Failed to stop recording", err)
+    }
+  }
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      stopRecording()
+    } else {
+      startRecording()
+    }
+  }
+
+  const transcribeWithWhisper = async (uri) => {
+    setIsLoadingTranscription(true)
+  
+    console.log("Sending file to Whisper:", uri)
+  
+    const formData = new FormData()
+    formData.append("file", {
+      uri,
+      name: "audio.wav",
+      type: "audio/wav",
+    })
+    formData.append("model", "whisper-1")
+  
+    try {
+      const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer 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`,
+          "Content-Type": "multipart/form-data",
+        },
+        body: formData,
+      })
+  
+      const data = await response.json()
+      console.log("Whisper response:", data)
+  
+      if (data.text) {
+        setMessage(data.text)
+      } else if (data.error) {
+        alert("Transcription error: " + data.error.message)
+      }
+    } catch (err) {
+      console.error("Whisper API error:", err)
+      alert("Something went wrong with the transcription.")
+    } finally {
+      setIsLoadingTranscription(false)
+    }
+  }
 
   const handleSend = () => {
     if (message.trim() === "") return
@@ -142,6 +256,16 @@ export default function ChatScreen({ navigation }) {
           placeholderTextColor="#999"
           multiline
         />
+
+        <TouchableOpacity style={styles.micButton} onPress={toggleRecording}>
+          <Ionicons name={isListening ? "mic" : "mic-outline"} size={20} color={isListening ? "#FF3B30" : "#666"} />
+          {isLoadingTranscription && (
+            <View style={styles.listeningIndicator}>
+              <ActivityIndicator size="small" color="#FF3B30" />
+            </View>
+          )}
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.sendButton} onPress={handleSend} disabled={message.trim() === ""}>
           <Ionicons name="send" size={20} color={message.trim() === "" ? "#ccc" : "white"} />
         </TouchableOpacity>
@@ -243,5 +367,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginLeft: 8,
+  },
+  micButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 8,
+  },
+  listeningIndicator: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "transparent",
   },
 })
