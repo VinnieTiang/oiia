@@ -34,6 +34,7 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         <View style={styles.tipCard}>
+        <TouchableOpacity  onPress={() => navigation.navigate("Advice")}>
           <View style={styles.tipHeader}>
             <Ionicons name="bulb" size={24} color="#FFD700" />
             <Text style={styles.tipTitle}>Tip of the Day</Text>
@@ -41,7 +42,9 @@ export default function HomeScreen({ navigation }) {
           <Text style={styles.tipText}>
             Consider offering a 10% discount during 2-4PM to boost your off-peak sales.
           </Text>
+          </TouchableOpacity>
         </View>
+        
 
         <Text style={styles.sectionTitle}>Quick Access</Text>
 

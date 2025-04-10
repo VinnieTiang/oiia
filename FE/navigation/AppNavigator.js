@@ -29,10 +29,10 @@ function MainTabNavigator() {
             iconName = focused ? "bar-chart" : "bar-chart-outline"
           } else if (route.name === "Advice") {
             iconName = focused ? "bulb" : "bulb-outline"
-          } else if (route.name === "Profile") {
-            iconName = focused ? "person" : "person-outline"
           } else if (route.name === "Inventory") {
             iconName = focused ? "cube" : "cube-outline"
+          } else if (route.name === "Profile") {
+            iconName = focused ? "person" : "person-outline"
           }
 
           return <Ionicons name={iconName} size={size} color={color} />
@@ -46,8 +46,8 @@ function MainTabNavigator() {
       <Tab.Screen name="Chat" component={ChatScreen} />
       <Tab.Screen name="Insight" component={InsightScreen} />
       <Tab.Screen name="Advice" component={AdviceScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
       <Tab.Screen name="Inventory" component={InventoryScreen} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   )
 }
