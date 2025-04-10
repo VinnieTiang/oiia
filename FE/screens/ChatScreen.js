@@ -108,10 +108,13 @@ export default function ChatScreen({ navigation }) {
     console.log("Sending file to Whisper:", uri)
   
     const formData = new FormData()
+    const fileExtension = Platform.OS === 'ios' ? 'm4a' : 'wav';
+    const mimeType = Platform.OS === 'ios' ? 'audio/m4a' : 'audio/wav';
+    
     formData.append("file", {
       uri,
-      name: "audio.wav",
-      type: "audio/wav",
+      name: `audio.${fileExtension}`,
+      type: mimeType,
     })
     formData.append("model", "whisper-1")
   
