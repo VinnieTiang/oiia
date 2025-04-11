@@ -1,20 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity, RefreshControl, Modal, TextInput} from 'react-native';
 import { Text, Card, Button, DataTable, Chip, ActivityIndicator, Searchbar, Snackbar, Portal, Dialog, TextInput as PaperTextInput  } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
 
 // Sample inventory data
 const inventoryData = [
-  { id: 1, name: "Chicken Rice", current: 5, recommended: 20, status: "low", lastRestocked: "2 days ago" },
-  { id: 2, name: "Nasi Lemak", current: 3, recommended: 15, status: "low", lastRestocked: "3 days ago" },
-  { id: 3, name: "Mee Goreng", current: 12, recommended: 15, status: "medium", lastRestocked: "1 day ago" },
-  { id: 4, name: "Roti Canai", current: 25, recommended: 20, status: "good", lastRestocked: "Today" },
-  { id: 5, name: "Teh Tarik", current: 30, recommended: 25, status: "good", lastRestocked: "Today" },
-  { id: 6, name: "Satay", current: 8, recommended: 15, status: "medium", lastRestocked: "2 days ago" },
-  { id: 7, name: "Curry Puff", current: 4, recommended: 20, status: "low", lastRestocked: "4 days ago" },
-  { id: 8, name: "Iced Coffee", current: 18, recommended: 20, status: "medium", lastRestocked: "Yesterday" },
+  { id: 1, name: "Chicken thigh", current: 5, recommended: 20, status: "low", lastRestocked: "2 days ago" },
+  { id: 2, name: "Jasmine rice", current: 3, recommended: 15, status: "low", lastRestocked: "3 days ago" },
+  { id: 3, name: "Egg", current: 12, recommended: 15, status: "medium", lastRestocked: "1 day ago" },
+  { id: 4, name: "Ginger", current: 25, recommended: 20, status: "good", lastRestocked: "Today" },
+  { id: 5, name: "Garlic", current: 30, recommended: 25, status: "good", lastRestocked: "Today" },
+  { id: 6, name: "Cucumber", current: 8, recommended: 15, status: "medium", lastRestocked: "2 days ago" },
+  { id: 7, name: "Chili sauce", current: 4, recommended: 20, status: "low", lastRestocked: "4 days ago" },
+  { id: 8, name: "Soy sauce", current: 18, recommended: 20, status: "medium", lastRestocked: "Yesterday" },
 ];
 
 Notifications.setNotificationHandler({
@@ -315,7 +314,7 @@ export default function InventoryScreen() {
                   {/* Scrollable portion */}
                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     <DataTable style={styles.scrollableTable}>
-                      <DataTable.Header>
+                      <DataTable.Header style ={styles.dataTableHeader}>
                         <DataTable.Title 
                           numeric
                           sortDirection={sortBy === 'current' ? sortDirection : null}
@@ -379,17 +378,21 @@ export default function InventoryScreen() {
                             <Text style={styles.dateText}>{item.lastRestocked}</Text>
                           </DataTable.Cell>
                           <DataTable.Cell style={styles.actionColumn}>
-                            <Button
-                              mode="text"
-                              compact
-                              onPress={() => handleRestock(item)}
-                              labelStyle={{
-                                color: item.status === 'low' ? '#d32f2f' : '#10B981',
-                                fontSize: 12,
-                              }}
-                            >
-                              {item.status === 'low' ? 'Restock Now' : 'Order More'}
-                            </Button>
+                          <Button
+                            mode="text"
+                            compact
+                            onPress={() => handleRestock(item)}
+                            style={[
+                              styles.actionButton,
+                              item.status === 'low' ? styles.restockNowButton : styles.orderMoreButton
+                            ]}
+                            labelStyle={[
+                              styles.actionButtonLabel,
+                              item.status === 'low' ? styles.restockNowLabel : styles.orderMoreLabel
+                            ]}
+                          >
+                            {item.status === 'low' ? 'Restock Now' : 'Order More'}
+                          </Button>
                           </DataTable.Cell>
                         </DataTable.Row>
                       ))}
@@ -398,33 +401,6 @@ export default function InventoryScreen() {
                 </View>
               </View>
             )}
-          </Card.Content>
-        </Card>
-
-        {/* Quick Actions Card */}
-        <Card style={styles.actionsCard}>
-          <Card.Content>
-            <Text style={styles.actionsTitle}>Quick Actions</Text>
-            <View style={styles.actionButtons}>
-              <Button 
-                mode="contained" 
-                onPress={() => showSnackbar('Order supplies action')}
-                style={[styles.actionButton, styles.primaryAction]}
-                labelStyle={styles.actionButtonLabel}
-                icon="cart"
-              >
-                Order Supplies
-              </Button>
-              <Button 
-                mode="contained-tonal" 
-                onPress={() => showSnackbar('Export report action')}
-                style={[styles.actionButton, styles.secondaryAction]}
-                labelStyle={styles.actionButtonLabel}
-                icon="download"
-              >
-                Export Report
-              </Button>
-            </View>
           </Card.Content>
         </Card>
       </ScrollView>
@@ -446,16 +422,6 @@ export default function InventoryScreen() {
         >
           <Ionicons name="remove" size={40} color="#fff" />
         </TouchableOpacity>
-        
-        {/* <PaperTextInput
-              label="Quantity"
-              value={restockQuantity}
-              onChangeText={setRestockQuantity}
-              keyboardType="numeric"
-              mode="outlined"
-              style={styles.restockInput}
-              autoFocus
-            /> */}
 
         <TextInput
           label="Quantity"
@@ -519,13 +485,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingHorizontal: 8,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-  },
   headerSubtitle: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#666',
     marginTop: 4,
   },
@@ -541,16 +502,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   summaryTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
   },
   refreshButton: {
     borderColor: '#10B981',
     borderRadius: 20,
-  },
-  refreshButtonLabel: {
-    fontSize: 13,
   },
   statsRow: {
     flexDirection: 'row',
@@ -566,13 +524,13 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   lowStat: {
-    backgroundColor: '#ffebee',
+    backgroundColor: '#ffcfd6',
   },
   mediumStat: {
-    backgroundColor: '#fff8e1',
+    backgroundColor: '#fae8ac',
   },
   goodStat: {
-    backgroundColor: '#e8f5e9',
+    backgroundColor: '#cdebb2',
   },
   statValue: {
     fontSize: 24,
@@ -581,8 +539,9 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: '#666',
+    color: '#333',
     marginTop: 4,
+    textAlign:'center',
   },
   statIcon: {
     position: 'absolute',
@@ -631,7 +590,7 @@ const styles = StyleSheet.create({
   },
   stickyColumn: {
     width: 140,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
     zIndex: 10,
     borderRightWidth: 1,
     borderRightColor: '#e0e0e0',
@@ -641,14 +600,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#f7f7f7',
   },
   stickyCell: {
-    minHeight: 60,
+    minHeight: 52,
     backgroundColor: '#fff',
   },
   nameColumnHeader: {
     paddingLeft: 16,
+    backgroundColor: 'transparent',
   },
   nameColumnCell: {
-    paddingLeft: 16,
+    paddingLeft: 2,
+    alignItems: 'center',
+  },
+  dataTableHeader: {
+    backgroundColor: '#f7f7f7',
+    borderBottomWidth: 2,
   },
   itemNameContainer: {
     flexDirection: 'row',
@@ -658,19 +623,20 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   itemNameText: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#333',
   },
   columnHeaderText: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: 'bold',
     color: '#555',
   },
   scrollableTable: {
     minWidth: 520, 
+    backgroundColor:'#fffff6',
   },
   dataRow: {
-    minHeight: 60,
+    minHeight: 52,
   },
   numberColumn: {
     width: 100,
@@ -678,7 +644,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stockText: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#333',
   },
   lowStockText: {
@@ -694,73 +660,51 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dateColumn: {
-    width: 120,
-    paddingHorizontal: 8,
+    width: 125,
+    paddingHorizontal: 4,
+    justifyContent: 'center',
   },
   dateText: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#555',
   },
   actionColumn: {
     width: 140,
     paddingHorizontal: 8,
-  },
-  actionButton: {
-    borderRadius: 6,
-    paddingVertical: 2,
-    backgroundColor: 'transparent', // Make background transparent
-  },
-  actionButtonLabel: {
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  restockButton: {
-    borderColor: '#e04652', // Border color for restock
-  },
-  restockButtonLabel: {
-    color: '#e04652', // Text color for Restock Now button
-  },
-  orderButton: {
-    borderColor: '#1cb861', // Border color for order
-  },
-  orderButtonLabel: {
-    color: '#1cb861', // Text color for Order More button
-  },
-  actionsCard: {
-    borderRadius: 12,
-    marginBottom: 24,
-    elevation: 2,
-  },
-  actionsTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#333',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  primaryAction: {
-    flex: 1,
-    marginHorizontal: 4,
-    backgroundColor: '#10B981',
-  },
-  secondaryAction: {
-    flex: 1,
-    marginHorizontal: 4,
-    backgroundColor: '#e0e0e0',
+    justifyContent: 'center',
   },
   snackbar: {
     backgroundColor: '#333',
   },
+  actionButton: {
+    minWidth: 100,
+    borderRadius: 6,
+    borderWidth: 1,
+    marginHorizontal: 4,
+  },
+  actionButtonLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    letterSpacing: 0.25,
+  },
 
+  // Status-specific styles
+  restockNowButton: {
+    backgroundColor: '#ffcfd6', // Light red background
+    borderRadius: 20,
+  },
+  restockNowLabel: {
+    color: '#d32f2f',
+  },
+  orderMoreButton: {
+
+  },
+  orderMoreLabel: {
+    color: '#10B981',
+  },
   dialogText: {
     fontSize: 16,
     marginBottom: 16,
-  },
-  restockInput: {
-    marginBottom: 8,
   },
   recommendedText: {
     fontSize: 14,
@@ -769,24 +713,6 @@ const styles = StyleSheet.create({
   },
   confirmRestockButton: {
     backgroundColor: '#10B981',
-  },
-  quantityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginVertical: 16,
-  },
-  quantityButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  quantityButtonText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    lineHeight: 28,
   },
   quantityInput: {
     flex: 1,
@@ -823,15 +749,5 @@ const styles = StyleSheet.create({
     marginHorizontal: 15,
     textAlign: 'center',
     fontSize: 27,
-  },
-  confirmButton: {
-    backgroundColor: '#10B981',
-    borderRadius: 8,
-    paddingVertical: 5,
-  },
-  confirmButtonLabel: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
 });
