@@ -28,7 +28,17 @@ export default function AppNavigator() {
           headerTitle: "Business Insights",
           headerTitleAlign: "center",
           headerLeft: () => (
-            <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginLeft: 8 }}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={{
+                marginLeft: 8,
+                width: 48,
+                height: 48,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <Ionicons name="arrow-back" size={24} color="#333" />
             </TouchableOpacity>
           ),
@@ -43,7 +53,17 @@ export default function AppNavigator() {
           headerTitle: "Business Advice",
           headerTitleAlign: "center",
           headerLeft: () => (
-            <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginLeft: 8 }}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={{
+                marginLeft: 8,
+                width: 48,
+                height: 48,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <Ionicons name="arrow-back" size={24} color="#333" />
             </TouchableOpacity>
           ),
@@ -58,7 +78,17 @@ export default function AppNavigator() {
           headerTitle: "Inventory Management",
           headerTitleAlign: "center",
           headerLeft: () => (
-            <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginLeft: 8 }}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={{
+                marginLeft: 8,
+                width: 48,
+                height: 48,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <Ionicons name="arrow-back" size={24} color="#333" />
             </TouchableOpacity>
           ),
@@ -73,7 +103,17 @@ export default function AppNavigator() {
           headerTitle: "Profile",
           headerTitleAlign: "center",
           headerLeft: () => (
-            <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginLeft: 8 }}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={{
+                marginLeft: 8,
+                width: 48,
+                height: 48,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <Ionicons name="arrow-back" size={24} color="#333" />
             </TouchableOpacity>
           ),
