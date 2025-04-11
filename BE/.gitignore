@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+.venv
+*.pyc
 
 # Virtual environment
 venv/
@@ -41,3 +43,4 @@ build/
 
 # CSV files
 *.csv
+
