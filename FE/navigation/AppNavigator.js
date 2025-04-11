@@ -10,6 +10,7 @@ import InsightScreen from "../screens/InsightScreen"
 import AdviceScreen from "../screens/AdviceScreen"
 import ProfileScreen from "../screens/ProfileScreen"
 import InventoryScreen from "../screens/InventoryScreen"
+import LeaderboardScreen from "../screens/LeaderboardScreen"
 
 const Stack = createNativeStackNavigator()
 
@@ -101,6 +102,31 @@ export default function AppNavigator() {
         options={({ navigation }) => ({
           headerShown: true,
           headerTitle: "Profile",
+          headerTitleAlign: "center",
+          headerLeft: () => (
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={{
+                marginLeft: 8,
+                width: 48,
+                height: 48,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="arrow-back" size={24} color="#333" />
+            </TouchableOpacity>
+          ),
+        })}
+      />
+
+      <Stack.Screen
+        name="Leaderboard"
+        component={LeaderboardScreen}
+        options={({ navigation }) => ({
+          headerShown: true,
+          headerTitle: "Merchant Leaderboard",
           headerTitleAlign: "center",
           headerLeft: () => (
             <TouchableOpacity

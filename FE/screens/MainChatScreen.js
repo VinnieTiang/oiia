@@ -1,5 +1,5 @@
 "use client"
-import { fetchLowStockItems } from '../api';
+import { fetchLowStockItems, askAI } from "../api"
 import { useState, useRef, useEffect } from "react"
 import {
   View,
@@ -14,6 +14,7 @@ import {
   Animated,
   Dimensions,
   ScrollView,
+  ActivityIndicator,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
@@ -26,57 +27,58 @@ const MESSAGE_TYPES = {
   TEXT: "text",
   SALES_SUMMARY: "sales_summary",
   INVENTORY_ALERT: "inventory_alert",
+  INVENTORY_ALERT2: "inventory_alert2",
   INSIGHT_CHART: "insight_chart",
   QUICK_ACTIONS: "quick_actions",
   PROFILE_CARD: "profile_card",
 }
 
 export default function MainChatScreen({ navigation }) {
-
   // Inside your MainChatScreen component
-const [lowStockItems, setLowStockItems] = useState([]);
-const [isLoading, setIsLoading] = useState(false);
+  const [lowStockItems, setLowStockItems] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [isAILoading, setIsAILoading] = useState(false)
 
-const checkInventory = async () => {
-  try {
-    setIsLoading(true);
-    // Show typing indicator
-    setIsTyping(true);
-    
-    // Add user message
-    const userMessage = {
-      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      type: MESSAGE_TYPES.TEXT,
-      text: "Check inventory",
-      sender: "user",
-      timestamp: new Date(),
-    };
-    setMessages((prevMessages) => [...prevMessages, userMessage]);
-    
-    // Fetch data from API
-    const items = await fetchLowStockItems();
-    setLowStockItems(items);
-    
-    // Add mascot response
-    addMascotMessage("I checked your inventory and found these low stock items:", MESSAGE_TYPES.TEXT);
-    
-    // Add inventory alert message
-    const inventoryMessage = {
-      id: `mascot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      type: MESSAGE_TYPES.INVENTORY_ALERT2,
-      sender: "mascot",
-      timestamp: new Date(),
-      items: items, // Pass the items to the message
-    };
-    setMessages((prevMessages) => [...prevMessages, inventoryMessage]);
-    
-  } catch (error) {
-    addMascotMessage("Sorry, I couldn't fetch your inventory data. Please try again later.", MESSAGE_TYPES.TEXT);
-  } finally {
-    setIsTyping(false);
-    setIsLoading(false);
+  const checkInventory = async () => {
+    try {
+      setIsLoading(true)
+      // Show typing indicator
+      setIsTyping(true)
+
+      // Add user message
+      const userMessage = {
+        id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: MESSAGE_TYPES.TEXT,
+        text: "Check inventory",
+        sender: "user",
+        timestamp: new Date(),
+      }
+      setMessages((prevMessages) => [...prevMessages, userMessage])
+
+      // Fetch data from API
+      const items = await fetchLowStockItems()
+      setLowStockItems(items)
+
+      // Add mascot response
+      addMascotMessage("I checked your inventory and found these low stock items:", MESSAGE_TYPES.TEXT)
+
+      // Add inventory alert message
+      const inventoryMessage = {
+        id: `mascot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: MESSAGE_TYPES.INVENTORY_ALERT2,
+        sender: "mascot",
+        timestamp: new Date(),
+        items: items, // Pass the items to the message
+      }
+      setMessages((prevMessages) => [...prevMessages, inventoryMessage])
+    } catch (error) {
+      addMascotMessage("Sorry, I couldn't fetch your inventory data. Please try again later.", MESSAGE_TYPES.TEXT)
+    } finally {
+      setIsTyping(false)
+      setIsLoading(false)
+    }
   }
-};
+
   const [message, setMessage] = useState("")
   const [messages, setMessages] = useState([
     {
@@ -124,7 +126,7 @@ const checkInventory = async () => {
     ]).start()
   }
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (message.trim() === "") return
 
     // Add user message
@@ -137,16 +139,35 @@ const checkInventory = async () => {
     }
 
     setMessages((prevMessages) => [...prevMessages, userMessage])
+    const userQuery = message
     setMessage("")
 
     // Show typing indicator
     setIsTyping(true)
+    setIsAILoading(true)
 
-    // Process the message and generate a response
-    setTimeout(() => {
-      processUserMessage(message)
+    try {
+      // Call the AI API
+      const aiResponse = await askAI(userQuery)
+
+      // Animate mascot when responding
+      animateMascot()
+
+      // Add the AI response
+      addMascotMessage(aiResponse, MESSAGE_TYPES.TEXT)
+
+      // Process the message to add relevant UI components
+      processUserMessage(userQuery)
+    } catch (error) {
+      console.error("Error getting AI response:", error)
+      addMascotMessage(
+        "I'm having trouble connecting to my brain right now. Please try again later.",
+        MESSAGE_TYPES.TEXT,
+      )
+    } finally {
       setIsTyping(false)
-    }, 1000)
+      setIsAILoading(false)
+    }
   }
 
   const processUserMessage = (userMessage) => {
@@ -163,8 +184,9 @@ const checkInventory = async () => {
       lowerCaseMessage.includes("income")
     ) {
       // Sales related query
-      addMascotMessage("Here's a summary of your recent sales performance:", MESSAGE_TYPES.TEXT)
-      addMascotMessage(null, MESSAGE_TYPES.SALES_SUMMARY)
+      setTimeout(() => {
+        addMascotMessage(null, MESSAGE_TYPES.SALES_SUMMARY)
+      }, 500)
     } else if (
       lowerCaseMessage.includes("inventory") ||
       lowerCaseMessage.includes("stock") ||
@@ -172,16 +194,17 @@ const checkInventory = async () => {
       lowerCaseMessage.includes("product")
     ) {
       // Inventory related query
-      addMascotMessage("I noticed some items in your inventory are running low:", MESSAGE_TYPES.TEXT)
-      addMascotMessage(null, MESSAGE_TYPES.INVENTORY_ALERT)
-
-      // Add option to go to inventory screen
       setTimeout(() => {
-        addMascotMessage("Would you like to see your full inventory?", MESSAGE_TYPES.TEXT)
-        addQuickReplies([
-          { text: "View Inventory", action: "inventory" },
-          { text: "Not now", action: "dismiss" },
-        ])
+        addMascotMessage(null, MESSAGE_TYPES.INVENTORY_ALERT)
+
+        // Add option to go to inventory screen
+        setTimeout(() => {
+          addMascotMessage("Would you like to see your full inventory?", MESSAGE_TYPES.TEXT)
+          addQuickReplies([
+            { text: "View Inventory", action: "inventory" },
+            { text: "Not now", action: "dismiss" },
+          ])
+        }, 500)
       }, 500)
     } else if (
       lowerCaseMessage.includes("insight") ||
@@ -191,16 +214,17 @@ const checkInventory = async () => {
       lowerCaseMessage.includes("performance")
     ) {
       // Insights related query
-      addMascotMessage("Here's your latest business performance data:", MESSAGE_TYPES.TEXT)
-      addMascotMessage(null, MESSAGE_TYPES.INSIGHT_CHART)
-
-      // Add option to go to insights screen
       setTimeout(() => {
-        addMascotMessage("Would you like to see more detailed insights?", MESSAGE_TYPES.TEXT)
-        addQuickReplies([
-          { text: "View Insights", action: "insight" },
-          { text: "Not now", action: "dismiss" },
-        ])
+        addMascotMessage(null, MESSAGE_TYPES.INSIGHT_CHART)
+
+        // Add option to go to insights screen
+        setTimeout(() => {
+          addMascotMessage("Would you like to see more detailed insights?", MESSAGE_TYPES.TEXT)
+          addQuickReplies([
+            { text: "View Insights", action: "insight" },
+            { text: "Not now", action: "dismiss" },
+          ])
+        }, 500)
       }, 500)
     } else if (
       lowerCaseMessage.includes("profile") ||
@@ -209,8 +233,9 @@ const checkInventory = async () => {
       lowerCaseMessage.includes("my info")
     ) {
       // Profile related query
-      addMascotMessage("Here's your profile information:", MESSAGE_TYPES.TEXT)
-      addMascotMessage(null, MESSAGE_TYPES.PROFILE_CARD)
+      setTimeout(() => {
+        addMascotMessage(null, MESSAGE_TYPES.PROFILE_CARD)
+      }, 500)
     } else if (
       lowerCaseMessage.includes("help") ||
       lowerCaseMessage.includes("what can you do") ||
@@ -218,23 +243,23 @@ const checkInventory = async () => {
       lowerCaseMessage.includes("function")
     ) {
       // Help query
-      addMascotMessage("I can help you with many things! Here are some options:", MESSAGE_TYPES.TEXT)
-      addMascotMessage(null, MESSAGE_TYPES.QUICK_ACTIONS)
-    } else {
-      // General response
-      const generalResponses = [
-        "I can help you manage your business. Try asking about your sales, inventory, or insights!",
-        "Would you like to see your business performance or check your inventory?",
-        "I'm here to boost your business! Ask me about sales trends, inventory status, or business advice.",
-        "How can I assist you with your business today? I can show sales data, inventory status, or provide recommendations.",
-      ]
-
-      const randomResponse = generalResponses[Math.floor(Math.random() * generalResponses.length)]
-      addMascotMessage(randomResponse, MESSAGE_TYPES.TEXT)
-
-      // After a short delay, show quick actions
       setTimeout(() => {
         addMascotMessage(null, MESSAGE_TYPES.QUICK_ACTIONS)
+      }, 500)
+    } else if (
+      lowerCaseMessage.includes("leaderboard") ||
+      lowerCaseMessage.includes("ranking") ||
+      lowerCaseMessage.includes("compare") ||
+      lowerCaseMessage.includes("competitor") ||
+      lowerCaseMessage.includes("competition")
+    ) {
+      // Leaderboard related query
+      setTimeout(() => {
+        addMascotMessage("Would you like to see how you compare with other merchants?", MESSAGE_TYPES.TEXT)
+        addQuickReplies([
+          { text: "View Leaderboard", action: "leaderboard" },
+          { text: "Not now", action: "dismiss" },
+        ])
       }, 500)
     }
   }
@@ -328,6 +353,9 @@ const checkInventory = async () => {
         case "dismiss":
           addMascotMessage("No problem! Let me know if you need anything else.", MESSAGE_TYPES.TEXT)
           break
+        case "leaderboard":
+          navigation.navigate("Leaderboard")
+          break
         default:
           addMascotMessage(
             "I'm not sure how to help with that yet. Is there something else you'd like to know?",
@@ -380,6 +408,12 @@ const checkInventory = async () => {
             ])
           }, 500)
           break
+        case "view leaderboard":
+          addMascotMessage("Here's how you compare with other merchants:", MESSAGE_TYPES.TEXT)
+          setTimeout(() => {
+            navigation.navigate("Leaderboard")
+          }, 500)
+          break
         default:
           addMascotMessage(
             "I'm not sure how to help with that yet. Is there something else you'd like to know?",
@@ -390,6 +424,11 @@ const checkInventory = async () => {
           }, 500)
       }
     }
+  }
+
+  const handleQuickReply = (reply) => {
+    setMessage(reply)
+    handleSend()
   }
 
   const renderMessage = ({ item }) => {
@@ -486,45 +525,42 @@ const checkInventory = async () => {
           </View>
         )
 
-        case MESSAGE_TYPES.INVENTORY_ALERT2:
-          // Use the items from the message or fall back to the state
-          const itemsToDisplay = item.items || lowStockItems;
-          
-          return (
-            <View style={styles.messageBubble}>
-              <View style={styles.mascotAvatarContainer}>
-                <Image source={require("../assets/mascot-avatar.png")} style={styles.mascotAvatar} />
-              </View>
-              <View style={[styles.messageContent, styles.cardContent]}>
-                <View style={styles.inventoryCard}>
-                  <Text style={styles.cardTitle}>Low Stock Alert</Text>
-                  <View style={styles.inventoryList}>
-                    {itemsToDisplay.length > 0 ? (
-                      itemsToDisplay.map((stockItem) => (
-                        <View key={stockItem.id} style={styles.inventoryItem}>
-                          <View style={[styles.inventoryStatus, { backgroundColor: "#ffebee" }]} />
-                          <Text style={styles.inventoryName}>{stockItem.name}</Text>
-                          <Text style={styles.inventoryCount}>{stockItem.current} left</Text>
-                        </View>
-                      ))
-                    ) : (
-                      <Text style={styles.emptyText}>No low stock items found</Text>
-                    )}
-                  </View>
-                  <TouchableOpacity 
-                    style={styles.cardButton}
-                    onPress={() => navigation.navigate("Inventory")}
-                  >
-                    <Text style={styles.cardButtonText}>Manage Inventory</Text>
-                    <Ionicons name="arrow-forward" size={16} color="#2FAE60" />
-                  </TouchableOpacity>
-                </View>
-                <Text style={styles.mascotTimestamp}>
-                  {item.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </Text>
-              </View>
+      case MESSAGE_TYPES.INVENTORY_ALERT2:
+        // Use the items from the message or fall back to the state
+        const itemsToDisplay = item.items || lowStockItems
+
+        return (
+          <View style={styles.messageBubble}>
+            <View style={styles.mascotAvatarContainer}>
+              <Image source={require("../assets/mascot-avatar.png")} style={styles.mascotAvatar} />
             </View>
-          );
+            <View style={[styles.messageContent, styles.cardContent]}>
+              <View style={styles.inventoryCard}>
+                <Text style={styles.cardTitle}>Low Stock Alert</Text>
+                <View style={styles.inventoryList}>
+                  {itemsToDisplay.length > 0 ? (
+                    itemsToDisplay.map((stockItem) => (
+                      <View key={stockItem.id} style={styles.inventoryItem}>
+                        <View style={[styles.inventoryStatus, { backgroundColor: "#ffebee" }]} />
+                        <Text style={styles.inventoryName}>{stockItem.name}</Text>
+                        <Text style={styles.inventoryCount}>{stockItem.current} left</Text>
+                      </View>
+                    ))
+                  ) : (
+                    <Text style={styles.emptyText}>No low stock items found</Text>
+                  )}
+                </View>
+                <TouchableOpacity style={styles.cardButton} onPress={() => navigation.navigate("Inventory")}>
+                  <Text style={styles.cardButtonText}>Manage Inventory</Text>
+                  <Ionicons name="arrow-forward" size={16} color="#2FAE60" />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.mascotTimestamp}>
+                {item.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </Text>
+            </View>
+          </View>
+        )
 
       case MESSAGE_TYPES.INSIGHT_CHART:
         return (
@@ -584,13 +620,18 @@ const checkInventory = async () => {
                 <Text style={styles.quickActionText}>Get Advice</Text>
               </TouchableOpacity>
 
+              <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("View Leaderboard")}>
+                <View style={[styles.quickActionIcon, { backgroundColor: "#FFF0F5" }]}>
+                  <Ionicons name="trophy-outline" size={20} color="#E91E63" />
+                </View>
+                <Text style={styles.quickActionText}>View Leaderboard</Text>
+              </TouchableOpacity>
+
               <TouchableOpacity style={styles.quickActionButton} onPress={checkInventory} disabled={isLoading}>
                 <View style={[styles.quickActionIcon, { backgroundColor: "#F3F0FF" }]}>
                   <Ionicons name="cube-outline" size={20} color="#9B51E0" />
                 </View>
-                <Text style={styles.quickActionText}>
-                  {isLoading ? "Loading..." : "Check Inventory"}
-                </Text>
+                <Text style={styles.quickActionText}>{isLoading ? "Loading..." : "Check API"}</Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -652,7 +693,7 @@ const checkInventory = async () => {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} >
+    <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <Animated.View
@@ -701,7 +742,7 @@ const checkInventory = async () => {
           </View>
         </View>
       )}
-      
+
       <View style={styles.quickQuestionContainer}>
         <FlatList
           data={quickReplies}
@@ -732,11 +773,19 @@ const checkInventory = async () => {
         />
 
         <TouchableOpacity
-          style={[styles.sendButton, message.trim() === "" ? styles.sendButtonDisabled : null]}
+          style={[
+            styles.sendButton,
+            message.trim() === "" ? styles.sendButtonDisabled : null,
+            isAILoading ? styles.sendButtonLoading : null,
+          ]}
           onPress={handleSend}
-          disabled={message.trim() === ""}
+          disabled={message.trim() === "" || isAILoading}
         >
-          <Ionicons name="send" size={20} color={message.trim() === "" ? "#ccc" : "white"} />
+          {isAILoading ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Ionicons name="send" size={20} color={message.trim() === "" ? "#ccc" : "white"} />
+          )}
         </TouchableOpacity>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -1138,11 +1187,21 @@ const styles = StyleSheet.create({
   sendButtonDisabled: {
     backgroundColor: "#e0e0e0",
   },
+  sendButtonLoading: {
+    backgroundColor: "#1D8348", // Darker green when loading
+  },
   quickQuestionContainer: {
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderTopWidth: 1,
     borderTopColor: "#eee",
     backgroundColor: "white",
+  },
+  emptyText: {
+    fontSize: 14,
+    color: "#666",
+    fontStyle: "italic",
+    textAlign: "center",
+    padding: 10,
   },
 })

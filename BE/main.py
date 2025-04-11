@@ -28,9 +28,12 @@ async def ask_advice(request: ChatRequest):
 
     # Step 2: Build prompt
     prompt = f"""
-You are a helpful assistant for Southeast Asian food merchants.
 
-Based on the business data below, give 2–3 personalized suggestions to help the merchant grow their business.
+    Answer the question based on the question language.
+
+    You are a helpful assistant for Southeast Asian food merchants.
+
+    Based on the business data below, answer the question. 
 
 Be friendly, practical, and concise.
 
