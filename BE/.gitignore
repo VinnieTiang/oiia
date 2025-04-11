@@ -1,3 +1,46 @@
-.venv
+# Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv
 *.pyc
+
+# Virtual environment
+venv/
+
+# Environment variables
+.env
+
+# Jupyter Notebook checkpoints (if any)
+.ipynb_checkpoints/
+
+# macOS specific
+.DS_Store
+
+# VSCode or IDE settings (optional)
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Cache
+*.sqlite3
+*.db
+*.bak
+
+# Compiled C extensions
+*.so
+
+# Pytest cache
+.pytest_cache/
+
+# Python egg info
+*.egg-info/
+dist/
+build/
+
+# CSV files
+*.csv
+
