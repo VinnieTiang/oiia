@@ -44,14 +44,14 @@ const grabMartVendors = [
     name: "SuperValue Store",
     rating: 4.6,
     deliveryTime: "20-30 min",
-    image: require("../assets/mascot-avatar.png"),
+    image: require("../assets/mascot-avatar2.png"),
   },
   {
     id: 3,
     name: "QuickShop Express",
     rating: 4.7,
     deliveryTime: "10-15 min",
-    image: require("../assets/mascot-avatar.png"),
+    image: require("../assets/mascot-avatar3.png"),
   },
   {
     id: 4,
@@ -65,7 +65,7 @@ const grabMartVendors = [
     name: "Metro Minimart",
     rating: 4.5,
     deliveryTime: "15-25 min",
-    image: require("../assets/mascot-avatar.png"),
+    image: require("../assets/mascot-avatar2.png"),
   },
 ]
 
@@ -91,6 +91,9 @@ export default function InventoryScreen() {
   const [restockQuantity, setRestockQuantity] = useState("")
   const [currentlyRestockingItem, setCurrentlyRestockingItem] = useState(null)
   const [selectedVendor, setSelectedVendor] = useState(null)
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false)
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("grabpay")
+  const [orderDetails, setOrderDetails] = useState(null)
 
   const onChangeSearch = (query) => setSearchQuery(query)
 
@@ -127,7 +130,6 @@ export default function InventoryScreen() {
     }
 
     requestNotificationPermission()
-    checkLowStockAndNotify()
   }, [])
 
   const checkLowStockAndNotify = async () => {
@@ -138,9 +140,10 @@ export default function InventoryScreen() {
     }
   }
 
+  // Check for low stock whenever inventory changes
   useEffect(() => {
     checkLowStockAndNotify()
-  }, [])
+  }, [inventory])
 
   const onRefresh = () => {
     setRefreshing(true)
@@ -177,10 +180,35 @@ export default function InventoryScreen() {
       return
     }
 
+    // Calculate order details
+    const basePrice = 10 * quantity // Example: $10 per unit
+    const deliveryFee = 5
+    const processingFee = Math.round(basePrice * 0.05 * 100) / 100 // 5% processing fee
+    const totalAmount = basePrice + deliveryFee + processingFee
+
+    // Set order details for payment modal
+    setOrderDetails({
+      item: currentlyRestockingItem,
+      quantity: quantity,
+      vendor: selectedVendor,
+      basePrice: basePrice,
+      deliveryFee: deliveryFee,
+      processingFee: processingFee,
+      totalAmount: totalAmount,
+    })
+
+    // Close restock modal and open payment modal
+    setRestockModalVisible(false)
+    setPaymentModalVisible(true)
+  }
+
+  const confirmPayment = () => {
+    if (!orderDetails) return
+
     // Update the inventory
     const updatedInventory = inventory.map((item) => {
-      if (item.id === currentlyRestockingItem.id) {
-        const newQuantity = item.current + quantity
+      if (item.id === orderDetails.item.id) {
+        const newQuantity = item.current + orderDetails.quantity
         let newStatus = item.status
 
         // Determine new status based on restocked quantity
@@ -203,8 +231,11 @@ export default function InventoryScreen() {
     })
 
     setInventory(updatedInventory)
-    showSnackbar(`Successfully ordered ${quantity} ${currentlyRestockingItem.name} from ${selectedVendor.name}`)
-    setRestockModalVisible(false)
+    showSnackbar(
+      `Payment successful! ${orderDetails.quantity} ${orderDetails.item.name} will be delivered by ${orderDetails.vendor.name}`,
+    )
+    setPaymentModalVisible(false)
+    setOrderDetails(null)
   }
 
   const getStatusColor = (status) => {
@@ -269,6 +300,12 @@ export default function InventoryScreen() {
     },
     { low: 0, medium: 0, good: 0 },
   )
+
+  const paymentMethods = [
+    { id: "grabpay", name: "GrabPay", icon: "wallet-outline" },
+    { id: "card", name: "Credit/Debit Card", icon: "card-outline" },
+    { id: "cod", name: "Cash on Delivery", icon: "cash-outline" },
+  ]
 
   return (
     <ScrollView
@@ -554,6 +591,94 @@ export default function InventoryScreen() {
             <Button onPress={() => setRestockModalVisible(false)}>Cancel</Button>
             <Button mode="contained" onPress={confirmRestock} style={styles.confirmRestockButton}>
               Confirm Restock
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      <Portal>
+        <Dialog
+          visible={paymentModalVisible}
+          onDismiss={() => setPaymentModalVisible(false)}
+          style={styles.paymentDialog}
+        >
+          <Dialog.Title>Payment Details</Dialog.Title>
+          <Dialog.Content>
+            {orderDetails && (
+              <>
+                <View style={styles.orderSummary}>
+                  <Text style={styles.orderSummaryTitle}>Order Summary</Text>
+                  <View style={styles.orderItem}>
+                    <Text style={styles.orderItemName}>{orderDetails.item.name}</Text>
+                    <Text style={styles.orderItemQuantity}>x{orderDetails.quantity}</Text>
+                    <Text style={styles.orderItemPrice}>RM{orderDetails.basePrice.toFixed(2)}</Text>
+                  </View>
+
+                  <View style={styles.vendorInfo}>
+                    <Image source={orderDetails.vendor.image} style={styles.vendorInfoImage} />
+                    <View style={styles.vendorInfoDetails}>
+                      <Text style={styles.vendorInfoName}>{orderDetails.vendor.name}</Text>
+                      <Text style={styles.vendorInfoDelivery}>Est. delivery: {orderDetails.vendor.deliveryTime}</Text>
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.feesContainer}>
+                  <View style={styles.feeRow}>
+                    <Text style={styles.feeLabel}>Subtotal</Text>
+                    <Text style={styles.feeValue}>RM{orderDetails.basePrice.toFixed(2)}</Text>
+                  </View>
+                  <View style={styles.feeRow}>
+                    <Text style={styles.feeLabel}>Delivery Fee</Text>
+                    <Text style={styles.feeValue}>RM{orderDetails.deliveryFee.toFixed(2)}</Text>
+                  </View>
+                  <View style={styles.feeRow}>
+                    <Text style={styles.feeLabel}>Processing Fee (5%)</Text>
+                    <Text style={styles.feeValue}>RM{orderDetails.processingFee.toFixed(2)}</Text>
+                  </View>
+                  <View style={[styles.feeRow, styles.totalRow]}>
+                    <Text style={styles.totalLabel}>Total</Text>
+                    <Text style={styles.totalValue}>RM{orderDetails.totalAmount.toFixed(2)}</Text>
+                  </View>
+                </View>
+
+                <Text style={styles.paymentMethodTitle}>Select Payment Method</Text>
+                <View style={styles.paymentMethodsContainer}>
+                  {paymentMethods.map((method) => (
+                    <TouchableOpacity
+                      key={method.id}
+                      style={[
+                        styles.paymentMethodCard,
+                        selectedPaymentMethod === method.id && styles.selectedPaymentMethod,
+                      ]}
+                      onPress={() => setSelectedPaymentMethod(method.id)}
+                    >
+                      <Ionicons
+                        name={method.icon}
+                        size={24}
+                        color={selectedPaymentMethod === method.id ? "#10B981" : "#666"}
+                      />
+                      <Text
+                        style={[
+                          styles.paymentMethodName,
+                          selectedPaymentMethod === method.id && styles.selectedPaymentMethodText,
+                        ]}
+                      >
+                        {method.name}
+                      </Text>
+                      {selectedPaymentMethod === method.id && (
+                        <Ionicons name="checkmark-circle" size={18} color="#10B981" style={styles.paymentMethodCheck} />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </>
+            )}
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setPaymentModalVisible(false)}>Cancel</Button>
+            <Button mode="contained" onPress={confirmPayment} style={styles.confirmPaymentButton}>
+              Pay Now
             </Button>
           </Dialog.Actions>
         </Dialog>
@@ -959,5 +1084,138 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 12,
     elevation: 2,
+  },
+  paymentDialog: {
+    maxWidth: 400,
+    width: "90%",
+    alignSelf: "center",
+  },
+  orderSummary: {
+    backgroundColor: "#f9f9f9",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  orderSummaryTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 12,
+    color: "#333",
+  },
+  orderItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    marginBottom: 12,
+  },
+  orderItemName: {
+    flex: 2,
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  orderItemQuantity: {
+    flex: 1,
+    fontSize: 14,
+    textAlign: "center",
+    color: "#666",
+  },
+  orderItemPrice: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "500",
+    textAlign: "right",
+  },
+  vendorInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  vendorInfoImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+  },
+  vendorInfoDetails: {
+    flex: 1,
+  },
+  vendorInfoName: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  vendorInfoDelivery: {
+    fontSize: 12,
+    color: "#666",
+  },
+  feesContainer: {
+    marginBottom: 20,
+  },
+  feeRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 8,
+  },
+  feeLabel: {
+    fontSize: 14,
+    color: "#666",
+  },
+  feeValue: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  totalRow: {
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    paddingTop: 12,
+    marginTop: 4,
+  },
+  totalLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  totalValue: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#10B981",
+  },
+  paymentMethodTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 12,
+    color: "#333",
+  },
+  paymentMethodsContainer: {
+    marginBottom: 16,
+  },
+  paymentMethodCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    borderRadius: 8,
+    marginBottom: 8,
+    backgroundColor: "#fff",
+  },
+  selectedPaymentMethod: {
+    borderColor: "#10B981",
+    backgroundColor: "#f0fdf4",
+  },
+  paymentMethodName: {
+    fontSize: 14,
+    marginLeft: 12,
+    flex: 1,
+  },
+  selectedPaymentMethodText: {
+    fontWeight: "500",
+    color: "#10B981",
+  },
+  paymentMethodCheck: {
+    marginLeft: 8,
+  },
+  confirmPaymentButton: {
+    backgroundColor: "#10B981",
   },
 })
