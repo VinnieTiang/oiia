@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import os
 from rag import get_merchant_summary
+from datetime import datetime
 from openai import OpenAI
 
 # Load API key from .env
@@ -23,18 +24,20 @@ class ChatRequest(BaseModel):
 # POST endpoint
 @app.post("/ask")
 async def ask_advice(request: ChatRequest):
+    
     # Step 1: Get summary for merchant
     summary = get_merchant_summary(request.merchant_id)
+    print("Summary:", summary)
 
     # Step 2: Build prompt
     prompt = f"""
 You are a helpful assistant for Southeast Asian food merchants.
 
-Based on the business data below, give 2–3 personalized suggestions to help the merchant grow their business.
+Based on the business data below, answer my question
 
 Be friendly, practical, and concise.
 
-{summary}
+{summary} 
 
 Question: {request.question}
 
