@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native"
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import { useState, useEffect } from "react"
@@ -113,48 +113,53 @@ export default function AdviceScreen() {
   const learningResources = [
     {
         id: "1",
-        title: "Spicy Food Trends in Southeast Asia",
+        title: "Spicy Food Trends in Malaysia",
         type: "Report",
-        duration: "8 min read",
+        duration: "10 mins read",
         icon: "document-text",
         color: "#E74C3C",
         category: "sales",
+        url: "https://www.myloveearth.com/blog/why-malaysians-love-their-chillies?srsltid=AfmBOorIdMrv0tdRXrmEh7NZTsEDdvt5Pxd7Fj1npLlHp5YXja6JKyte",
     },
     {
       id: "2",
       title: "Managing Peak Hours in Restaurants",
       type: "Video",
-      duration: "12 min",
+      duration: "1 min",
       icon: "videocam",
       color: "#F2994A",
       category: "sales",
+      url: "https://youtu.be/uhJ_VOLySPk?si=dI8R1cKNmGURuddr"
     },
     {
       id: "3",
       title: "Reducing Food Waste in Asian Cuisine",
       type: "Guide",
-      duration: "5 min read",
+      duration: "1 hour read",
       icon: "document-text",
       color: "#2D9CDB",
       category: "inventory",
+      url: "https://www.switch-asia.eu/site/assets/files/3901/food_waste_reduction_practical_guide.pdf"
     },
     {
       id: "4",
       title: "Customer Service Excellence",
       type: "Course",
-      duration: "1 hour",
+      duration: "5 days",
       icon: "school",
       color: "#9B51E0",
       category: "customers",
+      url: "https://www.lpcentre.com/kualaLumpur/customer-service/customer-service-excellence"
     },
     {
       id: "5",
       title: "Financial Planning for Food Businesses",
-      type: "Webinar",
-      duration: "45 min",
+      type: "Guide",
+      duration: "30 mins read",
       icon: "cash",
       color: "#2FAE60",
       category: "finance",
+      url: "https://www.incentivio.com/blog-news-restaurant-industry/financial-planning-and-budgeting-for-restaurants-long-term-success",
     },
   ]
 
@@ -320,7 +325,7 @@ export default function AdviceScreen() {
                   )}
                 </TouchableOpacity>
               ))}
-              
+
               {/* Show "See more" / "See less" button only if there are more than 3 items */}
               {filteredAdvice.length > 3 && (
                 <TouchableOpacity 
@@ -340,14 +345,17 @@ export default function AdviceScreen() {
             </>
           )}
         </View>
-        
+
         {/* Learning Resources */}
         {filteredResources.length > 0 && (
           <View style={styles.resourcesContainer}>
             <Text style={styles.sectionTitle}>Learning Resources</Text>
-            
+
             {filteredResources.map((resource) => (
-              <TouchableOpacity key={resource.id} style={styles.resourceCard}>
+              <TouchableOpacity
+                  key={resource.id}
+                  style={styles.resourceCard}
+                  onPress={() => Linking.openURL(resource.url)}>
                 <View style={[styles.resourceIconContainer, { backgroundColor: `${resource.color}15` }]}>
                   <Ionicons name={resource.icon} size={20} color={resource.color} />
                 </View>
@@ -362,7 +370,7 @@ export default function AdviceScreen() {
                 <Ionicons name="chevron-forward" size={16} color="#999" />
               </TouchableOpacity>
             ))}
-            
+
             {allCategoryResources.length > 2 && (
               <TouchableOpacity onPress={toggleShowAllResources} style={styles.seeMoreButton}>
                 <Text style={styles.seeMoreText}>
