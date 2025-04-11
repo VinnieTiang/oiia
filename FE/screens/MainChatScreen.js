@@ -1,23 +1,13 @@
 "use client"
 import { fetchLowStockItems, askAI } from "../api"
 import { useState, useRef, useEffect } from "react"
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  Image,
-  Animated,
-  Dimensions,
-  ScrollView,
-  ActivityIndicator,
-} from "react-native"
+import {View,Text,StyleSheet,TextInput,TouchableOpacity,FlatList,KeyboardAvoidingView,Platform,Image,Animated,Dimensions,ScrollView,ActivityIndicator} from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { Ionicons } from "@expo/vector-icons"
+import { Ionicons, Feather } from "@expo/vector-icons"
+import * as FileSystem from "expo-file-system";
+import { Audio } from "expo-av";
+import { OPENAI_API_KEY, ELEVENLABS_API_KEY } from "@env";
+
 
 // Get screen dimensions
 const { width: screenWidth } = Dimensions.get("window")
@@ -34,17 +24,17 @@ const MESSAGE_TYPES = {
 }
 
 export default function MainChatScreen({ navigation }) {
-  // Inside your MainChatScreen component
-  const [lowStockItems, setLowStockItems] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [isAILoading, setIsAILoading] = useState(false)
+  
+  ///////////// For testing backend API fetching /////////////
+  const [lowStockItems, setLowStockItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAILoading, setIsAILoading] = useState(false);
 
   const checkInventory = async () => {
     try {
-      setIsLoading(true)
-      // Show typing indicator
-      setIsTyping(true)
-
+      setIsLoading(true);
+      setIsTyping(true);
+      
       // Add user message
       const userMessage = {
         id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -52,33 +42,33 @@ export default function MainChatScreen({ navigation }) {
         text: "Check inventory",
         sender: "user",
         timestamp: new Date(),
-      }
-      setMessages((prevMessages) => [...prevMessages, userMessage])
-
+      };
+      setMessages((prevMessages) => [...prevMessages, userMessage]);
+      
       // Fetch data from API
-      const items = await fetchLowStockItems()
-      setLowStockItems(items)
-
-      // Add mascot response
-      addMascotMessage("I checked your inventory and found these low stock items:", MESSAGE_TYPES.TEXT)
-
+      const items = await fetchLowStockItems();
+      setLowStockItems(items);
+      addMascotMessage("I checked your inventory and found these low stock items:", MESSAGE_TYPES.TEXT);
+      
       // Add inventory alert message
       const inventoryMessage = {
         id: `mascot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         type: MESSAGE_TYPES.INVENTORY_ALERT2,
         sender: "mascot",
         timestamp: new Date(),
-        items: items, // Pass the items to the message
-      }
-      setMessages((prevMessages) => [...prevMessages, inventoryMessage])
+        items: items,
+      };
+      setMessages((prevMessages) => [...prevMessages, inventoryMessage]);
+      
     } catch (error) {
-      addMascotMessage("Sorry, I couldn't fetch your inventory data. Please try again later.", MESSAGE_TYPES.TEXT)
+      addMascotMessage("Sorry, I couldn't fetch your inventory data. Please try again later.", MESSAGE_TYPES.TEXT);
     } finally {
-      setIsTyping(false)
-      setIsLoading(false)
+      setIsTyping(false);
+      setIsLoading(false);
     }
-  }
+  };
 
+  ///////////// Welcome Message /////////////
   const [message, setMessage] = useState("")
   const [messages, setMessages] = useState([
     {
@@ -95,17 +85,25 @@ export default function MainChatScreen({ navigation }) {
       timestamp: new Date(),
     },
   ])
+
   const [isTyping, setIsTyping] = useState(false)
   const [mascotAnimation] = useState(new Animated.Value(0))
 
   const flatListRef = useRef(null)
+  const animationRefs = useRef({})
   const inputRef = useRef(null)
 
-  // Animate mascot on load
-  useEffect(() => {
-    animateMascot()
-  }, [])
+  //////// MICCCCC /////////
+  const [isListening, setIsListening] = useState(false);
+  const [speechError, setSpeechError] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+  const [recording, setRecording] = useState(null);
+  const [isLoadingTranscription, setIsLoadingTranscription] = useState(false);
+  const [currentlyPlayingId, setCurrentlyPlayingId] = useState(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [soundObject, setSoundObject] = useState(null);
 
+  ///////////// Animate mascot on load (show "...") & MIC /////////////
   const animateMascot = () => {
     Animated.sequence([
       Animated.timing(mascotAnimation, {
@@ -126,6 +124,344 @@ export default function MainChatScreen({ navigation }) {
     ]).start()
   }
 
+  useEffect(() => {
+    //Animate "..."
+    animateMascot();
+
+    const setupAudio = async () => {
+      try {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+        console.log("Audio mode set up for playback");
+      } catch (error) {
+        console.error("Failed to set audio mode:", error);
+      }
+    };
+  
+    setupAudio();
+  
+    return () => {
+      if (soundObject) {
+        soundObject.unloadAsync();
+      }
+    };
+  
+  }, [])
+
+  const requestAudioPermission = async () => {
+    const { status } = await Audio.requestPermissionsAsync()
+    if (status !== "granted") {
+      alert("Microphone permission is required!")
+      return false
+    }
+    return true
+  }
+
+  const startRecording = async () => {
+    const permission = await requestAudioPermission()
+    if (!permission) return
+
+    try {
+      // Set audio mode for recording
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      })
+
+      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY)
+      setRecording(recording)
+      setIsRecording(true)
+    } catch (err) {
+      console.error("Failed to start recording", err)
+    }
+  }
+
+  const stopRecording = async () => {
+    try {
+      if (!recording) return
+      await recording.stopAndUnloadAsync()
+      setIsRecording(false)
+
+      const uri = recording.getURI()
+      console.log("Recording URI:", uri)
+      setRecording(null)
+      if (uri) {
+        await transcribeWithWhisper(uri)
+      }
+    } catch (err) {
+      console.error("Failed to stop recording", err)
+    }
+  }
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      stopRecording()
+    } else {
+      startRecording()
+    }
+  }
+
+  const transcribeWithWhisper = async (uri) => {
+    setIsLoadingTranscription(true)
+
+    console.log("Sending file to Whisper:", uri)
+
+    const formData = new FormData()
+    const fileExtension = Platform.OS === "ios" ? "m4a" : "wav"
+    const mimeType = Platform.OS === "ios" ? "audio/m4a" : "audio/wav"
+
+    formData.append("file", {
+      uri,
+      name: `audio.${fileExtension}`,
+      type: mimeType,
+    })
+    formData.append("model", "whisper-1")
+
+    try {
+      const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "multipart/form-data",
+        },
+        body: formData,
+      })
+
+      const data = await response.json()
+      console.log("Whisper response:", data)
+
+      if (data.text) {
+        setMessage(data.text)
+      } else if (data.error) {
+        alert("Transcription error: " + data.error.message)
+      }
+    } catch (err) {
+      console.error("Whisper API error:", err)
+      alert("Something went wrong with the transcription.")
+    } finally {
+      setIsLoadingTranscription(false)
+    }
+  }
+
+
+
+
+
+  //////////// Convert text to speech using OpenAI TTS API /////////////
+  const textToSpeech = async (text, messageId) => {
+    // Stop any currently playing audio
+    if (soundObject) {
+      console.log("Unloading previous audio")
+      await soundObject.unloadAsync()
+    }
+  
+    setCurrentlyPlayingId(messageId)
+    setIsSpeaking(true)
+  
+    try {
+      console.log("Starting TTS process for text:", text.substring(0, 30) + "...")
+  
+      // Detect language to choose voice and API
+      const isMalay = /(terima kasih|apa khabar|bagus|tolong|saya|ini|anda|tinggi|jualan)/i.test(text)
+      const isChinese = /(谢谢|你好|帮助|销售|问题|我|客户|收入|商品)/i.test(text)
+  
+      // Set audio mode for playback
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: false,
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: true,
+        shouldDuckAndroid: true,
+        playThroughEarpieceAndroid: false,
+      })
+  
+      let audioBlob;
+      
+      // Use ElevenLabs for Malay
+      if (isMalay) {
+        console.log("Using ElevenLabs API for Malay text")
+        
+        // Replace with your preferred voice ID from ElevenLabs
+        const voiceId = "Xb7hH8MSUJpSbSDYk0k2"; 
+        
+        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "xi-api-key": ELEVENLABS_API_KEY,
+          },
+          body: JSON.stringify({
+            text: text,
+            model_id: "eleven_multilingual_v2",
+            voice_settings: {
+              stability: 0.5,
+              similarity_boost: 0.1,
+              style: 0.3
+            }
+          }),
+        });
+        
+        console.log("ElevenLabs API response status:", response.status)
+        
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.error("ElevenLabs API error:", errorData)
+          throw new Error(errorData.detail?.message || "ElevenLabs API request failed")
+        }
+        
+        audioBlob = await response.blob()
+        
+      } else {
+        // Use original OpenAI TTS for non-Malay languages
+        // Select voice based on detected language
+        let voice = "nova" // Default English voice
+        
+        if (isChinese) {
+          voice = "alloy" // Use a different voice for Chinese
+        }
+        
+        console.log("Using OpenAI voice:", voice)
+        
+        const response = await fetch("https://api.openai.com/v1/audio/speech", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "tts-1",
+            input: text,
+            voice: voice,
+          }),
+        })
+        
+        console.log("TTS API response status:", response.status)
+        
+        if (!response.ok) {
+          const errorData = await response.json()
+          console.error("TTS API error:", errorData)
+          throw new Error(errorData.error?.message || "TTS API request failed")
+        }
+        
+        audioBlob = await response.blob()
+      }
+      
+      console.log("Received audio blob, size:", audioBlob.size)
+  
+      // Process the audio blob (same for both APIs)
+      const reader = new FileReader()
+      reader.readAsDataURL(audioBlob)
+  
+      reader.onloadend = async () => {
+        const base64data = reader.result
+        console.log("Converted blob to base64, length:", base64data.length)
+  
+        // Remove the data URL prefix to get just the base64 string
+        const base64Audio = base64data.split(",")[1]
+  
+        // Create a temporary file URI for the audio
+        const fileUri = `${FileSystem.cacheDirectory}temp_audio_${messageId}.mp3`
+        console.log("Writing audio to file:", fileUri)
+  
+        // Write the base64 data to the file
+        await FileSystem.writeAsStringAsync(fileUri, base64Audio, {
+          encoding: FileSystem.EncodingType.Base64,
+        })
+  
+        console.log("Audio file written, preparing to play...")
+  
+        // Play the audio with proper volume
+        console.log("Creating sound object...")
+        const { sound } = await Audio.Sound.createAsync(
+          { uri: fileUri },
+          { shouldPlay: true, volume: 1.0 },
+        )
+  
+        console.log("Sound created and playing...")
+        setSoundObject(sound)
+  
+        // Handle audio completion
+        sound.setOnPlaybackStatusUpdate((status) => {
+          console.log(
+            "Playback status:",
+            status.isPlaying ? "playing" : "stopped",
+            "position:",
+            status.positionMillis,
+            "duration:",
+            status.durationMillis,
+          )
+  
+          if (status.didJustFinish) {
+            console.log("Audio playback finished")
+            setIsSpeaking(false)
+            setCurrentlyPlayingId(null)
+          }
+        })
+      }
+    } catch (error) {
+      if (error.message.includes("ElevenLabs")) {
+        // ElevenLabs specific error handling
+        console.error("ElevenLabs API error:", error);
+        // Fallback to OpenAI TTS if ElevenLabs fails
+        try {
+          alert("Falling back to default TTS service");
+          // Call OpenAI TTS as fallback
+          // ... fallback code here
+        } catch (fallbackError) {
+          console.error("Fallback TTS also failed:", fallbackError);
+          alert("All TTS services failed. Please try again later.");
+        }
+      } else {
+        // Handle other errors
+        alert("Failed to play speech: " + error.message);
+      }
+    }
+  }
+
+  // Function to stop speech playback
+  const stopSpeech = async () => {
+    if (soundObject) {
+      await soundObject.stopAsync()
+      await soundObject.unloadAsync()
+      setSoundObject(null)
+    }
+    setIsSpeaking(false)
+    setCurrentlyPlayingId(null)
+  }
+
+
+
+
+
+
+
+  //////////////// Feedback for AI did by YY ////////////////////////////
+  const animateFeedback = (anim) => {
+      Animated.sequence([
+        Animated.timing(anim, {
+          toValue: 1.3,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+      ]).start()
+    }
+  
+    const handleFeedback = (messageId, type) => {
+      setMessages((prevMessages) =>
+        prevMessages.map((msg) => (msg.id === messageId && msg.sender === "mascot" ? { ...msg, feedback: type } : msg)),
+      )
+    }
+
+  ///////////// Handle User Send Message Function /////////////
   const handleSend = async () => {
     if (message.trim() === "") return
 
@@ -170,13 +506,94 @@ export default function MainChatScreen({ navigation }) {
     }
   }
 
+  ///////////// Hard Code some Reply (If user input include certain words) /////////////
   const processUserMessage = (userMessage) => {
-    // Animate mascot when responding
     animateMascot()
-
     const lowerCaseMessage = userMessage.toLowerCase()
 
-    // Handle different types of queries
+    // Detect language (simple keyword matching)
+    const isMalay = /(terima kasih|apa khabar|bagus|tolong|saya|jualan|item|pelanggan|inventori|pendapatan)/i.test(message);
+    const isChinese = /(谢谢|你好|帮助|销售|问题|我|客户|收入|商品)/i.test(message);
+  
+    // Simulate AI response after a short delay
+    setTimeout(() => {
+      let responseText = ""
+
+      // English responses (default)
+      if (!isMalay && !isChinese) {
+        if (message.toLowerCase().includes("sale") || message.toLowerCase().includes("revenue")) {
+          responseText =
+            "Your sales this week are 15% higher than last week. Would you like to see your detailed insights?"
+        } else if (message.toLowerCase().includes("item") || message.toLowerCase().includes("product")) {
+          responseText =
+            "Based on your data, your best selling items are Nasi Lemak, Ayam Goreng, and Mee Goreng. These items account for 60% of your total sales."
+        } else if (message.toLowerCase().includes("customer") || message.toLowerCase().includes("retention")) {
+          responseText =
+            "To improve customer retention, try implementing a loyalty program, responding to reviews promptly, and offering occasional discounts to returning customers."
+        } else if (message.toLowerCase().includes("inventory") || message.toLowerCase().includes("stock")) {
+          responseText =
+            "You currently have 3 items that are running low on stock: chicken, rice, and cooking oil. Would you like to place an order with your suppliers?"
+        } else {
+          responseText =
+            "I can help you with sales insights, inventory management, and tips to maximize your business growth. What would you like to know?"
+        }
+      }
+      // Malay responses
+      else if (isMalay) {
+        if (message.toLowerCase().includes("jualan") || message.toLowerCase().includes("pendapatan")) {
+          responseText =
+            "Jualan anda minggu ini adalah 15% lebih tinggi daripada minggu lepas. Adakah anda ingin melihat analisis terperinci?"
+        } else if (message.toLowerCase().includes("item") || message.toLowerCase().includes("produk")) {
+          responseText =
+            "Berdasarkan data anda, item yang paling laris adalah Nasi Lemak, Ayam Goreng, dan Mee Goreng. Item ini menyumbang 60% daripada jumlah jualan anda."
+        } else if (message.toLowerCase().includes("pelanggan") || message.toLowerCase().includes("kekal")) {
+          responseText =
+            "Untuk meningkatkan pengekalan pelanggan, cuba laksanakan program kesetiaan, balas ulasan dengan pantas, dan tawarkan diskaun sekali-sekala kepada pelanggan tetap."
+        } else if (message.toLowerCase().includes("inventori") || message.toLowerCase().includes("stok")) {
+          responseText =
+            "Anda kini mempunyai 3 item yang hampir habis stok: ayam, beras, dan minyak masak. Adakah anda ingin membuat pesanan dengan pembekal anda?"
+        } else {
+          responseText =
+            "Saya boleh membantu anda dengan analisis jualan, pengurusan inventori, dan petua untuk memaksimumkan pertumbuhan perniagaan anda. Apa yang anda ingin tahu?"
+        }
+      }
+      // Chinese responses
+      else if (isChinese) {
+        if (message.includes("销售") || message.includes("收入")) {
+          responseText = "您本周的销售额比上周高出15%。您想查看详细分析吗？"
+        } else if (message.includes("产品") || message.includes("商品")) {
+          responseText = "根据您的数据，最畅销的商品是椰浆饭、炸鸡和炒面。这些商品占您总销售额的60%。"
+        } else if (message.includes("客户") || message.includes("保留") || message.includes("保留")) {
+          responseText = "为了提高客户保留率，可以尝试实施忠诚度计划、及时回复评论，并不时为回头客提供折扣。"
+        } else if (message.includes("库存") || message.includes("存货")) {
+          responseText = "您目前有3种商品的库存较低：鸡肉、大米和食用油。您想向供应商下订单吗？"
+        } else {
+          responseText = "我可以帮助您了解销售情况、库存管理以及促进业务增长的技巧。您想了解什么？"
+        }
+      }
+      
+      const newMessageId = (Date.now() + 1).toString()
+      const aiMessage = {
+        id: newMessageId,
+        text: responseText,
+        sender: "mascot",
+        timestamp: new Date(),
+        feedback: null,
+      }
+
+      setMessages((prevMessages) => [...prevMessages, aiMessage])
+
+      // Auto-play the AI response if hands-free mode is detected
+      // (This could be based on a setting or if the user used voice input)
+      if (isRecording || isListening) {
+        // Wait a bit for the UI to update before playing
+        setTimeout(() => {
+          textToSpeech(responseText, newMessageId)
+        }, 500)
+      }
+    }, 1000)
+
+    /////////////// Handle different types of queries (New added one) //////////////////////////
     if (
       lowerCaseMessage.includes("sales") ||
       lowerCaseMessage.includes("revenue") ||
@@ -245,7 +662,9 @@ export default function MainChatScreen({ navigation }) {
       // Help query
       setTimeout(() => {
         addMascotMessage(null, MESSAGE_TYPES.QUICK_ACTIONS)
-      }, 500)
+      }, 500) 
+      addMascotMessage("I can help you with many things! Here are some options:", MESSAGE_TYPES.TEXT)
+      addMascotMessage(null, MESSAGE_TYPES.QUICK_ACTIONS)
     } else if (
       lowerCaseMessage.includes("leaderboard") ||
       lowerCaseMessage.includes("ranking") ||
@@ -261,9 +680,27 @@ export default function MainChatScreen({ navigation }) {
           { text: "Not now", action: "dismiss" },
         ])
       }, 500)
+    } else {
+      // General response
+      const generalResponses = [
+        "I can help you manage your business. Try asking about your sales, inventory, or insights!",
+        "Would you like to see your business performance or check your inventory?",
+        "I'm here to boost your business! Ask me about sales trends, inventory status, or business advice.",
+        "How can I assist you with your business today? I can show sales data, inventory status, or provide recommendations.",
+      ]
+
+      const randomResponse = generalResponses[Math.floor(Math.random() * generalResponses.length)]
+      addMascotMessage(randomResponse, MESSAGE_TYPES.TEXT)
+
+      // After a short delay, show quick actions (This mcm not working ._.)
+      setTimeout(() => {
+        addMascotMessage(null, MESSAGE_TYPES.QUICK_ACTIONS)
+      }, 10)
     }
   }
 
+
+  ///////////// Function to show Mascot chat /////////////
   const addMascotMessage = (text, type) => {
     const newMessage = {
       id: `mascot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -276,6 +713,7 @@ export default function MainChatScreen({ navigation }) {
     setMessages((prevMessages) => [...prevMessages, newMessage])
   }
 
+  ///////////// Function to show the QuickReplies (the squares) /////////////
   const addQuickReplies = (replies) => {
     const newMessage = {
       id: `quick-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -288,6 +726,7 @@ export default function MainChatScreen({ navigation }) {
     setMessages((prevMessages) => [...prevMessages, newMessage])
   }
 
+  ///////////// Function when user press the QuickAction (show under mascot chat) /////////////
   const handleQuickAction = (action) => {
     // Add user message showing the selected action
     const userMessage = {
@@ -310,7 +749,8 @@ export default function MainChatScreen({ navigation }) {
     }, 800)
   }
 
-  const quickReplies = [
+  ///////////// Those quickSuggestion above text input /////////////
+  const quickSuggestion = [
     "Show my sales insights",
     "Best selling items?",
     "How can I increase my revenue?",
@@ -327,8 +767,15 @@ export default function MainChatScreen({ navigation }) {
     "客户保留技巧",
   ]
 
+  const handleQuickReplyForQuickSuggestion = (reply) => {
+    setMessage(reply)
+    setTimeout(() => {
+      handleSend()
+    }, 10)
+  }
+
+  ///////////// Function when user press the QuickActions (the squares) /////////////
   const handleAction = (action) => {
-    // Animate mascot when responding
     animateMascot()
 
     // Handle different actions
@@ -426,29 +873,85 @@ export default function MainChatScreen({ navigation }) {
     }
   }
 
-  const handleQuickReply = (reply) => {
-    setMessage(reply)
-    handleSend()
-  }
-
+  ///////////// Main Funtion for Mascot to render message out /////////////
   const renderMessage = ({ item }) => {
     const isMascot = item.sender === "mascot"
 
     switch (item.type) {
       case MESSAGE_TYPES.TEXT:
+        const isPlaying = currentlyPlayingId === item.id
+
+        if (!animationRefs.current[item.id]) {
+          animationRefs.current[item.id] = {
+            like: new Animated.Value(1),
+            dislike: new Animated.Value(1),
+          }
+        }
+        const { like, dislike } = animationRefs.current[item.id]
+
         return (
-          <View style={[styles.messageBubble, isMascot ? styles.mascotMessage : styles.userMessage]}>
+          <View>
+            <View style={[styles.messageBubble, isMascot ? styles.mascotMessage : styles.userMessage]}>
+              {isMascot && (
+                <View style={styles.mascotAvatarContainer}>
+                  <Image source={require("../assets/mascot-avatar.png")} style={styles.mascotAvatar} />
+                </View>
+              )}
+              <View style={[styles.messageContent, isMascot ? styles.mascotContent : styles.userContent]}>
+                <Text style={isMascot ? styles.mascotText : styles.userText}>{item.text}</Text>
+
+                {/* Speaker Button for Mascot */}
+                {isMascot && (
+                  <TouchableOpacity
+                    style={styles.speakerButton}
+                    onPress={() => (isPlaying ? stopSpeech() : textToSpeech(item.text, item.id))}
+                  >
+                    <Ionicons
+                      name={isPlaying ? "volume-high" : "volume-medium-outline"}
+                      size={18}
+                      color={isPlaying ? "#2FAE60" : "#666"}
+                    />
+                    {isPlaying && (
+                      <View style={styles.speakingIndicator}>
+                        <ActivityIndicator size="small" color="#2FAE60" />
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                )}
+
+                <Text style={isMascot ? styles.mascotTimestamp : styles.userTimestamp}>
+                  {item.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </Text>
+              </View>
+            </View>
+
+            {/* Feedback Buttons for Mascot */}
             {isMascot && (
-              <View style={styles.mascotAvatarContainer}>
-                <Image source={require("../assets/mascot-avatar.png")} style={styles.mascotAvatar} />
+              <View style={styles.feedbackContainer}>
+                <TouchableOpacity
+                  onPress={() => {
+                    animateFeedback(like)
+                    handleFeedback(item.id, "like")
+                  }}
+                  style={[styles.feedbackButton, item.feedback === "like" && styles.feedbackButtonActive]}
+                >
+                  <Animated.View style={{ transform: [{ scale: like }] }}>
+                    <Feather name="thumbs-up" size={16} color={item.feedback === "like" ? "#2FAE60" : "#999"} />
+                  </Animated.View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => {
+                    animateFeedback(dislike)
+                    handleFeedback(item.id, "dislike")
+                  }}
+                  style={[styles.feedbackButton, item.feedback === "dislike" && styles.feedbackButtonActive]}
+                >
+                  <Animated.View style={{ transform: [{ scale: dislike }] }}>
+                    <Feather name="thumbs-down" size={16} color={item.feedback === "dislike" ? "#D9534F" : "#999"} />
+                  </Animated.View>
+                </TouchableOpacity>
               </View>
             )}
-            <View style={[styles.messageContent, isMascot ? styles.mascotContent : styles.userContent]}>
-              <Text style={isMascot ? styles.mascotText : styles.userText}>{item.text}</Text>
-              <Text style={isMascot ? styles.mascotTimestamp : styles.userTimestamp}>
-                {item.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-              </Text>
-            </View>
           </View>
         )
 
@@ -631,7 +1134,9 @@ export default function MainChatScreen({ navigation }) {
                 <View style={[styles.quickActionIcon, { backgroundColor: "#F3F0FF" }]}>
                   <Ionicons name="cube-outline" size={20} color="#9B51E0" />
                 </View>
-                <Text style={styles.quickActionText}>{isLoading ? "Loading..." : "Check API"}</Text>
+                <Text style={styles.quickActionText}>
+                  {isLoading ? "Loading..." : "Check Inventory Testing BE"}
+                </Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
@@ -692,6 +1197,8 @@ export default function MainChatScreen({ navigation }) {
     }
   }
 
+
+  ///////////// MAIN CHAT SCREEN /////////////
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -745,12 +1252,12 @@ export default function MainChatScreen({ navigation }) {
 
       <View style={styles.quickQuestionContainer}>
         <FlatList
-          data={quickReplies}
+          data={quickSuggestion}
           horizontal
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.quickReplyButton} onPress={() => handleQuickReply(item)}>
+            <TouchableOpacity style={styles.quickReplyButton} onPress={() => handleQuickReplyForQuickSuggestion(item)}>
               <Text style={styles.quickReplyText}>{item}</Text>
             </TouchableOpacity>
           )}
@@ -771,6 +1278,15 @@ export default function MainChatScreen({ navigation }) {
           placeholderTextColor="#999"
           multiline
         />
+
+        <TouchableOpacity style={styles.micButton} onPress={toggleRecording}>
+          <Ionicons name={isRecording ? "mic" : "mic-outline"} size={20} color={isRecording ? "#FF3B30" : "#666"} />
+          {isLoadingTranscription && (
+            <View style={styles.listeningIndicator}>
+              <ActivityIndicator size="small" color="#FF3B30" />
+            </View>
+          )}
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={[
@@ -1203,5 +1719,53 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     textAlign: "center",
     padding: 10,
+  },
+  speakerButton: {
+    position: "absolute",
+    top: 8,
+    right: -5,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  speakingIndicator: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#2FAE60",
+  },
+  micButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#f0f0f0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 8,
+  },
+  listeningIndicator: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "transparent",
+  },
+  feedbackContainer: {
+    flexDirection: "row",
+    marginTop: -12,
+    marginLeft:40,
+  },
+  feedbackButton: {
+    padding: 6,
+    marginRight: 10,
+    borderRadius: 20,
+    backgroundColor: "#f7f7f7",
+  },
+  feedbackButtonActive: {
+    backgroundColor: "#f5fff5",
   },
 })
