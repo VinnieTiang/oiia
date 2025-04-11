@@ -907,7 +907,7 @@ const styles = StyleSheet.create({
     color: '#d32f2f',
   },
   orderMoreButton: {
-
+    borderRadius: 20,
   },
   orderMoreLabel: {
     color: '#10B981',
