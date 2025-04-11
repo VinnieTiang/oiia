@@ -240,6 +240,23 @@ export default function MainChatScreen({ navigation }) {
     }, 800)
   }
 
+  const quickReplies = [
+    "Show my sales insights",
+    "Best selling items?",
+    "How can I increase my revenue?",
+    "Tips for customer retention",
+    // Malay quick replies
+    "Tunjukkan analisis jualan saya",
+    "Item paling laris?",
+    "Bagaimana meningkatkan pendapatan?",
+    "Petua untuk kekalkan pelanggan",
+    // Chinese quick replies
+    "显示我的销售分析",
+    "最畅销的商品？",
+    "如何增加收入？",
+    "客户保留技巧",
+  ]
+
   const handleAction = (action) => {
     // Animate mascot when responding
     animateMascot()
@@ -541,7 +558,7 @@ export default function MainChatScreen({ navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={styles.safeArea} >
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <Animated.View
@@ -590,11 +607,25 @@ export default function MainChatScreen({ navigation }) {
           </View>
         </View>
       )}
+      
+      <View style={styles.quickQuestionContainer}>
+        <FlatList
+          data={quickReplies}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity style={styles.quickReplyButton} onPress={() => handleQuickReply(item)}>
+              <Text style={styles.quickReplyText}>{item}</Text>
+            </TouchableOpacity>
+          )}
+        />
+      </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={100}
-        style={styles.inputContainer}
+        keyboardVerticalOffset={15}
+        style={[styles.inputContainer, { marginBottom: 20 }]}
       >
         <TextInput
           ref={inputRef}
@@ -1012,5 +1043,12 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     backgroundColor: "#e0e0e0",
+  },
+  quickQuestionContainer: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#eee",
+    backgroundColor: "white",
   },
 })
