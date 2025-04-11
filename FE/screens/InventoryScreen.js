@@ -1,9 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity, RefreshControl, Modal, TextInput} from 'react-native';
-import { Text, Card, Button, DataTable, Chip, ActivityIndicator, Searchbar, Snackbar, Portal, Dialog, TextInput as PaperTextInput  } from 'react-native-paper';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import * as Notifications from 'expo-notifications';
+"use client"
+
+import { useEffect, useState } from "react"
+import { StyleSheet, View, ScrollView, TouchableOpacity, RefreshControl, TextInput } from "react-native"
+import {
+  Text,
+  Card,
+  Button,
+  DataTable,
+  Chip,
+  ActivityIndicator,
+  Searchbar,
+  Snackbar,
+  Portal,
+  Dialog,
+} from "react-native-paper"
+import { Ionicons } from "@expo/vector-icons"
+import * as Notifications from "expo-notifications"
+import { FlatList, Image } from "react-native"
 
 // Sample inventory data
 const inventoryData = [
@@ -15,7 +28,46 @@ const inventoryData = [
   { id: 6, name: "Satay", current: 8, recommended: 15, status: "medium", lastRestocked: "2 days ago" },
   { id: 7, name: "Curry Puff", current: 4, recommended: 20, status: "low", lastRestocked: "4 days ago" },
   { id: 8, name: "Iced Coffee", current: 18, recommended: 20, status: "medium", lastRestocked: "Yesterday" },
-];
+]
+
+// Sample GrabMart vendor data
+const grabMartVendors = [
+  {
+    id: 1,
+    name: "FreshMart Grocery",
+    rating: 4.8,
+    deliveryTime: "15-20 min",
+    image: require("../assets/mascot-avatar.png"),
+  },
+  {
+    id: 2,
+    name: "SuperValue Store",
+    rating: 4.6,
+    deliveryTime: "20-30 min",
+    image: require("../assets/mascot-avatar.png"),
+  },
+  {
+    id: 3,
+    name: "QuickShop Express",
+    rating: 4.7,
+    deliveryTime: "10-15 min",
+    image: require("../assets/mascot-avatar.png"),
+  },
+  {
+    id: 4,
+    name: "GreenGrocer",
+    rating: 4.9,
+    deliveryTime: "25-35 min",
+    image: require("../assets/mascot-avatar.png"),
+  },
+  {
+    id: 5,
+    name: "Metro Minimart",
+    rating: 4.5,
+    deliveryTime: "15-25 min",
+    image: require("../assets/mascot-avatar.png"),
+  },
+]
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -23,206 +75,208 @@ Notifications.setNotificationHandler({
     shouldPlaySound: true,
     shouldSetBadge: true,
   }),
-});
+})
 
 export default function InventoryScreen() {
-  const [inventory, setInventory] = useState(inventoryData);
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('name');
-  const [sortDirection, setSortDirection] = useState('ascending');
-  const [refreshing, setRefreshing] = useState(false);
-  const [snackbarVisible, setSnackbarVisible] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [restockModalVisible, setRestockModalVisible] = useState(false);
-  const [restockQuantity, setRestockQuantity] = useState('');
-  const [currentlyRestockingItem, setCurrentlyRestockingItem] = useState(null);
+  const [inventory, setInventory] = useState(inventoryData)
+  const [isLoading, setIsLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [sortBy, setSortBy] = useState("name")
+  const [sortDirection, setSortDirection] = useState("ascending")
+  const [refreshing, setRefreshing] = useState(false)
+  const [snackbarVisible, setSnackbarVisible] = useState(false)
+  const [snackbarMessage, setSnackbarMessage] = useState("")
+  const [selectedItem, setSelectedItem] = useState(null)
+  const [restockModalVisible, setRestockModalVisible] = useState(false)
+  const [restockQuantity, setRestockQuantity] = useState("")
+  const [currentlyRestockingItem, setCurrentlyRestockingItem] = useState(null)
+  const [selectedVendor, setSelectedVendor] = useState(null)
 
-
-  const onChangeSearch = query => setSearchQuery(query);
+  const onChangeSearch = (query) => setSearchQuery(query)
 
   const refreshInventory = () => {
-    setIsLoading(true);
+    setIsLoading(true)
     // Simulate API call
     setTimeout(() => {
-      setIsLoading(false);
-      setRefreshing(false);
-      showSnackbar('Inventory refreshed');
-    }, 1000);
-  };
+      setIsLoading(false)
+      setRefreshing(false)
+      showSnackbar("Inventory refreshed")
+    }, 1000)
+  }
 
   const scheduleLowStockNotification = async (items) => {
-    const itemNames = items.map(item => item.name).join(', ');
-    
+    const itemNames = items.map((item) => item.name).join(", ")
+
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: 'Low Stock Alert',
+        title: "Low Stock Alert",
         body: `The following items are low on stock: ${itemNames}`,
-        data: { screen: 'Inventory' },
+        data: { screen: "Inventory" },
       },
       trigger: null, // Send immediately
-    });
-  };
+    })
+  }
 
   // Check for notifications permission on component mount
   useEffect(() => {
     const requestNotificationPermission = async () => {
-      const { status } = await Notifications.requestPermissionsAsync();
-      if (status !== 'granted') {
-        alert('Please enable notifications for low stock alerts');
+      const { status } = await Notifications.requestPermissionsAsync()
+      if (status !== "granted") {
+        alert("Please enable notifications for low stock alerts")
       }
-    };
+    }
 
-    requestNotificationPermission();
-  }, []);
+    requestNotificationPermission()
+    checkLowStockAndNotify()
+  }, [])
 
   const checkLowStockAndNotify = async () => {
-    const lowStockItems = inventory.filter(item => item.status === 'low');
-    
-    if (lowStockItems.length > 0) {
-      await scheduleLowStockNotification(lowStockItems);
-    }
-  };
+    const lowStockItems = inventory.filter((item) => item.status === "low")
 
-  // Check for low stock whenever inventory changes
+    if (lowStockItems.length > 0) {
+      await scheduleLowStockNotification(lowStockItems)
+    }
+  }
+
   useEffect(() => {
-    checkLowStockAndNotify();
-  }, [inventory]);
+    checkLowStockAndNotify()
+  }, [])
 
   const onRefresh = () => {
-    setRefreshing(true);
-    refreshInventory();
-  };
+    setRefreshing(true)
+    refreshInventory()
+  }
 
   const showSnackbar = (message) => {
-    setSnackbarMessage(message);
-    setSnackbarVisible(true);
-  };
+    setSnackbarMessage(message)
+    setSnackbarVisible(true)
+  }
 
   const handleRestock = (item) => {
-    setSelectedItem(item);
-    setCurrentlyRestockingItem(item);
-    setRestockQuantity('');
-    setRestockModalVisible(true);
-  };
+    setSelectedItem(item)
+    setCurrentlyRestockingItem(item)
+    setRestockQuantity("")
+    setSelectedVendor(null)
+    setRestockModalVisible(true)
+  }
 
   const confirmRestock = () => {
     if (!restockQuantity || isNaN(restockQuantity)) {
-      showSnackbar('Please enter a valid quantity');
-      return;
+      showSnackbar("Please enter a valid quantity")
+      return
     }
 
-    const quantity = parseInt(restockQuantity, 10);
+    if (!selectedVendor) {
+      showSnackbar("Please select a vendor")
+      return
+    }
+
+    const quantity = Number.parseInt(restockQuantity, 10)
     if (quantity <= 0) {
-      showSnackbar('Quantity must be greater than 0');
-      return;
+      showSnackbar("Quantity must be greater than 0")
+      return
     }
 
     // Update the inventory
-    const updatedInventory = inventory.map(item => {
+    const updatedInventory = inventory.map((item) => {
       if (item.id === currentlyRestockingItem.id) {
-        const newQuantity = item.current + quantity;
-        let newStatus = item.status;
-        
+        const newQuantity = item.current + quantity
+        let newStatus = item.status
+
         // Determine new status based on restocked quantity
         if (newQuantity >= item.recommended * 0.7) {
-          newStatus = 'good';
+          newStatus = "good"
         } else if (newQuantity >= item.recommended * 0.3) {
-          newStatus = 'medium';
+          newStatus = "medium"
         } else {
-          newStatus = 'low';
+          newStatus = "low"
         }
 
         return {
           ...item,
           current: newQuantity,
           status: newStatus,
-          lastRestocked: 'Today'
-        };
+          lastRestocked: "Today",
+        }
       }
-      return item;
-    });
+      return item
+    })
 
-    setInventory(updatedInventory);
-    showSnackbar(`Successfully restocked ${quantity} ${currentlyRestockingItem.name}`);
-    setRestockModalVisible(false);
-  };
-
+    setInventory(updatedInventory)
+    showSnackbar(`Successfully ordered ${quantity} ${currentlyRestockingItem.name} from ${selectedVendor.name}`)
+    setRestockModalVisible(false)
+  }
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'low':
-        return '#ffebee';
-      case 'medium':
-        return '#fff8e1';
-      case 'good':
-        return '#e8f5e9';
+      case "low":
+        return "#ffebee"
+      case "medium":
+        return "#fff8e1"
+      case "good":
+        return "#e8f5e9"
       default:
-        return '#f5f5f5';
+        return "#f5f5f5"
     }
-  };
+  }
 
   const getStatusTextColor = (status) => {
     switch (status) {
-      case 'low':
-        return '#d32f2f';
-      case 'medium':
-        return '#f57c00';
-      case 'good':
-        return '#388e3c';
+      case "low":
+        return "#d32f2f"
+      case "medium":
+        return "#f57c00"
+      case "good":
+        return "#388e3c"
       default:
-        return '#757575';
+        return "#757575"
     }
-  };
+  }
 
   const sortInventory = (field) => {
     if (sortBy === field) {
-      setSortDirection(sortDirection === 'ascending' ? 'descending' : 'ascending');
+      setSortDirection(sortDirection === "ascending" ? "descending" : "ascending")
     } else {
-      setSortBy(field);
-      setSortDirection('ascending');
+      setSortBy(field)
+      setSortDirection("ascending")
     }
-  };
+  }
 
   const filteredInventory = inventory
-    .filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => {
-      let comparison = 0;
-      
-      if (sortBy === 'name') {
-        comparison = a.name.localeCompare(b.name);
-      } else if (sortBy === 'current') {
-        comparison = a.current - b.current;
-      } else if (sortBy === 'status') {
-        const statusOrder = { low: 0, medium: 1, good: 2 };
-        comparison = statusOrder[a.status] - statusOrder[b.status];
+      let comparison = 0
+
+      if (sortBy === "name") {
+        comparison = a.name.localeCompare(b.name)
+      } else if (sortBy === "current") {
+        comparison = a.current - b.current
+      } else if (sortBy === "status") {
+        const statusOrder = { low: 0, medium: 1, good: 2 }
+        comparison = statusOrder[a.status] - statusOrder[b.status]
       }
-      
-      return sortDirection === 'ascending' ? comparison : -comparison;
-    });
+
+      return sortDirection === "ascending" ? comparison : -comparison
+    })
 
   // Calculate summary stats dynamically
-  const summaryStats = inventory.reduce((acc, item) => {
-    if (item.status === 'low') acc.low++;
-    if (item.status === 'medium') acc.medium++;
-    if (item.status === 'good') acc.good++;
-    return acc;
-  }, { low: 0, medium: 0, good: 0 });
+  const summaryStats = inventory.reduce(
+    (acc, item) => {
+      if (item.status === "low") acc.low++
+      if (item.status === "medium") acc.medium++
+      if (item.status === "good") acc.good++
+      return acc
+    },
+    { low: 0, medium: 0, good: 0 },
+  )
 
   return (
     <ScrollView
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={['#10B981']}
-            tintColor="#10B981"
-          />
-        }
-      >
-    <ScrollView  style={styles.container}>
-      
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={["#10B981"]} tintColor="#10B981" />
+      }
+    >
+      <ScrollView style={styles.container}>
         {/* Welcome Header */}
         <View style={styles.header}>
           <Text style={styles.headerSubtitle}>Track and manage your stock levels</Text>
@@ -233,24 +287,24 @@ export default function InventoryScreen() {
           <Card.Content>
             <View style={styles.summaryHeader}>
               <Text style={styles.summaryTitle}>Inventory Summary</Text>
-              <Button 
-                mode="text" 
-                onPress={refreshInventory} 
+              <Button
+                mode="text"
+                onPress={refreshInventory}
                 disabled={isLoading}
                 style={styles.refreshButton}
                 labelStyle={{
-                  color: '#10B981',
+                  color: "#10B981",
                 }}
               >
                 {isLoading ? (
                   <ActivityIndicator size={13} color="#10B981" />
                 ) : (
                   <Ionicons name="refresh" size={13} color="#10B981" />
-                )}
-                {' '}Refresh
+                )}{" "}
+                Refresh
               </Button>
             </View>
-            
+
             <View style={styles.statsRow}>
               <View style={[styles.statItem, styles.lowStat]}>
                 <Text style={styles.statValue}>{summaryStats.low}</Text>
@@ -280,7 +334,7 @@ export default function InventoryScreen() {
               iconColor="#666"
               placeholderTextColor="#999"
             />
-            
+
             {filteredInventory.length === 0 ? (
               <View style={styles.emptyState}>
                 <Ionicons name="search" size={48} color="#ccc" />
@@ -293,9 +347,9 @@ export default function InventoryScreen() {
                   {/* Sticky left column for item names */}
                   <View style={styles.stickyColumn}>
                     <DataTable.Header style={styles.stickyHeader}>
-                      <DataTable.Title 
-                        sortDirection={sortBy === 'name' ? sortDirection : null}
-                        onPress={() => sortInventory('name')}
+                      <DataTable.Title
+                        sortDirection={sortBy === "name" ? sortDirection : null}
+                        onPress={() => sortInventory("name")}
                         style={styles.nameColumnHeader}
                       >
                         <Text style={styles.columnHeaderText}>Item</Text>
@@ -311,28 +365,25 @@ export default function InventoryScreen() {
                       </DataTable.Row>
                     ))}
                   </View>
-                  
+
                   {/* Scrollable portion */}
                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     <DataTable style={styles.scrollableTable}>
                       <DataTable.Header>
-                        <DataTable.Title 
+                        <DataTable.Title
                           numeric
-                          sortDirection={sortBy === 'current' ? sortDirection : null}
-                          onPress={() => sortInventory('current')}
+                          sortDirection={sortBy === "current" ? sortDirection : null}
+                          onPress={() => sortInventory("current")}
                           style={styles.numberColumn}
                         >
                           <Text style={styles.columnHeaderText}>Current</Text>
                         </DataTable.Title>
-                        <DataTable.Title 
-                          numeric
-                          style={styles.numberColumn}
-                        >
+                        <DataTable.Title numeric style={styles.numberColumn}>
                           <Text style={styles.columnHeaderText}>Recommended</Text>
                         </DataTable.Title>
-                        <DataTable.Title 
-                          sortDirection={sortBy === 'status' ? sortDirection : null}
-                          onPress={() => sortInventory('status')}
+                        <DataTable.Title
+                          sortDirection={sortBy === "status" ? sortDirection : null}
+                          onPress={() => sortInventory("status")}
                           style={styles.statusColumn}
                         >
                           <Text style={styles.columnHeaderText}>Status</Text>
@@ -348,11 +399,13 @@ export default function InventoryScreen() {
                       {filteredInventory.map((item) => (
                         <DataTable.Row key={`data-${item.id}`} style={styles.dataRow}>
                           <DataTable.Cell numeric style={styles.numberColumn}>
-                            <Text style={[
-                              styles.stockText,
-                              item.current < item.recommended * 0.3 ? styles.lowStockText : null,
-                              item.current >= item.recommended * 0.7 ? styles.goodStockText : null
-                            ]}>
+                            <Text
+                              style={[
+                                styles.stockText,
+                                item.current < item.recommended * 0.3 ? styles.lowStockText : null,
+                                item.current >= item.recommended * 0.7 ? styles.goodStockText : null,
+                              ]}
+                            >
                               {item.current}
                             </Text>
                           </DataTable.Cell>
@@ -369,7 +422,7 @@ export default function InventoryScreen() {
                               textStyle={{
                                 color: getStatusTextColor(item.status),
                                 fontSize: 12,
-                                fontWeight: 'bold',
+                                fontWeight: "bold",
                               }}
                             >
                               {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
@@ -384,11 +437,11 @@ export default function InventoryScreen() {
                               compact
                               onPress={() => handleRestock(item)}
                               labelStyle={{
-                                color: item.status === 'low' ? '#d32f2f' : '#10B981',
+                                color: item.status === "low" ? "#d32f2f" : "#10B981",
                                 fontSize: 12,
                               }}
                             >
-                              {item.status === 'low' ? 'Restock Now' : 'Order More'}
+                              {item.status === "low" ? "Restock Now" : "Order More"}
                             </Button>
                           </DataTable.Cell>
                         </DataTable.Row>
@@ -406,18 +459,18 @@ export default function InventoryScreen() {
           <Card.Content>
             <Text style={styles.actionsTitle}>Quick Actions</Text>
             <View style={styles.actionButtons}>
-              <Button 
-                mode="contained" 
-                onPress={() => showSnackbar('Order supplies action')}
+              <Button
+                mode="contained"
+                onPress={() => showSnackbar("Order supplies action")}
                 style={[styles.actionButton, styles.primaryAction]}
                 labelStyle={styles.actionButtonLabel}
                 icon="cart"
               >
                 Order Supplies
               </Button>
-              <Button 
-                mode="contained-tonal" 
-                onPress={() => showSnackbar('Export report action')}
+              <Button
+                mode="contained-tonal"
+                onPress={() => showSnackbar("Export report action")}
                 style={[styles.actionButton, styles.secondaryAction]}
                 labelStyle={styles.actionButtonLabel}
                 icon="download"
@@ -437,55 +490,69 @@ export default function InventoryScreen() {
               {currentlyRestockingItem?.name} (Current: {currentlyRestockingItem?.current})
             </Text>
 
-      {/* Quantity Controls */}
-      <View style={styles.quantityRow}>
-        <TouchableOpacity 
-          onPress={() => setRestockQuantity(Math.max(1, (parseInt(restockQuantity) || 0) - 1).toString())}
-          style={[styles.circleButton, styles.decrementButton]}
-          activeOpacity={0.5}
-        >
-          <Ionicons name="remove" size={40} color="#fff" />
-        </TouchableOpacity>
-        
-        {/* <PaperTextInput
-              label="Quantity"
-              value={restockQuantity}
-              onChangeText={setRestockQuantity}
-              keyboardType="numeric"
-              mode="outlined"
-              style={styles.restockInput}
-              autoFocus
-            /> */}
+            {/* Quantity Controls */}
+            <View style={styles.quantityRow}>
+              <TouchableOpacity
+                onPress={() => setRestockQuantity(Math.max(1, (Number.parseInt(restockQuantity) || 0) - 1).toString())}
+                style={[styles.circleButton, styles.decrementButton]}
+                activeOpacity={0.5}
+              >
+                <Ionicons name="remove" size={40} color="#fff" />
+              </TouchableOpacity>
 
-        <TextInput
-          label="Quantity"
-          value={restockQuantity}
-          onChangeText={setRestockQuantity}
-          keyboardType="numeric"
-          style={styles.quantityInput}
-        />
-        
-        <TouchableOpacity 
-          onPress={() => setRestockQuantity(((parseInt(restockQuantity) || 0) + 1).toString())}
-          style={[styles.circleButton, styles.incrementButton]}
-          activeOpacity={0.5}
-        >
-          <Ionicons name="add" size={40} color="#fff" />
-        </TouchableOpacity>
-      </View>
-            <Text style={styles.recommendedText}>
-              Recommended stock level: {currentlyRestockingItem?.recommended}
-            </Text>
+              <TextInput
+                label="Quantity"
+                value={restockQuantity}
+                onChangeText={setRestockQuantity}
+                keyboardType="numeric"
+                style={styles.quantityInput}
+              />
+
+              <TouchableOpacity
+                onPress={() => setRestockQuantity(((Number.parseInt(restockQuantity) || 0) + 1).toString())}
+                style={[styles.circleButton, styles.incrementButton]}
+                activeOpacity={0.5}
+              >
+                <Ionicons name="add" size={40} color="#fff" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.recommendedText}>Recommended stock level: {currentlyRestockingItem?.recommended}</Text>
+
+            {/* Vendor Selection */}
+            <Text style={styles.vendorSectionTitle}>Select a GrabMart vendor:</Text>
+
+            <FlatList
+              data={grabMartVendors}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id.toString()}
+              contentContainerStyle={styles.vendorList}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[styles.vendorCard, selectedVendor?.id === item.id && styles.selectedVendorCard]}
+                  onPress={() => setSelectedVendor(item)}
+                >
+                  <Image source={item.image} style={styles.vendorImage} />
+                  <Text style={styles.vendorName}>{item.name}</Text>
+                  <View style={styles.vendorRatingContainer}>
+                    <Ionicons name="star" size={14} color="#FFD700" />
+                    <Text style={styles.vendorRating}>{item.rating}</Text>
+                  </View>
+                  <Text style={styles.vendorDelivery}>{item.deliveryTime}</Text>
+
+                  {selectedVendor?.id === item.id && (
+                    <View style={styles.selectedVendorCheck}>
+                      <Ionicons name="checkmark-circle" size={24} color="#10B981" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              )}
+            />
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setRestockModalVisible(false)}>
-              Cancel
-            </Button>
-            <Button 
-              mode="contained" 
-              onPress={confirmRestock}
-              style={styles.confirmRestockButton}
-            >
+            <Button onPress={() => setRestockModalVisible(false)}>Cancel</Button>
+            <Button mode="contained" onPress={confirmRestock} style={styles.confirmRestockButton}>
               Confirm Restock
             </Button>
           </Dialog.Actions>
@@ -498,7 +565,7 @@ export default function InventoryScreen() {
         onDismiss={() => setSnackbarVisible(false)}
         duration={3000}
         action={{
-          label: 'OK',
+          label: "OK",
           onPress: () => setSnackbarVisible(false),
         }}
         style={styles.snackbar}
@@ -506,13 +573,13 @@ export default function InventoryScreen() {
         {snackbarMessage}
       </Snackbar>
     </ScrollView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
     padding: 16,
   },
   header: {
@@ -521,12 +588,12 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginTop: 4,
   },
   summaryCard: {
@@ -535,57 +602,57 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   summaryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   summaryTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
   refreshButton: {
-    borderColor: '#10B981',
+    borderColor: "#10B981",
     borderRadius: 20,
   },
   refreshButtonLabel: {
     fontSize: 13,
   },
   statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: 8,
   },
   statItem: {
-    alignItems: 'center',
+    alignItems: "center",
     flex: 1,
     padding: 12,
     borderRadius: 8,
     marginHorizontal: 4,
-    position: 'relative',
+    position: "relative",
   },
   lowStat: {
-    backgroundColor: '#ffebee',
+    backgroundColor: "#ffebee",
   },
   mediumStat: {
-    backgroundColor: '#fff8e1',
+    backgroundColor: "#fff8e1",
   },
   goodStat: {
-    backgroundColor: '#e8f5e9',
+    backgroundColor: "#e8f5e9",
   },
   statValue: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: "#333",
   },
   statLabel: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
     marginTop: 4,
   },
   statIcon: {
-    position: 'absolute',
+    position: "absolute",
     top: 8,
     right: 8,
   },
@@ -596,53 +663,53 @@ const styles = StyleSheet.create({
   },
   searchBar: {
     marginBottom: 16,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 8,
     elevation: 1,
   },
   searchInput: {
     fontSize: 14,
-    color: '#333',
+    color: "#333",
   },
   emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: 40,
   },
   emptyStateText: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#666',
+    fontWeight: "bold",
+    color: "#666",
     marginTop: 16,
   },
   emptyStateSubtext: {
     fontSize: 14,
-    color: '#999',
+    color: "#999",
     marginTop: 4,
   },
   tableContainer: {
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
     borderRadius: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   tableWrapper: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   stickyColumn: {
     width: 140,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     zIndex: 10,
     borderRightWidth: 1,
-    borderRightColor: '#e0e0e0',
+    borderRightColor: "#e0e0e0",
   },
   stickyHeader: {
     height: 48,
-    backgroundColor: '#f7f7f7',
+    backgroundColor: "#f7f7f7",
   },
   stickyCell: {
     minHeight: 60,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   nameColumnHeader: {
     paddingLeft: 16,
@@ -651,23 +718,23 @@ const styles = StyleSheet.create({
     paddingLeft: 16,
   },
   itemNameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   itemStatusIcon: {
     marginRight: 8,
   },
   itemNameText: {
     fontSize: 14,
-    color: '#333',
+    color: "#333",
   },
   columnHeaderText: {
     fontSize: 13,
-    fontWeight: 'bold',
-    color: '#555',
+    fontWeight: "bold",
+    color: "#555",
   },
   scrollableTable: {
-    minWidth: 520, 
+    minWidth: 520,
   },
   dataRow: {
     minHeight: 60,
@@ -675,23 +742,23 @@ const styles = StyleSheet.create({
   numberColumn: {
     width: 100,
     paddingHorizontal: 16,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   stockText: {
     fontSize: 14,
-    color: '#333',
+    color: "#333",
   },
   lowStockText: {
-    color: '#d32f2f',
-    fontWeight: 'bold',
+    color: "#d32f2f",
+    fontWeight: "bold",
   },
   goodStockText: {
-    color: '#388e3c',
+    color: "#388e3c",
   },
   statusColumn: {
     width: 120,
     paddingHorizontal: 8,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   dateColumn: {
     width: 120,
@@ -699,7 +766,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 13,
-    color: '#555',
+    color: "#555",
   },
   actionColumn: {
     width: 140,
@@ -708,23 +775,23 @@ const styles = StyleSheet.create({
   actionButton: {
     borderRadius: 6,
     paddingVertical: 2,
-    backgroundColor: 'transparent', // Make background transparent
+    backgroundColor: "transparent", // Make background transparent
   },
   actionButtonLabel: {
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   restockButton: {
-    borderColor: '#e04652', // Border color for restock
+    borderColor: "#e04652", // Border color for restock
   },
   restockButtonLabel: {
-    color: '#e04652', // Text color for Restock Now button
+    color: "#e04652", // Text color for Restock Now button
   },
   orderButton: {
-    borderColor: '#1cb861', // Border color for order
+    borderColor: "#1cb861", // Border color for order
   },
   orderButtonLabel: {
-    color: '#1cb861', // Text color for Order More button
+    color: "#1cb861", // Text color for Order More button
   },
   actionsCard: {
     borderRadius: 12,
@@ -733,26 +800,26 @@ const styles = StyleSheet.create({
   },
   actionsTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 16,
-    color: '#333',
+    color: "#333",
   },
   actionButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   primaryAction: {
     flex: 1,
     marginHorizontal: 4,
-    backgroundColor: '#10B981',
+    backgroundColor: "#10B981",
   },
   secondaryAction: {
     flex: 1,
     marginHorizontal: 4,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: "#e0e0e0",
   },
   snackbar: {
-    backgroundColor: '#333',
+    backgroundColor: "#333",
   },
 
   dialogText: {
@@ -764,74 +831,133 @@ const styles = StyleSheet.create({
   },
   recommendedText: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
     marginTop: 8,
   },
   confirmRestockButton: {
-    backgroundColor: '#10B981',
+    backgroundColor: "#10B981",
   },
   quantityContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginVertical: 16,
   },
   quantityButton: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   quantityButtonText: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     lineHeight: 28,
   },
   quantityInput: {
     flex: 1,
     marginHorizontal: 0,
-    textAlign: 'center',
+    textAlign: "center",
   },
 
   quantityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginVertical: 20,
   },
   circleButton: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
   },
   decrementButton: {
-    backgroundColor: '#AFACE1', 
+    backgroundColor: "#AFACE1",
   },
   incrementButton: {
-    backgroundColor: '#AFACE1', 
+    backgroundColor: "#AFACE1",
   },
   quantityInput: {
     flex: 1,
     marginHorizontal: 15,
-    textAlign: 'center',
+    textAlign: "center",
     fontSize: 27,
   },
   confirmButton: {
-    backgroundColor: '#10B981',
+    backgroundColor: "#10B981",
     borderRadius: 8,
     paddingVertical: 5,
   },
   confirmButtonLabel: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
-});
+  vendorSectionTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginTop: 20,
+    marginBottom: 12,
+    color: "#333",
+  },
+  vendorList: {
+    paddingVertical: 8,
+  },
+  vendorCard: {
+    width: 140,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 12,
+    padding: 12,
+    marginRight: 12,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    position: "relative",
+  },
+  selectedVendorCard: {
+    borderColor: "#10B981",
+    backgroundColor: "#f0fdf4",
+  },
+  vendorImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginBottom: 8,
+  },
+  vendorName: {
+    fontSize: 14,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  vendorRatingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  vendorRating: {
+    fontSize: 12,
+    fontWeight: "bold",
+    marginLeft: 4,
+  },
+  vendorDelivery: {
+    fontSize: 12,
+    color: "#666",
+  },
+  selectedVendorCheck: {
+    position: "absolute",
+    top: -10,
+    right: -10,
+    backgroundColor: "white",
+    borderRadius: 12,
+    elevation: 2,
+  },
+})
