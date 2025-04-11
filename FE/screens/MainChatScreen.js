@@ -1,5 +1,5 @@
 "use client"
-
+import { fetchLowStockItems } from '../api';
 import { useState, useRef, useEffect } from "react"
 import {
   View,
@@ -32,6 +32,51 @@ const MESSAGE_TYPES = {
 }
 
 export default function MainChatScreen({ navigation }) {
+
+  // Inside your MainChatScreen component
+const [lowStockItems, setLowStockItems] = useState([]);
+const [isLoading, setIsLoading] = useState(false);
+
+const checkInventory = async () => {
+  try {
+    setIsLoading(true);
+    // Show typing indicator
+    setIsTyping(true);
+    
+    // Add user message
+    const userMessage = {
+      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      type: MESSAGE_TYPES.TEXT,
+      text: "Check inventory",
+      sender: "user",
+      timestamp: new Date(),
+    };
+    setMessages((prevMessages) => [...prevMessages, userMessage]);
+    
+    // Fetch data from API
+    const items = await fetchLowStockItems();
+    setLowStockItems(items);
+    
+    // Add mascot response
+    addMascotMessage("I checked your inventory and found these low stock items:", MESSAGE_TYPES.TEXT);
+    
+    // Add inventory alert message
+    const inventoryMessage = {
+      id: `mascot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      type: MESSAGE_TYPES.INVENTORY_ALERT2,
+      sender: "mascot",
+      timestamp: new Date(),
+      items: items, // Pass the items to the message
+    };
+    setMessages((prevMessages) => [...prevMessages, inventoryMessage]);
+    
+  } catch (error) {
+    addMascotMessage("Sorry, I couldn't fetch your inventory data. Please try again later.", MESSAGE_TYPES.TEXT);
+  } finally {
+    setIsTyping(false);
+    setIsLoading(false);
+  }
+};
   const [message, setMessage] = useState("")
   const [messages, setMessages] = useState([
     {
@@ -441,6 +486,46 @@ export default function MainChatScreen({ navigation }) {
           </View>
         )
 
+        case MESSAGE_TYPES.INVENTORY_ALERT2:
+          // Use the items from the message or fall back to the state
+          const itemsToDisplay = item.items || lowStockItems;
+          
+          return (
+            <View style={styles.messageBubble}>
+              <View style={styles.mascotAvatarContainer}>
+                <Image source={require("../assets/mascot-avatar.png")} style={styles.mascotAvatar} />
+              </View>
+              <View style={[styles.messageContent, styles.cardContent]}>
+                <View style={styles.inventoryCard}>
+                  <Text style={styles.cardTitle}>Low Stock Alert</Text>
+                  <View style={styles.inventoryList}>
+                    {itemsToDisplay.length > 0 ? (
+                      itemsToDisplay.map((stockItem) => (
+                        <View key={stockItem.id} style={styles.inventoryItem}>
+                          <View style={[styles.inventoryStatus, { backgroundColor: "#ffebee" }]} />
+                          <Text style={styles.inventoryName}>{stockItem.name}</Text>
+                          <Text style={styles.inventoryCount}>{stockItem.current} left</Text>
+                        </View>
+                      ))
+                    ) : (
+                      <Text style={styles.emptyText}>No low stock items found</Text>
+                    )}
+                  </View>
+                  <TouchableOpacity 
+                    style={styles.cardButton}
+                    onPress={() => navigation.navigate("Inventory")}
+                  >
+                    <Text style={styles.cardButtonText}>Manage Inventory</Text>
+                    <Ionicons name="arrow-forward" size={16} color="#2FAE60" />
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.mascotTimestamp}>
+                  {item.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </Text>
+              </View>
+            </View>
+          );
+
       case MESSAGE_TYPES.INSIGHT_CHART:
         return (
           <View style={styles.messageBubble}>
@@ -497,6 +582,15 @@ export default function MainChatScreen({ navigation }) {
                   <Ionicons name="bulb-outline" size={20} color="#F2994A" />
                 </View>
                 <Text style={styles.quickActionText}>Get Advice</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.quickActionButton} onPress={checkInventory} disabled={isLoading}>
+                <View style={[styles.quickActionIcon, { backgroundColor: "#F3F0FF" }]}>
+                  <Ionicons name="cube-outline" size={20} color="#9B51E0" />
+                </View>
+                <Text style={styles.quickActionText}>
+                  {isLoading ? "Loading..." : "Check Inventory"}
+                </Text>
               </TouchableOpacity>
             </ScrollView>
           </View>
