@@ -382,9 +382,9 @@ export default function ChatScreen({ navigation }) {
     setMessage("")
 
     // Detect language (simple keyword matching)
-    const isMalay = /(terima kasih|apa khabar|bagus|tolong|saya)/i.test(message)
-    const isChinese = /(谢谢|你好|帮助|销售|问题|我|客户|收入|商品)/i.test(message)
-
+    const isMalay = /(terima kasih|apa khabar|bagus|tolong|saya|jualan|item|pelanggan|inventori|pendapatan)/i.test(message);
+    const isChinese = /(谢谢|你好|帮助|销售|问题|我|客户|收入|商品)/i.test(message);
+  
     // Simulate AI response after a short delay
     setTimeout(() => {
       let responseText = ""
