@@ -1,20 +1,7 @@
 "use client"
 import { fetchLowStockItems } from '../api';
 import { useState, useRef, useEffect } from "react"
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  Image,
-  Animated,
-  Dimensions,
-  ScrollView,
-} from "react-native"
+import {View,Text,StyleSheet,TextInput,TouchableOpacity,FlatList,KeyboardAvoidingView,Platform,Image,Animated,Dimensions,ScrollView,} from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 
@@ -33,50 +20,49 @@ const MESSAGE_TYPES = {
 
 export default function MainChatScreen({ navigation }) {
 
-  // Inside your MainChatScreen component
-const [lowStockItems, setLowStockItems] = useState([]);
-const [isLoading, setIsLoading] = useState(false);
+  ///////////// For testing backend API fetching /////////////
+  const [lowStockItems, setLowStockItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-const checkInventory = async () => {
-  try {
-    setIsLoading(true);
-    // Show typing indicator
-    setIsTyping(true);
-    
-    // Add user message
-    const userMessage = {
-      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      type: MESSAGE_TYPES.TEXT,
-      text: "Check inventory",
-      sender: "user",
-      timestamp: new Date(),
-    };
-    setMessages((prevMessages) => [...prevMessages, userMessage]);
-    
-    // Fetch data from API
-    const items = await fetchLowStockItems();
-    setLowStockItems(items);
-    
-    // Add mascot response
-    addMascotMessage("I checked your inventory and found these low stock items:", MESSAGE_TYPES.TEXT);
-    
-    // Add inventory alert message
-    const inventoryMessage = {
-      id: `mascot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      type: MESSAGE_TYPES.INVENTORY_ALERT2,
-      sender: "mascot",
-      timestamp: new Date(),
-      items: items, // Pass the items to the message
-    };
-    setMessages((prevMessages) => [...prevMessages, inventoryMessage]);
-    
-  } catch (error) {
-    addMascotMessage("Sorry, I couldn't fetch your inventory data. Please try again later.", MESSAGE_TYPES.TEXT);
-  } finally {
-    setIsTyping(false);
-    setIsLoading(false);
-  }
-};
+  const checkInventory = async () => {
+    try {
+      setIsLoading(true);
+      setIsTyping(true);
+      
+      // Add user message
+      const userMessage = {
+        id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: MESSAGE_TYPES.TEXT,
+        text: "Check inventory",
+        sender: "user",
+        timestamp: new Date(),
+      };
+      setMessages((prevMessages) => [...prevMessages, userMessage]);
+      
+      // Fetch data from API
+      const items = await fetchLowStockItems();
+      setLowStockItems(items);
+      addMascotMessage("I checked your inventory and found these low stock items:", MESSAGE_TYPES.TEXT);
+      
+      // Add inventory alert message
+      const inventoryMessage = {
+        id: `mascot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: MESSAGE_TYPES.INVENTORY_ALERT2,
+        sender: "mascot",
+        timestamp: new Date(),
+        items: items,
+      };
+      setMessages((prevMessages) => [...prevMessages, inventoryMessage]);
+      
+    } catch (error) {
+      addMascotMessage("Sorry, I couldn't fetch your inventory data. Please try again later.", MESSAGE_TYPES.TEXT);
+    } finally {
+      setIsTyping(false);
+      setIsLoading(false);
+    }
+  };
+
+  ///////////// Welcome Message /////////////
   const [message, setMessage] = useState("")
   const [messages, setMessages] = useState([
     {
@@ -99,7 +85,7 @@ const checkInventory = async () => {
   const flatListRef = useRef(null)
   const inputRef = useRef(null)
 
-  // Animate mascot on load
+  ///////////// Animate mascot on load (show "...") /////////////
   useEffect(() => {
     animateMascot()
   }, [])
@@ -124,6 +110,7 @@ const checkInventory = async () => {
     ]).start()
   }
 
+  ///////////// Handle User Send Message Function /////////////
   const handleSend = () => {
     if (message.trim() === "") return
 
@@ -149,10 +136,9 @@ const checkInventory = async () => {
     }, 1000)
   }
 
+  ///////////// Hard Code some Reply (If user input include certain words) /////////////
   const processUserMessage = (userMessage) => {
-    // Animate mascot when responding
     animateMascot()
-
     const lowerCaseMessage = userMessage.toLowerCase()
 
     // Handle different types of queries
@@ -232,13 +218,15 @@ const checkInventory = async () => {
       const randomResponse = generalResponses[Math.floor(Math.random() * generalResponses.length)]
       addMascotMessage(randomResponse, MESSAGE_TYPES.TEXT)
 
-      // After a short delay, show quick actions
+      // After a short delay, show quick actions (This mcm not working ._.)
       setTimeout(() => {
         addMascotMessage(null, MESSAGE_TYPES.QUICK_ACTIONS)
-      }, 500)
+      }, 10)
     }
   }
 
+
+  ///////////// Function to show Mascot chat /////////////
   const addMascotMessage = (text, type) => {
     const newMessage = {
       id: `mascot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -251,6 +239,7 @@ const checkInventory = async () => {
     setMessages((prevMessages) => [...prevMessages, newMessage])
   }
 
+  ///////////// Function to show the QuickReplies (the squares) /////////////
   const addQuickReplies = (replies) => {
     const newMessage = {
       id: `quick-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -263,6 +252,7 @@ const checkInventory = async () => {
     setMessages((prevMessages) => [...prevMessages, newMessage])
   }
 
+  ///////////// Function when user press the QuickReplies (show under mascot chat) /////////////
   const handleQuickAction = (action) => {
     // Add user message showing the selected action
     const userMessage = {
@@ -285,6 +275,7 @@ const checkInventory = async () => {
     }, 800)
   }
 
+  ///////////// Those QuickReplies above text input /////////////
   const quickReplies = [
     "Show my sales insights",
     "Best selling items?",
@@ -302,8 +293,8 @@ const checkInventory = async () => {
     "客户保留技巧",
   ]
 
+  ///////////// Function when user press the QuickActions (the squares) /////////////
   const handleAction = (action) => {
-    // Animate mascot when responding
     animateMascot()
 
     // Handle different actions
@@ -392,6 +383,8 @@ const checkInventory = async () => {
     }
   }
 
+
+  ///////////// Main Funtion for Mascot to render message out /////////////
   const renderMessage = ({ item }) => {
     const isMascot = item.sender === "mascot"
 
@@ -589,7 +582,7 @@ const checkInventory = async () => {
                   <Ionicons name="cube-outline" size={20} color="#9B51E0" />
                 </View>
                 <Text style={styles.quickActionText}>
-                  {isLoading ? "Loading..." : "Check Inventory"}
+                  {isLoading ? "Loading..." : "Check Inventory Testing BE"}
                 </Text>
               </TouchableOpacity>
             </ScrollView>
@@ -651,6 +644,8 @@ const checkInventory = async () => {
     }
   }
 
+
+  ///////////// MAIN CHAT SCREEN /////////////
   return (
     <SafeAreaView style={styles.safeArea} >
       <View style={styles.header}>
