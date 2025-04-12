@@ -73,7 +73,41 @@ We’ve successfully implemented several planned future features, including:
 ---
 
 ## 5. Business Model
-### Scalability Roadmap
+
+### For Merchants
+
+#### 1. Profit Optimization 💰
+- Enables revenue growth by providing merchants with AI-driven insights into daily sales trends, top-performing products, and region-specific demand patterns.
+- Minimizes operational losses with predictive inventory alerts and automated tracking, crucial for managing fast-moving goods in dynamic, localized markets.
+- Facilitates margin improvements by recommending pricing strategies and sales actions aligned with local customer behavior and seasonal trends.
+
+#### 2. Competitive Edge 🏆
+- Offers real-time benchmarking with nearby and similar-category businesses, helping merchants understand their standing in highly competitive, fragmented markets.
+- Delivers adaptive recommendations tailored to merchant types, regional preferences, and maturity stages—essential in Southeast Asia's highly diverse and segmented merchant landscape.
+- Equips merchants with data-backed strategies to capitalize on local events, customer preferences, and competitor trends.
+
+#### 3. Accessible Intelligence 🧠
+- Supports seamless communication in major Southeast Asian languages (English, Malay, Chinese, etc.), reducing friction for non-English speaking merchants.
+- Empowers merchants with voice message input and AI-generated audio replies, supporting users across varying levels of digital and traditional literacy.
+- Ensures inclusive access to business intelligence with a simple, intuitive chat interface usable by both tech-savvy and first-time digital entrepreneurs.
+
+### For Grab
+
+#### 1. Revenue Growth Engine 🚀
+- Drives increased Gross Merchandise Value (GMV) by empowering merchants to sell more efficiently and adapt faster to market needs, resulting in more transactions across Grab’s ecosystem.
+- Unlocks new monetization streams through value-added AI features, premium analytics, and merchant-focused advertising or promotions.
+- Encourages broader adoption of Grab’s services by deepening merchants’ reliance on the platform for end-to-end business operations.
+
+#### 2. Merchant Retention & Platform Loyalty 🤝
+- Strengthens platform loyalty by embedding AI as a daily operational tool, making Grab indispensable to micro and SME merchants across the region.
+- Improves merchant satisfaction and engagement through personalized, proactive support that adapts to local markets and individual business trajectories.
+- Enables long-term retention through continuous learning from merchant feedback, fostering trust and sustained usage.
+
+#### 3. Smart Operations Platform 🤖
+- Significantly reduces support costs by replacing routine inquiries with automated AI responses, which scale across multiple languages and regions.
+- Enhances service consistency across Southeast Asia, ensuring merchants receive accurate, localized assistance without the need for large regional support teams.
+- Creates operational agility by freeing up human support resources to focus on merchant onboarding, training, and strategic growth partnerships.
+
 
 ---
 
