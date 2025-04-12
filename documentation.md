@@ -82,14 +82,14 @@ We’ve successfully implemented several planned future features, including:
 
 We have identified three key business model strategies to monetize the merchant assistant while delivering strong operational value. Each strategy is designed to drive revenue, increase merchant engagement, and deepen ecosystem integration.
 
-### In-App Ingredient Restock via GrabMart Integration 🛒
+### In-App Ingredient Restock with GrabMart 🛒
 
 - Transforms the assistant into a revenue-generating channel by enabling direct ingredient restocking when low inventory is detected.
 - Orders are fulfilled via GrabMart, driving traffic and transactions within Grab’s own ecosystem instead of external suppliers.
 - Builds merchant reliance on the assistant for daily operations, increasing stickiness and platform retention.
 - Converts operational utility into long-term business value by embedding GrabMart as a core part of the merchant’s workflow.
 
-### Freemium to Premium Plan 🌟
+### Premium Subscription Tier 🌟
 
 - Provides basic features for free to drive adoption, then encourages upgrades by locking high-value features behind a premium paywall.
 - Premium includes personalized insights, unlimited assistant usage, and forecasting tools—essential for serious merchants to optimize operations.
