@@ -131,14 +131,15 @@ We’ve successfully implemented several planned future features, including:
 ## 4. Technical Execution
 ### AI/ML Models
 
-| Model               | Tech Stack                | Metric / Purpose                                      |
-|---------------------|---------------------------|-------------------------------------------------------|
-| GPT-3.5 (OpenAI API)| Python, OpenAI API        | Multilingual chat-based assistant                     |
-| Whisper             | Python, Whisper API       | Transcribe voice to text for voice input              |
-| ElevenLabs (TTS API)| Python, ElevenLabs API    | Text-to-speech for audio responses                    |
-| Custom Analytics    | Pandas, NumPy             | Revenue, order volume, basket size, delivery time     |
-| Recommendation Logic| Scikit-learn, pandas      | Personalized item suggestions & underperforming items |
-| Advice Engine       | Python, GPT-3.5, RAG      | Provide personalized advice based on merchant's data  |
+| Model                        | Tech Stack                | Metric / Purpose                                      |
+|------------------------------|---------------------------|-------------------------------------------------------|
+| GPT-3.5 (OpenAI API)         | Python, OpenAI API        | Multilingual chat-based assistant                     |
+| Whisper                      | Python, Whisper API       | Transcribe voice to text for voice input              |
+| ElevenLabs (TTS API)         | Python, ElevenLabs API    | Text-to-speech for audio responses                    |
+| Custom Analytics             | Pandas, NumPy             | Revenue, order volume, basket size, delivery time     |
+| Recommendation Logic         | Scikit-learn, pandas      | Personalized item suggestions & underperforming items |
+| Advice Engine                | Python, GPT-3.5, RAG      | Provide personalized advice based on merchant's data  |
+| Time Series Sales Forecasting| Python, Prophet           | Predict future daily sales for merchants              |
 
 ---
 
