@@ -1,5 +1,5 @@
 import { API_URL } from '@env';
-
+const merchant_id = "0e1b3"; //*****Set Merchant ID HEREEE***** 
 
 export const fetchLowStockItems = async () => {
   try {
@@ -19,7 +19,7 @@ export const fetchLowStockItems = async () => {
   }
 };
 
-export const askAI = async (question, merchantId = "5c1f8") => {
+export const askAI = async (question, merchantId = merchant_id) => {
   try {
     console.log("Sending question to AI:", question)
     const response = await fetch(`${API_URL}/ask`, {
@@ -46,7 +46,7 @@ export const askAI = async (question, merchantId = "5c1f8") => {
   }
 }
 
-export const fetchForecast = async (merchantId = "5c1f8", days = 7) => {
+export const fetchForecast = async (merchantId = merchant_id, days = 7) => {
   try {
     const url = `${API_URL}/forecast/${merchantId}?days=${days}`;
     console.log('Fetching forecast data from:', url);

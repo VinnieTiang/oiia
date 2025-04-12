@@ -1,20 +1,33 @@
 "use client"
 import { fetchLowStockItems, askAI } from "../api"
 import { useState, useRef, useEffect } from "react"
-import {View,Text,StyleSheet,TextInput,TouchableOpacity,FlatList,KeyboardAvoidingView,Platform,Image,Animated,Dimensions,ScrollView,ActivityIndicator} from "react-native"
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Image,
+  Animated,
+  Dimensions,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons, Feather } from "@expo/vector-icons"
-import * as FileSystem from "expo-file-system";
-import { Audio } from "expo-av";
-import { OPENAI_API_KEY, ELEVENLABS_API_KEY } from "@env";
-
+import * as FileSystem from "expo-file-system"
+import { Audio } from "expo-av"
+import { OPENAI_API_KEY, ELEVENLABS_API_KEY } from "@env"
 
 // Get screen dimensions
 const { width: screenWidth } = Dimensions.get("window")
 
 // Define message types for different content
 const MESSAGE_TYPES = {
-  AITEXT:"ai_text",
+  AITEXT: "ai_text",
   TEXT: "text",
   SALES_SUMMARY: "sales_summary",
   INVENTORY_ALERT: "inventory_alert",
@@ -25,17 +38,16 @@ const MESSAGE_TYPES = {
 }
 
 export default function MainChatScreen({ navigation }) {
-  
   ///////////// For testing backend API fetching /////////////
-  const [lowStockItems, setLowStockItems] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isAILoading, setIsAILoading] = useState(false);
+  const [lowStockItems, setLowStockItems] = useState([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [isAILoading, setIsAILoading] = useState(false)
 
   const checkInventory = async () => {
     try {
-      setIsLoading(true);
-      setIsTyping(true);
-      
+      setIsLoading(true)
+      setIsTyping(true)
+
       // Add user message
       const userMessage = {
         id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -43,14 +55,14 @@ export default function MainChatScreen({ navigation }) {
         text: "Check inventory",
         sender: "user",
         timestamp: new Date(),
-      };
-      setMessages((prevMessages) => [...prevMessages, userMessage]);
-      
+      }
+      setMessages((prevMessages) => [...prevMessages, userMessage])
+
       // Fetch data from API
-      const items = await fetchLowStockItems();
-      setLowStockItems(items);
-      addMascotMessage("I checked your inventory and found these low stock items:", MESSAGE_TYPES.TEXT);
-      
+      const items = await fetchLowStockItems()
+      setLowStockItems(items)
+      addMascotMessage("I checked your inventory and found these low stock items:", MESSAGE_TYPES.TEXT)
+
       // Add inventory alert message
       const inventoryMessage = {
         id: `mascot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -58,16 +70,15 @@ export default function MainChatScreen({ navigation }) {
         sender: "mascot",
         timestamp: new Date(),
         items: items,
-      };
-      setMessages((prevMessages) => [...prevMessages, inventoryMessage]);
-      
+      }
+      setMessages((prevMessages) => [...prevMessages, inventoryMessage])
     } catch (error) {
-      addMascotMessage("Sorry, I couldn't fetch your inventory data. Please try again later.", MESSAGE_TYPES.TEXT);
+      addMascotMessage("Sorry, I couldn't fetch your inventory data. Please try again later.", MESSAGE_TYPES.TEXT)
     } finally {
-      setIsTyping(false);
-      setIsLoading(false);
+      setIsTyping(false)
+      setIsLoading(false)
     }
-  };
+  }
 
   ///////////// Welcome Message /////////////
   const [message, setMessage] = useState("")
@@ -95,14 +106,14 @@ export default function MainChatScreen({ navigation }) {
   const inputRef = useRef(null)
 
   //////// MICCCCC /////////
-  const [isListening, setIsListening] = useState(false);
-  const [speechError, setSpeechError] = useState("");
-  const [isRecording, setIsRecording] = useState(false);
-  const [recording, setRecording] = useState(null);
-  const [isLoadingTranscription, setIsLoadingTranscription] = useState(false);
-  const [currentlyPlayingId, setCurrentlyPlayingId] = useState(null);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [soundObject, setSoundObject] = useState(null);
+  const [isListening, setIsListening] = useState(false)
+  const [speechError, setSpeechError] = useState("")
+  const [isRecording, setIsRecording] = useState(false)
+  const [recording, setRecording] = useState(null)
+  const [isLoadingTranscription, setIsLoadingTranscription] = useState(false)
+  const [currentlyPlayingId, setCurrentlyPlayingId] = useState(null)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [soundObject, setSoundObject] = useState(null)
 
   ///////////// Animate mascot on load (show "...") & MIC /////////////
   const animateMascot = () => {
@@ -125,9 +136,70 @@ export default function MainChatScreen({ navigation }) {
     ]).start()
   }
 
+  // Add these new state variables for typing dots animation
+  const [dot1Opacity] = useState(new Animated.Value(0.3))
+  const [dot2Opacity] = useState(new Animated.Value(0.3))
+  const [dot3Opacity] = useState(new Animated.Value(0.3))
+
+  // Add this new function to animate the typing dots
+  const animateTypingDots = () => {
+    Animated.loop(
+      Animated.sequence([
+        // First dot animation
+        Animated.timing(dot1Opacity, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        // Second dot animation
+        Animated.timing(dot2Opacity, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        // Third dot animation
+        Animated.timing(dot3Opacity, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        // Reset all dots
+        Animated.parallel([
+          Animated.timing(dot1Opacity, {
+            toValue: 0.3,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(dot2Opacity, {
+            toValue: 0.3,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(dot3Opacity, {
+            toValue: 0.3,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]),
+      ]),
+    ).start()
+  }
+
+  // Add this effect to start/stop the typing dots animation
+  useEffect(() => {
+    if (isTyping) {
+      animateTypingDots()
+    } else {
+      // Reset animations when not typing
+      dot1Opacity.setValue(0.3)
+      dot2Opacity.setValue(0.3)
+      dot3Opacity.setValue(0.3)
+    }
+  }, [isTyping])
+
   useEffect(() => {
     //Animate "..."
-    animateMascot();
+    animateMascot()
 
     const setupAudio = async () => {
       try {
@@ -137,21 +209,20 @@ export default function MainChatScreen({ navigation }) {
           staysActiveInBackground: true,
           shouldDuckAndroid: true,
           playThroughEarpieceAndroid: false,
-        });
-        console.log("Audio mode set up for playback");
+        })
+        console.log("Audio mode set up for playback")
       } catch (error) {
-        console.error("Failed to set audio mode:", error);
+        console.error("Failed to set audio mode:", error)
       }
-    };
-  
-    setupAudio();
-  
+    }
+
+    setupAudio()
+
     return () => {
       if (soundObject) {
-        soundObject.unloadAsync();
+        soundObject.unloadAsync()
       }
-    };
-  
+    }
   }, [])
 
   const requestAudioPermission = async () => {
@@ -249,10 +320,6 @@ export default function MainChatScreen({ navigation }) {
     }
   }
 
-
-
-
-
   //////////// Convert text to speech using OpenAI TTS API /////////////
   const textToSpeech = async (text, messageId) => {
     // Stop any currently playing audio
@@ -260,17 +327,17 @@ export default function MainChatScreen({ navigation }) {
       console.log("Unloading previous audio")
       await soundObject.unloadAsync()
     }
-  
+
     setCurrentlyPlayingId(messageId)
     setIsSpeaking(true)
-  
+
     try {
       console.log("Starting TTS process for text:", text.substring(0, 30) + "...")
-  
+
       // Detect language to choose voice and API
       const isMalay = /(terima kasih|apa khabar|bagus|tolong|saya|ini|anda|tinggi|jualan)/i.test(text)
       const isChinese = /(谢谢|你好|帮助|销售|问题|我|客户|收入|商品)/i.test(text)
-  
+
       // Set audio mode for playback
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: false,
@@ -279,16 +346,16 @@ export default function MainChatScreen({ navigation }) {
         shouldDuckAndroid: true,
         playThroughEarpieceAndroid: false,
       })
-  
-      let audioBlob;
-      
+
+      let audioBlob
+
       // Use ElevenLabs for Malay
       if (isMalay) {
         console.log("Using ElevenLabs API for Malay text")
-        
+
         // Replace with your preferred voice ID from ElevenLabs
-        const voiceId = "Xb7hH8MSUJpSbSDYk0k2"; 
-        
+        const voiceId = "Xb7hH8MSUJpSbSDYk0k2"
+
         const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
           method: "POST",
           headers: {
@@ -301,32 +368,31 @@ export default function MainChatScreen({ navigation }) {
             voice_settings: {
               stability: 0.5,
               similarity_boost: 0.1,
-              style: 0.3
-            }
+              style: 0.3,
+            },
           }),
-        });
-        
+        })
+
         console.log("ElevenLabs API response status:", response.status)
-        
+
         if (!response.ok) {
           const errorData = await response.json()
           console.error("ElevenLabs API error:", errorData)
           throw new Error(errorData.detail?.message || "ElevenLabs API request failed")
         }
-        
+
         audioBlob = await response.blob()
-        
       } else {
         // Use original OpenAI TTS for non-Malay languages
         // Select voice based on detected language
         let voice = "nova" // Default English voice
-        
+
         if (isChinese) {
           voice = "alloy" // Use a different voice for Chinese
         }
-        
+
         console.log("Using OpenAI voice:", voice)
-        
+
         const response = await fetch("https://api.openai.com/v1/audio/speech", {
           method: "POST",
           headers: {
@@ -339,52 +405,49 @@ export default function MainChatScreen({ navigation }) {
             voice: voice,
           }),
         })
-        
+
         console.log("TTS API response status:", response.status)
-        
+
         if (!response.ok) {
           const errorData = await response.json()
           console.error("TTS API error:", errorData)
           throw new Error(errorData.error?.message || "TTS API request failed")
         }
-        
+
         audioBlob = await response.blob()
       }
-      
+
       console.log("Received audio blob, size:", audioBlob.size)
-  
+
       // Process the audio blob (same for both APIs)
       const reader = new FileReader()
       reader.readAsDataURL(audioBlob)
-  
+
       reader.onloadend = async () => {
         const base64data = reader.result
         console.log("Converted blob to base64, length:", base64data.length)
-  
+
         // Remove the data URL prefix to get just the base64 string
         const base64Audio = base64data.split(",")[1]
-  
+
         // Create a temporary file URI for the audio
         const fileUri = `${FileSystem.cacheDirectory}temp_audio_${messageId}.mp3`
         console.log("Writing audio to file:", fileUri)
-  
+
         // Write the base64 data to the file
         await FileSystem.writeAsStringAsync(fileUri, base64Audio, {
           encoding: FileSystem.EncodingType.Base64,
         })
-  
+
         console.log("Audio file written, preparing to play...")
-  
+
         // Play the audio with proper volume
         console.log("Creating sound object...")
-        const { sound } = await Audio.Sound.createAsync(
-          { uri: fileUri },
-          { shouldPlay: true, volume: 1.0 },
-        )
-  
+        const { sound } = await Audio.Sound.createAsync({ uri: fileUri }, { shouldPlay: true, volume: 1.0 })
+
         console.log("Sound created and playing...")
         setSoundObject(sound)
-  
+
         // Handle audio completion
         sound.setOnPlaybackStatusUpdate((status) => {
           console.log(
@@ -395,7 +458,7 @@ export default function MainChatScreen({ navigation }) {
             "duration:",
             status.durationMillis,
           )
-  
+
           if (status.didJustFinish) {
             console.log("Audio playback finished")
             setIsSpeaking(false)
@@ -406,19 +469,19 @@ export default function MainChatScreen({ navigation }) {
     } catch (error) {
       if (error.message.includes("ElevenLabs")) {
         // ElevenLabs specific error handling
-        console.error("ElevenLabs API error:", error);
+        console.error("ElevenLabs API error:", error)
         // Fallback to OpenAI TTS if ElevenLabs fails
         try {
-          alert("Falling back to default TTS service");
+          alert("Falling back to default TTS service")
           // Call OpenAI TTS as fallback
           // ... fallback code here
         } catch (fallbackError) {
-          console.error("Fallback TTS also failed:", fallbackError);
-          alert("All TTS services failed. Please try again later.");
+          console.error("Fallback TTS also failed:", fallbackError)
+          alert("All TTS services failed. Please try again later.")
         }
       } else {
         // Handle other errors
-        alert("Failed to play speech: " + error.message);
+        alert("Failed to play speech: " + error.message)
       }
     }
   }
@@ -434,33 +497,27 @@ export default function MainChatScreen({ navigation }) {
     setCurrentlyPlayingId(null)
   }
 
-
-
-
-
-
-
   //////////////// Feedback for AI did by YY ////////////////////////////
   const animateFeedback = (anim) => {
-      Animated.sequence([
-        Animated.timing(anim, {
-          toValue: 1.3,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-        Animated.timing(anim, {
-          toValue: 1,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-      ]).start()
-    }
-  
-    const handleFeedback = (messageId, type) => {
-      setMessages((prevMessages) =>
-        prevMessages.map((msg) => (msg.id === messageId && msg.sender === "mascot" ? { ...msg, feedback: type } : msg)),
-      )
-    }
+    Animated.sequence([
+      Animated.timing(anim, {
+        toValue: 1.3,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(anim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start()
+  }
+
+  const handleFeedback = (messageId, type) => {
+    setMessages((prevMessages) =>
+      prevMessages.map((msg) => (msg.id === messageId && msg.sender === "mascot" ? { ...msg, feedback: type } : msg)),
+    )
+  }
 
   ///////////// Handle User Send Message Function /////////////
   const handleSend = async () => {
@@ -480,21 +537,24 @@ export default function MainChatScreen({ navigation }) {
     setMessage("")
 
     if (userQuery.trim().toLowerCase() === "start over") {
-      addMascotMessage("I'm here to boost your business! Ask me about sales trends, inventory status, or business advice.", MESSAGE_TYPES.TEXT)
+      addMascotMessage(
+        "I'm here to boost your business! Ask me about sales trends, inventory status, or business advice.",
+        MESSAGE_TYPES.TEXT,
+      )
       addMascotMessage(null, MESSAGE_TYPES.QUICK_ACTIONS)
       return
     }
-    
+
     // Show typing indicator
     setIsTyping(true)
     setIsAILoading(true)
-  
+
     try {
       // Call the AI API
       const aiResponse = await askAI(userQuery)
 
       // Animate mascot when responding
-      animateMascot()
+      //animateMascot()
 
       // Add the AI response
       addMascotMessage(aiResponse, MESSAGE_TYPES.AITEXT)
@@ -515,13 +575,15 @@ export default function MainChatScreen({ navigation }) {
 
   ///////////// Hard Code some Reply (If user input include certain words) /////////////
   const processUserMessage = (userMessage) => {
-    animateMascot()
+    //animateMascot()
     const lowerCaseMessage = userMessage.toLowerCase()
 
     // Detect language (simple keyword matching)
-    const isMalay = /(terima kasih|apa khabar|bagus|tolong|saya|jualan|item|pelanggan|inventori|pendapatan)/i.test(message);
-    const isChinese = /(谢谢|你好|帮助|销售|问题|我|客户|收入|商品)/i.test(message);
-  
+    const isMalay = /(terima kasih|apa khabar|bagus|tolong|saya|jualan|item|pelanggan|inventori|pendapatan)/i.test(
+      message,
+    )
+    const isChinese = /(谢谢|你好|帮助|销售|问题|我|客户|收入|商品)/i.test(message)
+
     // Simulate AI response after a short delay
     setTimeout(() => {
       let responseText = ""
@@ -578,7 +640,7 @@ export default function MainChatScreen({ navigation }) {
           responseText = "我可以帮助您了解销售情况、库存管理以及促进业务增长的技巧。您想了解什么？"
         }
       }
-      
+
       const newMessageId = (Date.now() + 1).toString()
       const aiMessage = {
         id: newMessageId,
@@ -684,7 +746,7 @@ export default function MainChatScreen({ navigation }) {
           { text: "Not now", action: "dismiss" },
         ])
       }, 500)
-    } 
+    }
     // else {
     //   // General response
     //   const generalResponses = [
@@ -703,7 +765,6 @@ export default function MainChatScreen({ navigation }) {
     //   }, 10)
     // }
   }
-
 
   ///////////// Function to show Mascot chat /////////////
   const addMascotMessage = (text, type) => {
@@ -795,7 +856,7 @@ export default function MainChatScreen({ navigation }) {
           navigation.navigate("Inventory")
           break
         case "insight":
-          navigation.navigate("Insight",{ scrollToBottom: true })
+          navigation.navigate("Insight", { scrollToBottom: true })
           break
         case "advice":
           navigation.navigate("Advice")
@@ -1088,7 +1149,10 @@ export default function MainChatScreen({ navigation }) {
                   <Ionicons name="trending-up" size={16} color="#2FAE60" />
                   <Text style={styles.insightText}>Sales are up 12% this week</Text>
                 </View>
-                <TouchableOpacity style={styles.cardButton} onPress={() => navigation.navigate("Insight",{ scrollToBottom: true })}>
+                <TouchableOpacity
+                  style={styles.cardButton}
+                  onPress={() => navigation.navigate("Insight", { scrollToBottom: true })}
+                >
                   <Text style={styles.cardButtonText}>View Full Insights</Text>
                   <Ionicons name="arrow-forward" size={16} color="#2FAE60" />
                 </TouchableOpacity>
@@ -1111,13 +1175,6 @@ export default function MainChatScreen({ navigation }) {
                 <Text style={styles.quickActionText}>Show Sales</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("Check Inventory")}>
-                <View style={[styles.quickActionIcon, { backgroundColor: "#F3F0FF" }]}>
-                  <Ionicons name="cube-outline" size={20} color="#9B51E0" />
-                </View>
-                <Text style={styles.quickActionText}>Check Inventory</Text>
-              </TouchableOpacity>
-
               <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("View Insights")}>
                 <View style={[styles.quickActionIcon, { backgroundColor: "#F0FFF4" }]}>
                   <Ionicons name="bar-chart-outline" size={20} color="#2FAE60" />
@@ -1132,6 +1189,13 @@ export default function MainChatScreen({ navigation }) {
                 <Text style={styles.quickActionText}>Get Advice</Text>
               </TouchableOpacity>
 
+              <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("Check Inventory")}>
+                <View style={[styles.quickActionIcon, { backgroundColor: "#F3F0FF" }]}>
+                  <Ionicons name="cube-outline" size={20} color="#9B51E0" />
+                </View>
+                <Text style={styles.quickActionText}>Check Inventory</Text>
+              </TouchableOpacity>
+              
               <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("View Leaderboard")}>
                 <View style={[styles.quickActionIcon, { backgroundColor: "#FFF0F5" }]}>
                   <Ionicons name="trophy-outline" size={20} color="#E91E63" />
@@ -1206,7 +1270,6 @@ export default function MainChatScreen({ navigation }) {
     }
   }
 
-
   ///////////// MAIN CHAT SCREEN /////////////
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -1252,9 +1315,47 @@ export default function MainChatScreen({ navigation }) {
             <Image source={require("../assets/mascot-avatar.png")} style={styles.typingAvatar} />
           </View>
           <View style={styles.typingBubble}>
-            <View style={styles.typingDot} />
-            <View style={styles.typingDot} />
-            <View style={styles.typingDot} />
+            <Animated.View
+              style={[
+                styles.typingDot,
+                {
+                  opacity: dot1Opacity.interpolate({
+                    inputRange: [0, 0.5, 1],
+                    outputRange: [0.3, 1, 0.3],
+                  }),
+                },
+              ]}
+            />
+            <Animated.View
+              style={[
+                styles.typingDot,
+                {
+                  opacity: dot2Opacity.interpolate({
+                    inputRange: [0, 0.5, 1],
+                    outputRange: [0.5, 1, 0.5],
+                  }),
+                  transform: [
+                    {
+                      scale: mascotAnimation.interpolate({
+                        inputRange: [0, 0.5, 1],
+                        outputRange: [0.8, 1.2, 0.8],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            />
+            <Animated.View
+              style={[
+                styles.typingDot,
+                {
+                  opacity: dot3Opacity.interpolate({
+                    inputRange: [0, 0.5, 1],
+                    outputRange: [0.7, 1, 0.7],
+                  }),
+                },
+              ]}
+            />
           </View>
         </View>
       )}
@@ -1522,7 +1623,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 2,
     width: screenWidth * 0.7,
-    marginTop:10,
+    marginTop: 10,
   },
   chartImage: {
     width: "100%",
@@ -1601,6 +1702,11 @@ const styles = StyleSheet.create({
   quickActionsContainer: {
     marginBottom: 10,
     marginLeft: 44,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.5,
+    shadowRadius: 1,
+    elevation: 1,
   },
   quickActionButton: {
     backgroundColor: "white",
@@ -1609,11 +1715,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
     alignItems: "center",
     width: 100,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 1,
+
   },
   quickActionIcon: {
     width: 40,
