@@ -529,7 +529,7 @@ export default function LeaderboardScreen() {
                   <View style={styles.crownContainer}>
                     <Ionicons name="trophy" size={20} color="#C0C0C0" />
                   </View>
-                  <Image source={require("../assets/profile-placeholder.png")} style={styles.topThreeImage} />
+                  <Image source={require("../assets/profile-placeholder2.png")} style={styles.topThreeImage} />
                   <View style={[styles.topThreeBadge, styles.secondPlaceBadge]}>
                     <Text style={styles.topThreeBadgeText}>2</Text>
                   </View>
@@ -562,7 +562,7 @@ export default function LeaderboardScreen() {
                     <Ionicons name="trophy" size={24} color="#FFD700" />
                   </View>
                   <Image
-                    source={require("../assets/profile-placeholder.png")}
+                    source={require("../assets/profile-placeholder1.png")}
                     style={[styles.topThreeImage, styles.firstPlaceImage]}
                   />
                   <View style={[styles.topThreeBadge, styles.firstPlaceBadge]}>
@@ -598,7 +598,7 @@ export default function LeaderboardScreen() {
                   <View style={styles.crownContainer}>
                     <Ionicons name="trophy" size={20} color="#CD7F32" />
                   </View>
-                  <Image source={require("../assets/profile-placeholder.png")} style={styles.topThreeImage} />
+                  <Image source={require("../assets/profile-placeholder3.png")} style={styles.topThreeImage} />
                   <View style={[styles.topThreeBadge, styles.thirdPlaceBadge]}>
                     <Text style={styles.topThreeBadgeText}>3</Text>
                   </View>

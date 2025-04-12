@@ -849,7 +849,7 @@ export default function MainChatScreen({ navigation }) {
         case "get advice":
           addMascotMessage("Based on your recent performance, here's my advice:", MESSAGE_TYPES.TEXT)
           addMascotMessage(
-            "Consider adding more spicy options to your menu. 85% of customers in your area prefer spicy food, and restaurants with spicy options see 18% higher repeat orders in your region.",
+            "💡 Consider adding more spicy options to your menu. 85% of customers in your area prefer spicy food, and restaurants with spicy options see 18% higher repeat orders in your region.",
             MESSAGE_TYPES.TEXT,
           )
 
@@ -1011,18 +1011,18 @@ export default function MainChatScreen({ navigation }) {
                 <View style={styles.inventoryList}>
                   <View style={styles.inventoryItem}>
                     <View style={[styles.inventoryStatus, { backgroundColor: "#ffebee" }]} />
-                    <Text style={styles.inventoryName}>Chicken Rice</Text>
+                    <Text style={styles.inventoryName}>Chicken thigh</Text>
                     <Text style={styles.inventoryCount}>5 left</Text>
                   </View>
                   <View style={styles.inventoryItem}>
                     <View style={[styles.inventoryStatus, { backgroundColor: "#ffebee" }]} />
-                    <Text style={styles.inventoryName}>Nasi Lemak</Text>
-                    <Text style={styles.inventoryCount}>3 left</Text>
+                    <Text style={styles.inventoryName}>Chili sauce</Text>
+                    <Text style={styles.inventoryCount}>4 left</Text>
                   </View>
                   <View style={styles.inventoryItem}>
                     <View style={[styles.inventoryStatus, { backgroundColor: "#fff8e1" }]} />
-                    <Text style={styles.inventoryName}>Curry Puff</Text>
-                    <Text style={styles.inventoryCount}>4 left</Text>
+                    <Text style={styles.inventoryName}>Jasmine rice</Text>
+                    <Text style={styles.inventoryCount}>3 left</Text>
                   </View>
                 </View>
                 <TouchableOpacity style={styles.cardButton} onPress={() => navigation.navigate("Inventory")}>
@@ -1171,7 +1171,7 @@ export default function MainChatScreen({ navigation }) {
             <View style={[styles.messageContent, styles.cardContent]}>
               <View style={styles.profileCard}>
                 <View style={styles.profileHeader}>
-                  <Image source={require("../assets/profile-placeholder.png")} style={styles.profileImage} />
+                  <Image source={require("../assets/profile-placeholder1.png")} style={styles.profileImage} />
                   <Text style={styles.profileName}>Warung Makan Sedap</Text>
                   <Text style={styles.profileBio}>Restaurant • Since 2018</Text>
                 </View>

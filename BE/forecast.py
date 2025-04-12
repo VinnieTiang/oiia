@@ -59,7 +59,7 @@ def forecast_to_summary(forecast_df: pd.DataFrame):
 
     return f"""
 📊 Forecast Summary (Next {len(forecast_df)} Days):
-- Average predicted daily sales: RM{avg_sales:.2f}
-- Highest predicted sales: RM{high_day['yhat']:.2f} on {high_day['ds'].strftime('%A, %d %b')}
-- Lowest predicted sales: RM{low_day['yhat']:.2f} on {low_day['ds'].strftime('%A, %d %b')}
+- Average predicted daily sales: RM{avg_sales:.0f}
+- Highest predicted sales: RM{high_day['yhat']:.0f} on {high_day['ds'].strftime('%A, %d %b')}
+- Lowest predicted sales: RM{low_day['yhat']:.0f} on {low_day['ds'].strftime('%A, %d %b')}
 """.strip()

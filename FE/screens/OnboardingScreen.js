@@ -16,7 +16,7 @@ const slides = [
   {
     id: "2",
     title: "Chat for Insights",
-    description: "Simply chat with Boostie to get personalized business insights and advice",
+    description: "Simply chat with Grablet to get personalized business insights and advice",
     icon: "analytics-outline",
   },
   {
