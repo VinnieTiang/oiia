@@ -29,7 +29,7 @@ Empower Grab merchant-partners with a proactive, voice-first AI assistant that d
 
 ---
 
-## 2. System Architecture (edit the datapart into csv filenames and link correctly)
+## 2. System Architecture
 
 ```mermaid
 graph TD
@@ -98,7 +98,7 @@ graph TD
 
 ---
 
-## 3. Data Utilization & Personalization (TODO)
+## 3. Data Utilization & Personalization
 ### Data Used
 We utilize the following datasets to provide personalized, data-driven recommendations and insights for merchant-partners:
 
