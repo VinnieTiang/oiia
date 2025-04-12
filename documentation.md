@@ -145,42 +145,28 @@ We’ve successfully implemented several planned future features, including:
 
 ## 5. Business Model
 
-Our business model focuses on enhancing merchant operations by integrating seamless restocking capabilities into Grab's platform. By leveraging the chatbot and partnering with GrabMart, merchants can quickly restock ingredients, improve operational efficiency, and foster stronger business relationships. The model introduces a transaction-based commission for Grab, while simultaneously boosting merchant retention and encouraging long-term engagement with the platform.
+We have identified three key business model strategies to monetize the merchant assistant while delivering strong operational value. Each strategy is designed to drive revenue, increase merchant engagement, and deepen ecosystem integration.
 
-**In-App Ingredient Restock  🛒**
+### In-App Ingredient Restock via Assistant & GrabMart Integration 🛒
 
-- Merchants can restock ingredients instantly from the chatbot when low inventory is detected, offering a seamless and immediate solution to inventory challenges.
+- Transforms the assistant into a revenue-generating channel by enabling direct ingredient restocking when low inventory is detected.
+- Orders are fulfilled via GrabMart, driving traffic and transactions within Grab’s own ecosystem instead of external suppliers.
+- Builds merchant reliance on the assistant for daily operations, increasing stickiness and platform retention.
+- Converts operational utility into long-term business value by embedding GrabMart as a core part of the merchant’s workflow.
 
-- It reduces the need to switch between multiple apps or suppliers, saving merchants valuable time and effort, which improves overall operational efficiency.
+### Freemium to Premium Plan 🌟
 
-- By turning actionable insights into direct business actions, it increases the assistant's practical value and makes it indispensable in the daily operations of merchants.
+- Provides basic features for free to drive adoption, then encourages upgrades by locking high-value features behind a premium paywall.
+- Premium includes personalized insights, unlimited assistant usage, and forecasting tools—essential for serious merchants to optimize operations.
+- This tiered model balances reach and monetization, ensuring wide user acquisition while capturing revenue from power users.
+- Increases merchant lifetime value (LTV) as they grow and transition from freemium to premium based on evolving needs.
 
+### Transaction-Based Commission Model 💰
 
-**Integrated with GrabMart 🔗**
-
-- Restocking is fulfilled through GrabMart, which not only drives internal ecosystem usage but also strengthens GrabMart’s position as a one-stop solution for merchant needs.
-
-- This integration establishes GrabMart as a trusted, go-to supply source for merchants, fostering long-term business relationships and loyalty.
-
-- It converts operational tools into a new sales channel for GrabMart, creating new revenue opportunities while seamlessly supporting merchant business functions.
-
-
-**Transaction-Based Commission 💰**
-
-- Grab earns a commission on every restock made through the assistant, creating a continuous revenue stream directly tied to merchant activity.
-
-- As merchant engagement increases, revenue naturally grows, making the business model scalable and adaptable to the platform's success.
-
-- This commission-based monetization model is sustainable and non-intrusive, allowing Grab to earn from the assistant’s functionality without disrupting the merchant's user experience.
-
-
-**Increased Merchant Retention 🤝**
-
-- The assistant becomes a core part of the merchant’s daily workflow, which increases their reliance on Grab’s platform and encourages long-term engagement.
-
-- The convenience and usefulness of the assistant, combined with its ability to solve key operational challenges, keep merchants loyal and significantly reduce churn.
-
-- Continuous usage and integration into the merchant’s routine build platform stickiness, making it harder for merchants to leave and encouraging them to expand their usage of Grab’s services.
+- Generates revenue by taking a small commission on every restock order placed through the assistant.
+- Monetization is directly tied to merchant activity, creating a scalable and performance-based income stream.
+- The model is non-intrusive—merchants benefit from convenience while Grab earns passively in the background.
+- Increased merchant engagement directly fuels revenue growth, creating a flywheel effect where the assistant’s usefulness drives adoption, and adoption drives monetization.
 
 ---
 
