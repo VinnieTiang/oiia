@@ -4,9 +4,9 @@
 
 - 👨‍💻 Yee Song Jun 
 - 👩‍💻 Tan Theng Fang
-- 👨‍💻 Vinnie Tiang Wen Ying  
+- 👩‍💻 Vinnie Tiang Wen Ying  
 - 👩‍💻 Tan Ying Shan  
-- 👨‍💻 Wong Yit Yen  
+- 👩‍💻 Wong Yit Yen  
 
 ---
 
