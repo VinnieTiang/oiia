@@ -1320,7 +1320,7 @@ export default function MainChatScreen({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "white",
   },
   header: {
     flexDirection: "row",
