@@ -3,7 +3,7 @@
 ### Objective
 Empower Grab merchant-partners with a proactive, voice-first AI assistant that delivers real-time insights, automates workflows, and bridges language/digital literacy gaps in Southeast Asia.
 
-### Key Features (TODO)
+### Key Features
 - **Voice-First Design**:
   - Integrated speech-to-text (Whisper API) and text-to-speech (ElevenLabs/OpenAI) for a hands-free chatbot experience.
   - Multilingual support: English, Malay, and Chinese (prototype) — scalable to other Southeast Asian languages.
@@ -13,7 +13,6 @@ Empower Grab merchant-partners with a proactive, voice-first AI assistant that d
     - Highlights top-selling items, peak hours, and predicts upcoming sales trends using Prophet
   - **Intelligent Inventory Management**:
     - Auto real-time low-stock detection and alert with restock suggestions
-    - Potential auto-supplier ordering (?)
 - **AI-Driven Insights**
   - **Business Advice Engine**:
     - Combines GPT-3.5 with a custom Retrieval-Augmented Generation(RAG) system to generate contextual insights from transactional data
@@ -30,71 +29,7 @@ Empower Grab merchant-partners with a proactive, voice-first AI assistant that d
 ---
 
 ## 2. System Architecture
-
-```mermaid
-graph TD
-
-  %% Subgraph: User Side
-  subgraph User_Side ["User Side"]
-    A1(Voice Input / UI Actions)
-    A2(Speech-to-Text)
-    A3(User Feedback)
-  end
-
-  %% Subgraph: Frontend
-  subgraph Frontend ["Frontend (Mobile/Web App)"]
-    B1(Voice UI + Interactive Dashboard)
-    B2(Charts + One-tap Actions)
-    B3(Feedback Buttons)
-  end
-
-  %% Subgraph: Backend
-  subgraph Backend ["Backend (FastAPI)"]
-    C1(Whisper API - STT)
-    C2(ElevenLabs / TTS API)
-    C3(Sales Analytics Engine)
-    C4(Inventory Management)
-    C5(Advice Engine - GPT-3.5 + RAG)
-    C6(Merchant Ranking & Clustering)
-    C7(User Feedback Logger)
-  end
-
-  %% Subgraph: Data Layer
-  subgraph Data_Layer ["Data Layer"]
-    D1(Transaction DB)
-    D2(Inventory DB)
-    D3(Merchant DB)
-    D4(Vector DB for RAG)
-  end
-
-  %% Dummy node to force alignment
-  DUMMY((Dummy Node for Layout Alignment)) 
-
-  %% Connect dummy to Data Layer to force alignment in TD layout
-  C1 --> DUMMY
-  DUMMY --> D1
-
-  %% Original Connections
-  A1 --> B1
-  A2 --> C1
-  A3 --> B3
-
-  B1 --> C1
-  B1 --> C3
-  B1 --> C4
-  B1 --> C5
-  B1 --> C6
-  B3 --> C7
-
-  C1 --> C2
-  C3 --> D1
-  C4 --> D2
-  C5 --> D1
-  C5 --> D4
-  C6 --> D3
-  C7 --> D1
-
-```
+![UMHack architectural diagram drawio](https://github.com/user-attachments/assets/758da737-2b16-46e1-9329-8605ab04205f)
 
 ---
 
@@ -188,9 +123,10 @@ Our business model focuses on enhancing merchant operations by integrating seaml
   - Replace Prophet with Long Short-Term Memory(LSTM) model to better capture complex patterns in merchant's transaction data
 - **Language Expansion**:
   - Support more Southeast Asian languages, dialects and slangs
-- **Stronger Personalization**:
-  - Learn from user behavior to refine insights
-
+- **Promo Effectiveness Prediction**:
+  - Use past transaction data to predict how effective a promotion or discount will be, estimating potential sales lift, ideal timing, and target audience to maximize ROI
+- **Stock-Level Integration with Auto-Restock Suggestion**:
+  - Monitor real-time stock levels and suggest restocks based on sales velocity and supplier lead time, which help merchants stay ahead of demand with minimal effort.
 ---
 
 ## 7. User Flow Diagram
