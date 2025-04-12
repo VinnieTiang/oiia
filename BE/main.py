@@ -4,6 +4,11 @@ from dotenv import load_dotenv
 import os
 from rag import get_merchant_summary
 from openai import OpenAI
+from forecast import (
+    load_merchant_sales_series,
+    forecast_sales,
+    forecast_to_summary
+)
 
 # Load API key from .env
 load_dotenv()
@@ -55,3 +60,28 @@ Suggestions:
     return {
         "reply": response.choices[0].message.content
     }
+
+
+@app.get("/forecast/{merchant_id}")
+async def get_forecast(merchant_id: str, days: int = 7):
+    try:
+        # Load merchant sales data
+        df = load_merchant_sales_series(merchant_id)
+        if df.empty:
+            return {"error": "No sales data available for this merchant."}
+
+        # Run forecasting
+        forecast_df = forecast_sales(df, periods=days)
+        summary = forecast_to_summary(forecast_df)
+
+        # Return forecast values + summary
+        return {
+            "merchant_id": merchant_id,
+            "days": days,
+            "forecast": forecast_df.to_dict(orient="records"),
+            "summary": summary
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
+
