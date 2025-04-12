@@ -14,6 +14,27 @@ def load_merchant_sales_series(merchant_id: str, file_path="data/transaction_dat
     daily_sales.columns = ["ds", "y"]
     return daily_sales
 
+# def forecast_sales(df: pd.DataFrame, periods=7):
+#     if len(df) < 10:
+#         raise ValueError("Not enough data to train a forecast model.")
+
+#     model = Prophet()
+#     model.fit(df)
+
+#     future = model.make_future_dataframe(periods=periods)
+#     forecast = model.predict(future)
+
+#     # Select only date and prediction
+#     forecast_result = forecast[["ds", "yhat"]].tail(periods)
+
+#     # Add a dummy point to force Y-axis min to 4000
+#     dummy_row = pd.DataFrame([{
+#         "ds": forecast_result["ds"].iloc[-1] + pd.Timedelta(days=1),  # future date not shown
+#         "yhat": 4000
+#     }])
+#     forecast_result = pd.concat([forecast_result, dummy_row], ignore_index=True)
+
+#     return forecast_result
 
 def forecast_sales(df: pd.DataFrame, periods=7):
     if len(df) < 10:
@@ -25,7 +46,10 @@ def forecast_sales(df: pd.DataFrame, periods=7):
     future = model.make_future_dataframe(periods=periods)
     forecast = model.predict(future)
 
-    return forecast[["ds", "yhat"]].tail(periods)
+    # Select only date and prediction
+    forecast_result = forecast[["ds", "yhat"]].tail(periods)
+
+    return forecast_result
 
 
 def forecast_to_summary(forecast_df: pd.DataFrame):
