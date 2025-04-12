@@ -7,11 +7,11 @@ Empower Grab merchant-partners with a proactive, voice-first AI assistant that d
 - **Voice-First Design**:
   - Integrated speech-to-text (Whisper API) and text-to-speech (ElevenLabs/OpenAI) for a hands-free chatbot experience.
   - Multilingual support: English, Malay, and Chinese (prototype) — scalable to other Southeast Asian languages.
-- **Real-Time Business Analytics**:
+- **Real-Time Sales Analytics**:
   - **Smart Sales Dashboard**:
     - Visualizes daily, weekly, and monthly performance
     - Highlights top-selling items, peak hours, and predicts upcoming sales trends using Prophet
-  - **Intelligent Inventory Management**:
+  - **Streamlined Inventory**:
     - Auto real-time low-stock detection and alert with restock suggestions
 - **AI-Driven Insights**
   - **Business Advice Engine**:
@@ -64,13 +64,21 @@ We’ve successfully implemented several planned future features, including:
 ---
 
 ## 4. Technical Execution
+### Technology Stack
+
+| Component                    | Technology/Tools                      | Metric / Purpose                                      |
+|------------------------------|---------------------------------------|-------------------------------------------------------|
+| Backend                      | FastAPI, Python	REST API development | data processing, and integration with AI models       |
+| Frontend                     | React Native, JavaScript              | Cross-platform mobile app development for iOS/Android |
+
 ### AI/ML Models
 
 | Model                        | Tech Stack                | Metric / Purpose                                      |
 |------------------------------|---------------------------|-------------------------------------------------------|
 | GPT-3.5 (OpenAI API)         | Python, OpenAI API        | Multilingual chat-based assistant                     |
-| Whisper                      | Python, Whisper API       | Transcribe voice to text for voice input              |
-| ElevenLabs (TTS API)         | Python, ElevenLabs API    | Text-to-speech for audio responses                    |
+| Whisper (STT)                | Python, Whisper API       | Transcribe voice to text for voice input              |
+| OpenAI TTS                   | Python, OpenAI API        | TTS for broader language support                      |
+| ElevenLabs (TTS)             | Python, ElevenLabs API    | Text-to-speech for Malay audio responses              |
 | Custom Analytics             | Pandas, NumPy             | Revenue, order volume, basket size, delivery time     |
 | Recommendation Logic         | Scikit-learn, pandas      | Personalized item suggestions & underperforming items |
 | Advice Engine                | Python, GPT-3.5, RAG      | Provide personalized advice based on merchant's data  |
@@ -107,7 +115,7 @@ We have identified three key business model strategies to monetize the merchant 
 
 ## 6. Future Improvement
 - **AI & Prediction Enhancements**:
-  - Replace Prophet with Long Short-Term Memory(LSTM) model to better capture complex patterns in merchant's transaction data
+  - Replace Prophet with deep learning model such as Long Short-Term Memory(LSTM) to better capture complex patterns in merchant's transaction data
 - **Language Expansion**:
   - Support more Southeast Asian languages, dialects and slangs
 - **Promo Effectiveness Prediction**:
