@@ -4,29 +4,82 @@
 Empower Grab merchant-partners with a proactive, voice-first AI assistant that delivers real-time insights, automates workflows, and bridges language/digital literacy gaps in Southeast Asia.
 
 ### Key Features (TODO)
-- **Proactive Alerts**: Low-stock warnings, demand spikes, and competitor benchmarks.
-- **Voice-Driven Workflows**: Dialect-aware speech-to-text for multiple language.
-- **Predictive Insights**: AI-driven demand forecasting and pricing optimization.
-- **Auto-Actions**: One-tap restocking, promo creation, and supplier coordination.
+- **Voice-First Design**:
+  - Integrated speech-to-text (Whisper API) and text-to-speech (ElevenLabs/OpenAI) for a hands-free chatbot experience.
+  - Multilingual support: English, Malay, and Chinese (prototype) — scalable to other Southeast Asian languages.
+- **Real-Time Business Analytics**:
+  - **Smart Sales Dashboard**:
+    - Visualizes daily, weekly, and monthly performance
+    - Highlights top-selling items, peak hours, and predicts upcoming sales trends
+  - **Intelligent Inventory Management**:
+    - Auto low-stock detection with restock suggestions
+    - Potential auto-supplier ordering (?)
+- **AI-Driven Insights**
+  - **Business Advice Engine**:
+    - Combines GPT-3.5 with a custom Retrieval-Augmented Generation(RAG) system to generate contextual insights from transactional data
+  - **Competitive Leaderboards**:
+    - Ranks merchants by sales/ratings across different scopes (Overall, Nearby, Category)
+- **Accessibility Design**:
+  - **Low-Literacy Optimization**:
+    - Clear visuals, data-driven charts
+    - Simple one-tap actions for smooth interaction
+- **Feedback-Driven Learning**:
+  - User can rate AI responses as "Good" or "Bad" with a single tap
+  - Feedback is used to fine-tune future suggestions, making the system more personalized, reliable, and aligned with merchant needs
 
 ---
 
-## 2. Architecture (TODO)
+## 2. System Architecture (edit the datapart into csv filenames and link correctly)
 ```mermaid
 graph TD
-  A[Merchant Data] --> B{Kafka Stream}
-  B --> C[Real-Time Alerts]
-  B --> D[Batch Analytics]
-  D --> E[Demand Forecasting Model]
-  E --> F[Proactive Recommendations]
-  G[Voice Input] --> H{Whisper ASR}
-  H --> I[Mistral-7B LLM]
-  I --> J[Action/Insight]
-  J --> K[React Native UI]
-```
+  subgraph "User Side"
+    A1(Voice Input / UI Actions)
+    A2(Speech-to-Text)
+    A3(User Feedback)
+  end
 
-### Components
-- **Data Pipeline**: ...
+  subgraph "Frontend (Mobile/Web App)"
+    B1(Voice UI + Interactive Dashboard)
+    B2(Charts + One-tap Actions)
+    B3(Feedback Buttons)
+  end
+
+  subgraph "Backend (FastAPI)"
+    C1(Whisper API - STT)
+    C2(ElevenLabs / TTS API)
+    C3(Sales Analytics Engine)
+    C4(Inventory Management)
+    C5(Advice Engine - GPT-3.5 + RAG)
+    C6(Merchant Ranking & Clustering)
+    C7(User Feedback Logger)
+  end
+
+  subgraph "Data Layer"
+    D1(Transaction DB)
+    D2(Inventory DB)
+    D3(Merchant DB)
+    D4(Vector DB for RAG)
+  end
+
+  A1 --> B1
+  A2 --> C1
+  A3 --> B3
+
+  B1 --> C1
+  B1 --> C3
+  B1 --> C4
+  B1 --> C5
+  B1 --> C6
+  B3 --> C7
+
+  C1 --> C2
+  C3 --> D1
+  C4 --> D2
+  C5 --> D1
+  C5 --> D4
+  C6 --> D3
+  C7 --> D1
+```
 
 ---
 
@@ -64,11 +117,13 @@ We’ve successfully implemented several planned future features, including:
 ### AI/ML Models
 
 | Model               | Tech Stack                | Metric / Purpose                                      |
-|---------------------|---------------------------|--------------------------------------------------------|
-| GPT-3.5 (OpenAI API) | Python, OpenAI API        | Multilingual chat-based assistant                     |
+|---------------------|---------------------------|-------------------------------------------------------|
+| GPT-3.5 (OpenAI API)| Python, OpenAI API        | Multilingual chat-based assistant                     |
 | Whisper             | Python, Whisper API       | Transcribe voice to text for voice input              |
+| ElevenLabs (TTS API)| Python, ElevenLabs API    | Text-to-speech for audio responses                    |
 | Custom Analytics    | Pandas, NumPy             | Revenue, order volume, basket size, delivery time     |
 | Recommendation Logic| Scikit-learn, pandas      | Personalized item suggestions & underperforming items |
+| Advice Engine       | Python, GPT-3.5, RAG      | Provide personalized advice based on merchant's data  |
 
 ---
 
@@ -112,6 +167,7 @@ We’ve successfully implemented several planned future features, including:
 ---
 
 ## 6. Future Roadmap
+- 
 
 ---
 
@@ -133,5 +189,5 @@ graph TD
     J --> K[Detect preferred language]
     K --> L[Translate & return insight in selected language]
     L --> M[Display in Chat UI]
-
+```
 
