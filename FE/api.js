@@ -45,3 +45,23 @@ export const askAI = async (question, merchantId = "5c1f8") => {
     throw error
   }
 }
+
+export const fetchForecast = async (merchantId = "5c1f8", days = 7) => {
+  try {
+    const url = `${API_URL}/forecast/${merchantId}?days=${days}`;
+    console.log('Fetching forecast data from:', url);
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`Network response was not ok: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Forecast data received:', data);
+    return data;
+  } catch (error) {
+    console.error('Error fetching forecast data:', error);
+    throw error;
+  }
+};

@@ -71,5 +71,5 @@ To get started with this project, follow the steps below:
 
 6. **Run the server**:
    ```bash
-   uvicorn main:app --reload
+   uvicorn main:app --reload --host 0.0.0.0 --port 8000
    ```
