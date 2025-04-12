@@ -12,7 +12,7 @@ Empower Grab merchant-partners with a proactive, voice-first AI assistant that d
     - Visualizes daily, weekly, and monthly performance
     - Highlights top-selling items, peak hours, and predicts upcoming sales trends using Prophet
   - **Intelligent Inventory Management**:
-    - Auto low-stock detection with restock suggestions
+    - Auto real-time low-stock detection and alert with restock suggestions
     - Potential auto-supplier ordering (?)
 - **AI-Driven Insights**
   - **Business Advice Engine**:
@@ -30,21 +30,26 @@ Empower Grab merchant-partners with a proactive, voice-first AI assistant that d
 ---
 
 ## 2. System Architecture (edit the datapart into csv filenames and link correctly)
+
 ```mermaid
 graph TD
-  subgraph "User Side"
+
+  %% Subgraph: User Side
+  subgraph User_Side ["User Side"]
     A1(Voice Input / UI Actions)
     A2(Speech-to-Text)
     A3(User Feedback)
   end
 
-  subgraph "Frontend (Mobile/Web App)"
+  %% Subgraph: Frontend
+  subgraph Frontend ["Frontend (Mobile/Web App)"]
     B1(Voice UI + Interactive Dashboard)
     B2(Charts + One-tap Actions)
     B3(Feedback Buttons)
   end
 
-  subgraph "Backend (FastAPI)"
+  %% Subgraph: Backend
+  subgraph Backend ["Backend (FastAPI)"]
     C1(Whisper API - STT)
     C2(ElevenLabs / TTS API)
     C3(Sales Analytics Engine)
@@ -54,13 +59,22 @@ graph TD
     C7(User Feedback Logger)
   end
 
-  subgraph "Data Layer"
+  %% Subgraph: Data Layer
+  subgraph Data_Layer ["Data Layer"]
     D1(Transaction DB)
     D2(Inventory DB)
     D3(Merchant DB)
     D4(Vector DB for RAG)
   end
 
+  %% Dummy node to force alignment
+  DUMMY((Dummy Node for Layout Alignment)) 
+
+  %% Connect dummy to Data Layer to force alignment in TD layout
+  C1 --> DUMMY
+  DUMMY --> D1
+
+  %% Original Connections
   A1 --> B1
   A2 --> C1
   A3 --> B3
@@ -79,6 +93,7 @@ graph TD
   C5 --> D4
   C6 --> D3
   C7 --> D1
+
 ```
 
 ---
@@ -170,7 +185,7 @@ Our business model focuses on enhancing merchant operations by integrating seaml
 
 ## 6. Future Improvement
 - **AI & Prediction Enhancements**:
-  - Replace Prophet with LSTM or Transformer models for more accurate sales forecasting
+  - Replace Prophet with Long Short-Term Memory(LSTM) model to better capture complex patterns in merchant's transaction data
 - **Language Expansion**:
   - Support more Southeast Asian languages, dialects and slangs
 - **Stronger Personalization**:
