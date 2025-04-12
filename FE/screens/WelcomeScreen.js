@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native"
+import { useFonts, Poppins_400Regular, Poppins_600SemiBold } from '@expo-google-fonts/poppins'
 import { LinearGradient } from "expo-linear-gradient"
 
 export default function WelcomeScreen({ navigation }) {
@@ -10,8 +11,11 @@ export default function WelcomeScreen({ navigation }) {
       </View>
 
       <View style={styles.mascotContainer}>
-        <View style={styles.speechBubble}>
-          <Text style={styles.speechText}>Hi! I'm Grablet, your AI business assistant. Let me help you grow your business!</Text>
+        <View style={styles.speechBubbleContainer}>
+          <View style={styles.speechBubble}>
+            <Text style={styles.speechText}>Hi! I'm Grablet, your AI business assistant!</Text>
+          </View>
+          <View style={styles.speechTriangle}></View>
         </View>
         <Image source={require("../assets/mascot-avatar.png")} style={styles.mascotImage} resizeMode="contain" />
         
@@ -65,23 +69,43 @@ const styles = StyleSheet.create({
   mascotImage: {
     width: 250,
     height: 250,
-    marginVertical: 20,
+    marginTop: 0,
     shadowColor:"#000",
     shadowRadius:10,
     shadowOpacity: 0.5,
     shadowOffset: (10),
+  },
+  speechBubbleContainer: {
+    alignItems: 'center',
+    position: 'relative',
   },
   speechBubble: {
     backgroundColor: "white",
     borderRadius: 20,
     padding: 15,
     maxWidth: 250,
-    position: "relative",
+  },
+  speechTriangle: {
+    width: 0,
+    height: 0,
+    backgroundColor: 'transparent',
+    borderStyle: 'solid',
+    borderLeftWidth: 10,
+    borderRightWidth: 10,
+    borderBottomWidth: 0,
+    borderTopWidth: 15,
+    right: 60,
+    borderLeftColor: 'transparent',
+    borderRightColor: 'transparent',
+    borderTopColor: 'white',
+    marginTop: -1, // Overlap slightly with the bubble to avoid a gap
   },
   speechText: {
+    fontFamily: 'Poppins_400Regular',
     fontSize: 16,
     color: "#333",
     textAlign: "center",
+    letterSpacing: 0.5,
   },
   buttonContainer: {
     width: "80%",

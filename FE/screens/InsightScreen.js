@@ -930,6 +930,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
     marginBottom: 4,
+    height:30,
+    textAlign: "center",
   },
   forecastMetricValue: {
     fontSize: 16,

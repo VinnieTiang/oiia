@@ -10,7 +10,8 @@
             "./assets/notification-sound.wav"
           ]
         }
-      ]
+      ],
+      "expo-font"
     ],
     "name": "GigBoostApp",
     "slug": "GigBoostApp",

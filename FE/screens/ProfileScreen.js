@@ -8,7 +8,7 @@ export default function ProfileScreen() {
       <ScrollView style={styles.container}>
         
         <View style={styles.profileHeader}>
-          <Image source={require("../assets/profile-placeholder.png")} style={styles.profileImage} />
+          <Image source={require("../assets/profile-placeholder1.png")} style={styles.profileImage} />
           <Text style={styles.profileName}>Warung Makan Sedap</Text>
           <Text style={styles.profileBio}>Restaurant • Since 2018</Text>
 
