@@ -147,7 +147,7 @@ We’ve successfully implemented several planned future features, including:
 
 We have identified three key business model strategies to monetize the merchant assistant while delivering strong operational value. Each strategy is designed to drive revenue, increase merchant engagement, and deepen ecosystem integration.
 
-### In-App Ingredient Restock via Assistant & GrabMart Integration 🛒
+### In-App Ingredient Restock via GrabMart Integration 🛒
 
 - Transforms the assistant into a revenue-generating channel by enabling direct ingredient restocking when low inventory is detected.
 - Orders are fulfilled via GrabMart, driving traffic and transactions within Grab’s own ecosystem instead of external suppliers.
