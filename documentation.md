@@ -5,7 +5,7 @@ Empower Grab merchant-partners with a proactive, voice-first AI assistant that d
 
 ### Key Features (TODO)
 - **Proactive Alerts**: Low-stock warnings, demand spikes, and competitor benchmarks.
-- **Voice-Driven Workflows**: Dialect-aware speech-to-text for English, Chinese and Malay.
+- **Voice-Driven Workflows**: Dialect-aware speech-to-text for multiple language.
 - **Predictive Insights**: AI-driven demand forecasting and pricing optimization.
 - **Auto-Actions**: One-tap restocking, promo creation, and supplier coordination.
 
