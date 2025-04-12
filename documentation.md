@@ -10,7 +10,7 @@ Empower Grab merchant-partners with a proactive, voice-first AI assistant that d
 - **Real-Time Business Analytics**:
   - **Smart Sales Dashboard**:
     - Visualizes daily, weekly, and monthly performance
-    - Highlights top-selling items, peak hours, and predicts upcoming sales trends
+    - Highlights top-selling items, peak hours, and predicts upcoming sales trends using Prophet
   - **Intelligent Inventory Management**:
     - Auto low-stock detection with restock suggestions
     - Potential auto-supplier ordering (?)
@@ -166,8 +166,13 @@ We’ve successfully implemented several planned future features, including:
 
 ---
 
-## 6. Future Roadmap
-- 
+## 6. Future Improvement
+- **AI & Prediction Enhancements**:
+  - Replace Prophet with LSTM or Transformer models for more accurate sales forecasting
+- **Language Expansion**:
+  - Support more Southeast Asian languages, dialects and slangs
+- **Stronger Personalization**:
+  - Learn from user behavior to refine insights
 
 ---
 
