@@ -14,6 +14,7 @@ const { width: screenWidth } = Dimensions.get("window")
 
 // Define message types for different content
 const MESSAGE_TYPES = {
+  AITEXT:"ai_text",
   TEXT: "text",
   SALES_SUMMARY: "sales_summary",
   INVENTORY_ALERT: "inventory_alert",
@@ -478,10 +479,16 @@ export default function MainChatScreen({ navigation }) {
     const userQuery = message
     setMessage("")
 
+    if (userQuery.trim().toLowerCase() === "start over") {
+      addMascotMessage("I'm here to boost your business! Ask me about sales trends, inventory status, or business advice.", MESSAGE_TYPES.TEXT)
+      addMascotMessage(null, MESSAGE_TYPES.QUICK_ACTIONS)
+      return
+    }
+    
     // Show typing indicator
     setIsTyping(true)
     setIsAILoading(true)
-
+  
     try {
       // Call the AI API
       const aiResponse = await askAI(userQuery)
@@ -490,7 +497,7 @@ export default function MainChatScreen({ navigation }) {
       animateMascot()
 
       // Add the AI response
-      addMascotMessage(aiResponse, MESSAGE_TYPES.TEXT)
+      addMascotMessage(aiResponse, MESSAGE_TYPES.AITEXT)
 
       // Process the message to add relevant UI components
       processUserMessage(userQuery)
@@ -660,9 +667,6 @@ export default function MainChatScreen({ navigation }) {
       lowerCaseMessage.includes("function")
     ) {
       // Help query
-      setTimeout(() => {
-        addMascotMessage(null, MESSAGE_TYPES.QUICK_ACTIONS)
-      }, 500) 
       addMascotMessage("I can help you with many things! Here are some options:", MESSAGE_TYPES.TEXT)
       addMascotMessage(null, MESSAGE_TYPES.QUICK_ACTIONS)
     } else if (
@@ -680,23 +684,24 @@ export default function MainChatScreen({ navigation }) {
           { text: "Not now", action: "dismiss" },
         ])
       }, 500)
-    } else {
-      // General response
-      const generalResponses = [
-        "I can help you manage your business. Try asking about your sales, inventory, or insights!",
-        "Would you like to see your business performance or check your inventory?",
-        "I'm here to boost your business! Ask me about sales trends, inventory status, or business advice.",
-        "How can I assist you with your business today? I can show sales data, inventory status, or provide recommendations.",
-      ]
+    } 
+    // else {
+    //   // General response
+    //   const generalResponses = [
+    //     "I can help you manage your business. Try asking about your sales, inventory, or insights!",
+    //     "Would you like to see your business performance or check your inventory?",
+    //     "I'm here to boost your business! Ask me about sales trends, inventory status, or business advice.",
+    //     "How can I assist you with your business today? I can show sales data, inventory status, or provide recommendations.",
+    //   ]
 
-      const randomResponse = generalResponses[Math.floor(Math.random() * generalResponses.length)]
-      addMascotMessage(randomResponse, MESSAGE_TYPES.TEXT)
+    //   const randomResponse = generalResponses[Math.floor(Math.random() * generalResponses.length)]
+    //   addMascotMessage(randomResponse, MESSAGE_TYPES.TEXT)
 
-      // After a short delay, show quick actions (This mcm not working ._.)
-      setTimeout(() => {
-        addMascotMessage(null, MESSAGE_TYPES.QUICK_ACTIONS)
-      }, 10)
-    }
+    //   // After a short delay, show quick actions (This mcm not working ._.)
+    //   setTimeout(() => {
+    //     addMascotMessage(null, MESSAGE_TYPES.QUICK_ACTIONS)
+    //   }, 10)
+    // }
   }
 
 
@@ -751,6 +756,7 @@ export default function MainChatScreen({ navigation }) {
 
   ///////////// Those quickSuggestion above text input /////////////
   const quickSuggestion = [
+    "Start Over",
     "Show my sales insights",
     "Best selling items?",
     "How can I increase my revenue?",
@@ -789,7 +795,7 @@ export default function MainChatScreen({ navigation }) {
           navigation.navigate("Inventory")
           break
         case "insight":
-          navigation.navigate("Insight")
+          navigation.navigate("Insight",{ scrollToBottom: true })
           break
         case "advice":
           navigation.navigate("Advice")
@@ -879,7 +885,9 @@ export default function MainChatScreen({ navigation }) {
 
     switch (item.type) {
       case MESSAGE_TYPES.TEXT:
+      case MESSAGE_TYPES.AITEXT:
         const isPlaying = currentlyPlayingId === item.id
+        const showFeedback = item.type === MESSAGE_TYPES.AITEXT
 
         if (!animationRefs.current[item.id]) {
           animationRefs.current[item.id] = {
@@ -887,6 +895,7 @@ export default function MainChatScreen({ navigation }) {
             dislike: new Animated.Value(1),
           }
         }
+
         const { like, dislike } = animationRefs.current[item.id]
 
         return (
@@ -925,8 +934,8 @@ export default function MainChatScreen({ navigation }) {
               </View>
             </View>
 
-            {/* Feedback Buttons for Mascot */}
-            {isMascot && (
+            {/* Feedback Buttons for AI-generated messages ONLY :DDDD */}
+            {isMascot && showFeedback && (
               <View style={styles.feedbackContainer}>
                 <TouchableOpacity
                   onPress={() => {
@@ -1074,12 +1083,12 @@ export default function MainChatScreen({ navigation }) {
             <View style={[styles.messageContent, styles.cardContent]}>
               <View style={styles.insightCard}>
                 <Text style={styles.cardTitle}>Weekly Performance</Text>
-                <Image source={require("../assets/chart-preview.png")} style={styles.chartImage} resizeMode="contain" />
+                <Image source={require("../assets/chart-preview.jpg")} style={styles.chartImage} resizeMode="contain" />
                 <View style={styles.insightHighlight}>
                   <Ionicons name="trending-up" size={16} color="#2FAE60" />
                   <Text style={styles.insightText}>Sales are up 12% this week</Text>
                 </View>
-                <TouchableOpacity style={styles.cardButton} onPress={() => navigation.navigate("Insight")}>
+                <TouchableOpacity style={styles.cardButton} onPress={() => navigation.navigate("Insight",{ scrollToBottom: true })}>
                   <Text style={styles.cardButtonText}>View Full Insights</Text>
                   <Ionicons name="arrow-forward" size={16} color="#2FAE60" />
                 </TouchableOpacity>
@@ -1130,14 +1139,14 @@ export default function MainChatScreen({ navigation }) {
                 <Text style={styles.quickActionText}>View Leaderboard</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.quickActionButton} onPress={checkInventory} disabled={isLoading}>
+              {/* <TouchableOpacity style={styles.quickActionButton} onPress={checkInventory} disabled={isLoading}>
                 <View style={[styles.quickActionIcon, { backgroundColor: "#F3F0FF" }]}>
                   <Ionicons name="cube-outline" size={20} color="#9B51E0" />
                 </View>
                 <Text style={styles.quickActionText}>
                   {isLoading ? "Loading..." : "Check Inventory Testing BE"}
                 </Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </ScrollView>
           </View>
         )
@@ -1354,7 +1363,7 @@ const styles = StyleSheet.create({
   },
   messageBubble: {
     flexDirection: "row",
-    marginBottom: 16,
+    marginVertical: 5,
     maxWidth: "100%",
   },
   mascotAvatarContainer: {
@@ -1513,10 +1522,11 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 2,
     width: screenWidth * 0.7,
+    marginTop:10,
   },
   chartImage: {
     width: "100%",
-    height: 120,
+    height: 170,
     marginBottom: 12,
     borderRadius: 8,
   },
@@ -1589,7 +1599,7 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   quickActionsContainer: {
-    marginVertical: 8,
+    marginBottom: 10,
     marginLeft: 44,
   },
   quickActionButton: {
@@ -1756,11 +1766,11 @@ const styles = StyleSheet.create({
   },
   feedbackContainer: {
     flexDirection: "row",
-    marginTop: -12,
-    marginLeft:40,
+    marginTop: -30,
+    marginLeft: 60,
   },
   feedbackButton: {
-    padding: 6,
+    padding: 4,
     marginRight: 10,
     borderRadius: 20,
     backgroundColor: "#f7f7f7",

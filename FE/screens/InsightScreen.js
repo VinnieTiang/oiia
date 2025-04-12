@@ -2,12 +2,24 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useWindowDimensio
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons } from "@expo/vector-icons"
 import { LineChart, BarChart, PieChart, ProgressChart } from "react-native-chart-kit"
-import { useState } from "react"
+import { useRef, useEffect, useState } from "react"
+import { useRoute } from "@react-navigation/native";
 
 export default function InsightScreen() {
   const [timePeriod, setTimePeriod] = useState("weekly")
   const { width: windowWidth } = useWindowDimensions();
   const chartWidth = windowWidth - 32 - 32;
+  const scrollViewRef = useRef(null);
+  const route = useRoute();
+
+  useEffect(() => {
+    if (route.params?.scrollToBottom) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100); // Small delay to ensure content is rendered
+    }
+  }, [route.params]);
+
   
   // Sample data for different time periods
   const salesData = {
@@ -135,9 +147,7 @@ export default function InsightScreen() {
   }
 
   return (
-    
-
-      <ScrollView style={styles.container}>
+      <ScrollView ref={scrollViewRef} style={styles.container}>
         {/* Time period selector */}
         <View style={styles.periodSelector}>
           <TouchableOpacity 
@@ -456,25 +466,6 @@ export default function InsightScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#f8f9fa",
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    backgroundColor: "white",
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-    marginRight: 8,
-  },
   container: {
     flex: 1,
     padding: 16,
