@@ -129,40 +129,42 @@ We’ve successfully implemented several planned future features, including:
 
 ## 5. Business Model
 
-### For Grab Merchants
+Our business model focuses on enhancing merchant operations by integrating seamless restocking capabilities into Grab's platform. By leveraging the chatbot and partnering with GrabMart, merchants can quickly restock ingredients, improve operational efficiency, and foster stronger business relationships. The model introduces a transaction-based commission for Grab, while simultaneously boosting merchant retention and encouraging long-term engagement with the platform.
 
-#### 1. Profit Optimization 💰
-- Enables revenue growth by providing merchants with AI-driven insights into daily sales trends, top-performing products, and region-specific demand patterns.
-- Minimizes operational losses with predictive inventory alerts and automated tracking, crucial for managing fast-moving goods in dynamic, localized markets.
-- Facilitates margin improvements by recommending pricing strategies and sales actions aligned with local customer behavior and seasonal trends.
+**In-App Ingredient Restock  🛒**
 
-#### 2. Competitive Edge 🏆
-- Offers real-time benchmarking with nearby and similar-category businesses, helping merchants understand their standing in highly competitive, fragmented markets.
-- Delivers adaptive recommendations tailored to merchant types, regional preferences, and maturity stages—essential in Southeast Asia's highly diverse and segmented merchant landscape.
-- Equips merchants with data-backed strategies to capitalize on local events, customer preferences, and competitor trends.
+- Merchants can restock ingredients instantly from the chatbot when low inventory is detected, offering a seamless and immediate solution to inventory challenges.
 
-#### 3. Accessible Intelligence 🧠
-- Supports seamless communication in major Southeast Asian languages (English, Malay, Chinese, etc.), reducing friction for non-English speaking merchants.
-- Empowers merchants with voice message input and AI-generated audio replies, supporting users across varying levels of digital and traditional literacy.
-- Ensures inclusive access to business intelligence with a simple, intuitive chat interface usable by both tech-savvy and first-time digital entrepreneurs.
+- It reduces the need to switch between multiple apps or suppliers, saving merchants valuable time and effort, which improves overall operational efficiency.
 
-### For Grab (The Company)
+- By turning actionable insights into direct business actions, it increases the assistant's practical value and makes it indispensable in the daily operations of merchants.
 
-#### 1. Revenue Growth Engine 🚀
-- Drives increased Gross Merchandise Value (GMV) by empowering merchants to sell more efficiently and adapt faster to market needs, resulting in more transactions across Grab’s ecosystem.
-- Unlocks new monetization streams through value-added AI features, premium analytics, and merchant-focused advertising or promotions.
-- Encourages broader adoption of Grab’s services by deepening merchants’ reliance on the platform for end-to-end business operations.
 
-#### 2. Merchant Retention & Platform Loyalty 🤝
-- Strengthens platform loyalty by embedding AI as a daily operational tool, making Grab indispensable to micro and SME merchants across the region.
-- Improves merchant satisfaction and engagement through personalized, proactive support that adapts to local markets and individual business trajectories.
-- Enables long-term retention through continuous learning from merchant feedback, fostering trust and sustained usage.
+**Integrated with GrabMart 🔗**
 
-#### 3. Smart Operations Platform 🤖
-- Significantly reduces support costs by replacing routine inquiries with automated AI responses, which scale across multiple languages and regions.
-- Enhances service consistency across Southeast Asia, ensuring merchants receive accurate, localized assistance without the need for large regional support teams.
-- Creates operational agility by freeing up human support resources to focus on merchant onboarding, training, and strategic growth partnerships.
+- Restocking is fulfilled through GrabMart, which not only drives internal ecosystem usage but also strengthens GrabMart’s position as a one-stop solution for merchant needs.
 
+- This integration establishes GrabMart as a trusted, go-to supply source for merchants, fostering long-term business relationships and loyalty.
+
+- It converts operational tools into a new sales channel for GrabMart, creating new revenue opportunities while seamlessly supporting merchant business functions.
+
+
+**Transaction-Based Commission 💰**
+
+- Grab earns a commission on every restock made through the assistant, creating a continuous revenue stream directly tied to merchant activity.
+
+- As merchant engagement increases, revenue naturally grows, making the business model scalable and adaptable to the platform's success.
+
+- This commission-based monetization model is sustainable and non-intrusive, allowing Grab to earn from the assistant’s functionality without disrupting the merchant's user experience.
+
+
+**Increased Merchant Retention 🤝**
+
+- The assistant becomes a core part of the merchant’s daily workflow, which increases their reliance on Grab’s platform and encourages long-term engagement.
+
+- The convenience and usefulness of the assistant, combined with its ability to solve key operational challenges, keep merchants loyal and significantly reduce churn.
+
+- Continuous usage and integration into the merchant’s routine build platform stickiness, making it harder for merchants to leave and encouraging them to expand their usage of Grab’s services.
 
 ---
 
