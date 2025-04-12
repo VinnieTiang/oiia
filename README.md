@@ -15,7 +15,7 @@
 
 ## 🎥 Presentation Slide
 
-🔗 [Click here to view our presentation slide](https://www.canva.com/design/DAGkQJGJx9I/7XH5j1kcYtpH8SJ3OS_mHA/view?utm_content=DAGkQJGJx9I&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=hb192d7bdba)
+🔗 [Click here to view our presentation material](https://drive.google.com/drive/folders/1QMXTomP8NLPJRbnaPy4saa-jI3OkVWJ7?usp=sharing)
 
 ---
 
