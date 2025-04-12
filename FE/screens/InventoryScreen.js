@@ -21,14 +21,14 @@ import { FlatList, Image } from "react-native"
 
 // Sample inventory data
 const inventoryData = [
-  { id: 1, name: "Chicken Rice", current: 5, recommended: 20, status: "low", lastRestocked: "2 days ago" },
-  { id: 2, name: "Nasi Lemak", current: 3, recommended: 15, status: "low", lastRestocked: "3 days ago" },
-  { id: 3, name: "Mee Goreng", current: 12, recommended: 15, status: "medium", lastRestocked: "1 day ago" },
+  { id: 1, name: "Chicken thigh", current: 5, recommended: 20, status: "low", lastRestocked: "2 days ago" },
+  { id: 2, name: "Jasmine rice", current: 3, recommended: 15, status: "low", lastRestocked: "3 days ago" },
+  { id: 3, name: "Egg", current: 12, recommended: 15, status: "medium", lastRestocked: "1 day ago" },
   { id: 4, name: "Roti Canai", current: 25, recommended: 20, status: "good", lastRestocked: "Today" },
-  { id: 5, name: "Teh Tarik", current: 30, recommended: 25, status: "good", lastRestocked: "Today" },
-  { id: 6, name: "Satay", current: 8, recommended: 15, status: "medium", lastRestocked: "2 days ago" },
-  { id: 7, name: "Curry Puff", current: 4, recommended: 20, status: "low", lastRestocked: "4 days ago" },
-  { id: 8, name: "Iced Coffee", current: 18, recommended: 20, status: "medium", lastRestocked: "Yesterday" },
+  { id: 5, name: "Ginger", current: 30, recommended: 25, status: "good", lastRestocked: "Today" },
+  { id: 6, name: "Cucumber", current: 8, recommended: 15, status: "medium", lastRestocked: "2 days ago" },
+  { id: 7, name: "Chili sauce", current: 4, recommended: 20, status: "low", lastRestocked: "4 days ago" },
+  { id: 8, name: "Soy sauce", current: 18, recommended: 20, status: "medium", lastRestocked: "Yesterday" },
 ]
 
 // Sample GrabMart vendor data
