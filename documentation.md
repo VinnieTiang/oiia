@@ -74,7 +74,7 @@ We’ve successfully implemented several planned future features, including:
 
 ## 5. Business Model
 
-### For Merchants
+### For Grab Merchants
 
 #### 1. Profit Optimization 💰
 - Enables revenue growth by providing merchants with AI-driven insights into daily sales trends, top-performing products, and region-specific demand patterns.
@@ -91,7 +91,7 @@ We’ve successfully implemented several planned future features, including:
 - Empowers merchants with voice message input and AI-generated audio replies, supporting users across varying levels of digital and traditional literacy.
 - Ensures inclusive access to business intelligence with a simple, intuitive chat interface usable by both tech-savvy and first-time digital entrepreneurs.
 
-### For Grab
+### For Grab (The Company)
 
 #### 1. Revenue Growth Engine 🚀
 - Drives increased Gross Merchandise Value (GMV) by empowering merchants to sell more efficiently and adapt faster to market needs, resulting in more transactions across Grab’s ecosystem.
