@@ -400,11 +400,13 @@ export default function InsightScreen() {
               data={forecastChartData}
               width={chartWidth}
               height={220}
+              yAxisMin={4000}
               chartConfig={{
                 ...chartConfig,
                 color: (opacity = 1) => `rgba(66, 133, 244, ${opacity})`,
                 propsForDots: {
                   r: "5",
+                  yAxisMin:"0",
                   strokeWidth: "2",
                   stroke: "#4285F4",
                 },
