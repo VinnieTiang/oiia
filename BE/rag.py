@@ -1,6 +1,7 @@
 import pandas as pd
 from datetime import datetime, timedelta
 from collections import Counter
+from itertools import combinations
 
 def get_city_comparison(merchant_id: str, df_merchants: pd.DataFrame, df_tx: pd.DataFrame) -> str:
     """Generate comparison metrics against city peers"""
@@ -185,6 +186,27 @@ def get_merchant_summary(merchant_id: str) -> str:
     
     # --- Basket Analysis ---
     avg_basket_size = df_joined.groupby("order_id").size().mean()
+
+    # Build a list of all item combinations per order
+    order_items = df_joined.groupby("order_id")["item_id"].apply(list)
+
+    pair_counter = Counter()
+
+    for items in order_items:
+        unique_items = list(set(items))  # Avoid duplicate items in the same order
+        if len(unique_items) > 1:
+            pairs = combinations(sorted(unique_items), 2)
+            pair_counter.update(pairs)
+
+    # Get top 3 most common item pairs
+    top_pairs = pair_counter.most_common(3)
+
+    # Convert item IDs to item names
+    pair_names = []
+    for (item1, item2), count in top_pairs:
+        name1 = df_items[df_items["item_id"] == item1]["item_name"].values[0]
+        name2 = df_items[df_items["item_id"] == item2]["item_name"].values[0]
+        pair_names.append(f"{name1} + {name2} ({count} times)")
     
     # --- Delivery Performance ---
     df_merchant_tx["delivery_time"] = pd.to_datetime(df_merchant_tx["delivery_time"])
@@ -199,13 +221,13 @@ def get_merchant_summary(merchant_id: str) -> str:
     business_years = business_duration / 12  # Convert months to years
 
     if business_years < 2:
-        maturity = f"Established (1-2 years) – Focus on customer retention and menu optimization.\n• Implement loyalty rewards\n• Analyze customer feedback\n• Optimize your top-selling items"
+        maturity = f"Established (1-2 years)"
     elif business_years < 5:
-        maturity = f"Maturing ({business_years:.1f} years) – Time to expand and innovate.\n• Develop seasonal specials\n• Explore catering options\n• Partner with local businesses"
+        maturity = f"Maturing ({business_years:.1f} years)"
     elif business_years < 10:
-        maturity = f"Seasoned (5-10 years) – Strengthen your market position.\n• Refresh your brand image\n• Train staff for consistency\n• Automate routine tasks"
+        maturity = f"Seasoned (5-10 years)"
     else:
-        maturity = f"Veteran (10+ years) – Legacy business opportunities.\n• Consider franchising\n• Mentor new entrepreneurs\n• Community engagement programs"
+        maturity = f"Veteran (10+ years)"
         
     # Add city comparison
     city_merchants = df_merchants[df_merchants["city_id"] == city_id]
@@ -253,6 +275,10 @@ Merchant Profile: {merchant_name} ({merchant_id})
 
 🛍️ Customer Behavior:
 - Avg. Basket Size: {avg_basket_size:.2f} items per order
+- Frequently Bought Together:
+  - {pair_names[0]}
+  - {pair_names[1]}
+  - {pair_names[2]}
 
 🚚 Delivery Metrics:
 - Avg. Delivery Time: {avg_delivery_time:.1f} minutes

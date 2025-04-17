@@ -746,6 +746,22 @@ export default function MainChatScreen({ navigation }) {
           { text: "Not now", action: "dismiss" },
         ])
       }, 500)
+    } else if (
+      lowerCaseMessage.includes("promo") ||
+      lowerCaseMessage.includes("discount") ||
+      lowerCaseMessage.includes("offer") ||
+      lowerCaseMessage.includes("deal") ||
+      lowerCaseMessage.includes("bundle")
+    ) {
+      // Promotion related query
+      setTimeout(() => {
+        addMascotMessage("Would you like to create a new promotion or view your existing ones?", MESSAGE_TYPES.TEXT)
+        addQuickReplies([
+          { text: "Create New Promotion", action: "promo" },
+          { text: "View Promotions", action: "promoMonitor" },
+          { text: "Not now", action: "dismiss" },
+        ])
+      }, 500)
     }
     // else {
     //   // General response
@@ -822,6 +838,8 @@ export default function MainChatScreen({ navigation }) {
     "Best selling items?",
     "How can I increase my revenue?",
     "Tips for customer retention",
+    "Create a promotion",
+    "View my promotions",
     // Malay quick replies
     "Tunjukkan analisis jualan saya",
     "Item paling laris?",
@@ -870,6 +888,14 @@ export default function MainChatScreen({ navigation }) {
         case "leaderboard":
           navigation.navigate("Leaderboard")
           break
+        // Add new cases for promotions
+        case "promo":
+          navigation.navigate("PromoBuilder")
+          break
+        case "promoMonitor":
+          navigation.navigate("PromoMonitor")
+          break
+
         default:
           addMascotMessage(
             "I'm not sure how to help with that yet. Is there something else you'd like to know?",
@@ -926,6 +952,17 @@ export default function MainChatScreen({ navigation }) {
           addMascotMessage("Here's how you compare with other merchants:", MESSAGE_TYPES.TEXT)
           setTimeout(() => {
             navigation.navigate("Leaderboard")
+          }, 500)
+          break
+        // Add new case for promotions
+        case "manage promotions":
+          addMascotMessage("Let's manage your promotions! What would you like to do?", MESSAGE_TYPES.TEXT)
+          setTimeout(() => {
+            addQuickReplies([
+              { text: "Create New Promotion", action: "promo" },
+              { text: "View Promotions", action: "promoMonitor" },
+              { text: "Not now", action: "dismiss" },
+            ])
           }, 500)
           break
         default:
@@ -1195,12 +1232,20 @@ export default function MainChatScreen({ navigation }) {
                 </View>
                 <Text style={styles.quickActionText}>Check Inventory</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("View Leaderboard")}>
                 <View style={[styles.quickActionIcon, { backgroundColor: "#FFF0F5" }]}>
                   <Ionicons name="trophy-outline" size={20} color="#E91E63" />
                 </View>
                 <Text style={styles.quickActionText}>View Leaderboard</Text>
+              </TouchableOpacity>
+
+              {/* Add new button for Promotions */}
+              <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("Manage Promotions")}>
+                <View style={[styles.quickActionIcon, { backgroundColor: "#FFF0E0" }]}>
+                  <Ionicons name="pricetag-outline" size={20} color="#FF9800" />
+                </View>
+                <Text style={styles.quickActionText}>Promotions</Text>
               </TouchableOpacity>
 
               {/* <TouchableOpacity style={styles.quickActionButton} onPress={checkInventory} disabled={isLoading}>
@@ -1715,7 +1760,6 @@ const styles = StyleSheet.create({
     marginRight: 12,
     alignItems: "center",
     width: 100,
-
   },
   quickActionIcon: {
     width: 40,

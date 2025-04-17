@@ -65,3 +65,29 @@ export const fetchForecast = async (merchantId = merchant_id, days = 7) => {
     throw error;
   }
 };
+
+export const generatePromoContent = async (prompt) => {
+  try {
+    console.log("Sending prompt to AI:", prompt)
+    const response = await fetch(`${API_URL}/generate-content`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+      }),
+    })
+
+    if (!response.ok) {
+      throw new Error(`Network response was not ok: ${response.status}`)
+    }
+
+    const data = await response.json()
+    console.log("AI response:", data)
+    return data.reply
+  } catch (error) {
+    console.error("Error asking AI:", error)
+    throw error
+  }
+}

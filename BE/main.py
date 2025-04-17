@@ -26,6 +26,9 @@ class ChatRequest(BaseModel):
     merchant_id: str
     question: str
 
+class PromptRequest(BaseModel):
+    prompt: str
+
 # POST endpoint
 @app.post("/ask")
 async def ask_advice(request: ChatRequest):
@@ -87,4 +90,18 @@ async def get_forecast(merchant_id: str, days: int = 7):
 
     except Exception as e:
         return {"error": str(e)}
+    
+@app.post("/generate-content")
+async def ask_advice(request: PromptRequest):
+    prompt = f"""{request.prompt}"""
+
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.7
+    )
+
+    return {
+        "reply": response.choices[0].message.content
+    }
 
