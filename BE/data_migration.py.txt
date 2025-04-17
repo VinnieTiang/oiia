@@ -1,0 +1,79 @@
+import pandas as pd
+import os
+from sqlalchemy import create_engine
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Get database connection string from environment variables
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://localhost/grabletDB")
+
+# Create database engine
+engine = create_engine(DATABASE_URL)
+
+def migrate_csv_to_database():
+    """
+    Migrate data from CSV files to the database
+    """
+    print("Starting data migration from CSV files to database...")
+    
+    # Load CSV files
+    try:
+        merchants_df = pd.read_csv("data/merchant.csv")
+        transactions_df = pd.read_csv("data/transaction_data.csv")
+        items_df = pd.read_csv("data/items.csv")
+        transaction_items_df = pd.read_csv("data/transaction_items.csv")
+        keywords_df = pd.read_csv("data/keywords.csv")
+        
+        print(f"Loaded CSV files successfully")
+        print(f"- Merchants: {len(merchants_df)} records")
+        print(f"- Transactions: {len(transactions_df)} records")
+        print(f"- Items: {len(items_df)} records")
+        print(f"- Transaction Items: {len(transaction_items_df)} records")
+        print(f"- Keywords: {len(keywords_df)} records")
+    except Exception as e:
+        print(f"Error loading CSV files: {str(e)}")
+        return
+    
+    # Process date columns
+    try:
+        # Convert date formats
+        merchants_df["join_date"] = pd.to_datetime(merchants_df["join_date"], format="%d%m%Y", errors="coerce")
+        transactions_df["order_time"] = pd.to_datetime(transactions_df["order_time"])
+        transactions_df["delivery_time"] = pd.to_datetime(transactions_df["delivery_time"])
+        
+        print("Date columns processed successfully")
+    except Exception as e:
+        print(f"Error processing date columns: {str(e)}")
+        return
+    
+    # Insert data into database
+    try:
+        # Insert merchants first (since other tables reference it)
+        merchants_df.to_sql("merchants", engine, if_exists="append", index=False)
+        print("Merchants data inserted successfully")
+        
+        # Insert items (referenced by transaction_items)
+        items_df.to_sql("items", engine, if_exists="append", index=False)
+        print("Items data inserted successfully")
+        
+        # Insert transactions (referenced by transaction_items)
+        transactions_df.to_sql("transactions", engine, if_exists="append", index=False)
+        print("Transactions data inserted successfully")
+        
+        # Insert transaction items
+        transaction_items_df.to_sql("transaction_items", engine, if_exists="append", index=False)
+        print("Transaction items data inserted successfully")
+        
+        # Insert keywords
+        keywords_df.to_sql("keywords", engine, if_exists="append", index=False)
+        print("Keywords data inserted successfully")
+        
+        print("Data migration completed successfully!")
+    except Exception as e:
+        print(f"Error inserting data into database: {str(e)}")
+        return
+
+if __name__ == "__main__":
+    migrate_csv_to_database()
