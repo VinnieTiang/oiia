@@ -2,6 +2,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from collections import Counter
 from database import query_to_dataframe  # Import the database function
+from itertools import combinations
 
 def get_city_comparison(merchant_id: str) -> str:
     """Generate comparison metrics against city peers"""
