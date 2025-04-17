@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from rag import get_merchant_summary
 from forecast import load_merchant_sales_series, forecast_sales, forecast_to_summary
 from database import get_db, import_csv_to_db
+from sales import get_merchant_today_summary, get_merchant_period_summary
 
 # Load API key from .env
 load_dotenv()
@@ -94,3 +95,15 @@ async def initialize_database():
         return {"message": "Database initialized successfully"}
     except Exception as e:
         return {"error": str(e)}
+    
+
+@app.get("/merchant/{merchant_id}/today")
+async def get_today_summary(merchant_id: str):
+    return get_merchant_today_summary(merchant_id)
+
+@app.get("/merchant/{merchant_id}/summary/{period}")
+async def get_period_sales(merchant_id: str, period: str):
+    """Get sales summary for a specific period (week/month)"""
+    if period not in ["week", "month"]:
+        return {"error": "Period must be 'week' or 'month'"}
+    return get_merchant_period_summary(merchant_id, period)

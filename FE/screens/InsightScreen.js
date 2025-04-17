@@ -1,19 +1,11 @@
 "use client"
 
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  useWindowDimensions,
-  ActivityIndicator,
-} from "react-native"
+import {View,Text,StyleSheet,ScrollView,TouchableOpacity,useWindowDimensions,ActivityIndicator,} from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { LineChart, BarChart, PieChart, ProgressChart } from "react-native-chart-kit"
 import { useRef, useEffect, useState } from "react"
 import { useRoute } from "@react-navigation/native"
-import { fetchForecast } from "../api" // Import the new forecast API
+import { fetchForecast, fetchTodaySales } from "../api" // Import the new forecast API
 
 export default function InsightScreen() {
   const [timePeriod, setTimePeriod] = useState("weekly")
@@ -24,6 +16,9 @@ export default function InsightScreen() {
   const chartWidth = windowWidth - 32 - 32
   const scrollViewRef = useRef(null)
   const route = useRoute()
+  const [todaySales, setTodaySales] = useState(null);
+  const [todayLoading, setTodayLoading] = useState(true);
+  const [todayError, setTodayError] = useState(null);
 
   useEffect(() => {
     if (route.params?.scrollToBottom) {
@@ -51,6 +46,23 @@ export default function InsightScreen() {
 
     loadForecastData()
   }, [])
+  
+  useEffect(() => {
+    const fetchTodaySalesData = async () => {
+      try {
+        setTodayLoading(true);
+        setTodayError(null);
+        const data = await fetchTodaySales();
+        setTodaySales(data);
+      } catch (error) {
+        console.error("Error loading today's sales data:", error);
+        setTodayError("Unable to load today's sales data");
+      } finally {
+        setTodayLoading(false);
+      }
+    };
+    fetchTodaySalesData();
+  }, []); 
 
   // Sample data for different time periods
   const salesData = {
@@ -260,13 +272,21 @@ export default function InsightScreen() {
       <View style={styles.summaryContainer}>
         <View style={styles.summaryCard}>
           <Text style={styles.cardTitle}>Total Sales</Text>
-          <Text style={[styles.summaryValue, { fontSize: 18 }]} numberOfLines={1} adjustsFontSizeToFit>
-            {summaryData[timePeriod].totalSales}
-          </Text>
-          <View style={styles.trendContainer}>
-            <Ionicons name="trending-up" size={14} color="#2FAE60" />
-            <Text style={styles.summaryLabel}>12% from last {timePeriod}</Text>
-          </View>
+          {todayLoading ? (
+      <ActivityIndicator size="small" color="#2FAE60" />
+    ) : todayError ? (
+      <Text style={[styles.summaryValue, { fontSize: 14, color: "#FF3D00" }]}>Error</Text>
+    ) : (
+      <>
+        <Text style={[styles.summaryValue, { fontSize: 18 }]} numberOfLines={1} adjustsFontSizeToFit>
+          {todaySales?.total_sales_formatted || summaryData[timePeriod].totalSales}
+        </Text>
+        <View style={styles.trendContainer}>
+          <Ionicons name="trending-up" size={14} color="#2FAE60" />
+          <Text style={styles.summaryLabel}>12% from last {timePeriod}</Text>
+        </View>
+      </>
+    )}
         </View>
 
         <View style={styles.summaryCard}>
