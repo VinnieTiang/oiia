@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { LineChart, BarChart, PieChart, ProgressChart } from "react-native-chart-kit"
 import { useRef, useEffect, useState } from "react"
 import { useRoute } from "@react-navigation/native"
-import { fetchForecast, fetchTodaySales } from "../api" // Import the new forecast API
+import { fetchForecast, fetchSalesData } from "../api"
 
 export default function InsightScreen() {
   const [timePeriod, setTimePeriod] = useState("weekly")
@@ -16,9 +16,15 @@ export default function InsightScreen() {
   const chartWidth = windowWidth - 32 - 32
   const scrollViewRef = useRef(null)
   const route = useRoute()
-  const [todaySales, setTodaySales] = useState(null);
-  const [todayLoading, setTodayLoading] = useState(true);
-  const [todayError, setTodayError] = useState(null);
+  const [todaySales, setTodaySales] = useState(null)
+  const [todayLoading, setTodayLoading] = useState(true)
+  const [todayError, setTodayError] = useState(null)
+  const [weeklySales, setWeeklySales] = useState(null)
+  const [weeklyLoading, setWeeklyLoading] = useState(true)
+  const [weeklyError, setWeeklyError] = useState(null)
+  const [monthlySales, setMonthlySales] = useState(null)
+  const [monthlyLoading, setMonthlyLoading] = useState(true)
+  const [monthlyError, setMonthlyError] = useState(null)
 
   useEffect(() => {
     if (route.params?.scrollToBottom) {
@@ -46,23 +52,41 @@ export default function InsightScreen() {
 
     loadForecastData()
   }, [])
-  
+
+
   useEffect(() => {
-    const fetchTodaySalesData = async () => {
+    const fetchAllSalesData = async () => {
       try {
-        setTodayLoading(true);
-        setTodayError(null);
-        const data = await fetchTodaySales();
-        setTodaySales(data);
+        // Fetch today's data
+        setTodayLoading(true)
+        const todaySales = await fetchSalesData('today')
+        setTodaySales(todaySales)
+        setTodayLoading(false)
+        
+        // Fetch weekly data
+        setWeeklyLoading(true)
+        const weeklySales = await fetchSalesData('week');
+        setWeeklySales(weeklySales)
+        setWeeklyLoading(false)
+        
+        // Fetch monthly data
+        setMonthlyLoading(true)
+        const monthlySales = await fetchSalesData('month');
+        setMonthlySales(monthlySales)
+        setMonthlyLoading(false)
       } catch (error) {
-        console.error("Error loading today's sales data:", error);
-        setTodayError("Unable to load today's sales data");
+        console.error("Error fetching sales data:", error)
+        setTodayError(error.message)
+        setWeeklyError(error.message)
+        setMonthlyError(error.message)
       } finally {
-        setTodayLoading(false);
+        setTodayLoading(false)
+        setWeeklyLoading(false)
+        setMonthlyLoading(false)
       }
-    };
-    fetchTodaySalesData();
-  }, []); 
+    }
+    fetchAllSalesData()
+  }, []) // Empty dependency array - run once on mount
 
   // Sample data for different time periods
   const salesData = {
@@ -151,25 +175,31 @@ export default function InsightScreen() {
 
   const summaryData = {
     daily: {
-      totalSales: "RM3,450",
-      totalOrders: "128",
-      rating: "4.7",
-      avgOrderValue: "RM26.95",
-      peakHour: "12PM",
+      totalSales: todaySales?.total_sales_formatted || "RM0.00",
+      totalOrders: todaySales?.total_orders?.toString() || "0",
+      rating: "4.7", // HARDCODED,  it's not from the API
+      avgOrderValue: todaySales?.total_sales && todaySales?.total_orders 
+        ? `RM${(todaySales.total_sales / todaySales.total_orders).toFixed(2)}`
+        : "RM0.00",
+      peakHour: "12PM", // HARDCODED,   it's not from the API
     },
     weekly: {
-      totalSales: "RM8,800",
-      totalOrders: "342",
-      rating: "4.8",
-      avgOrderValue: "RM25.73",
-      peakDay: "Saturday",
+      totalSales: weeklySales?.total_sales_formatted || "RM0.00",
+      totalOrders: weeklySales?.total_orders?.toString() || "0",
+      rating: "4.8", // Keep this since it's not from the API
+      avgOrderValue: weeklySales?.total_sales && weeklySales?.total_orders 
+        ? `RM${(weeklySales.total_sales / weeklySales.total_orders).toFixed(2)}`
+        : "RM0.00",
+      peakDay: "Saturday", // Keep this since it's not from the API
     },
     monthly: {
-      totalSales: "RM24,200",
-      totalOrders: "1,150",
-      rating: "4.8",
-      avgOrderValue: "RM21.04",
-      peakWeek: "Week 4",
+      totalSales: monthlySales?.total_sales_formatted || "RM0.00",
+      totalOrders: monthlySales?.total_orders?.toString() || "0",
+      rating: "4.8", // Keep this since it's not from the API
+      avgOrderValue: monthlySales?.total_sales && monthlySales?.total_orders 
+        ? `RM${(monthlySales.total_sales / monthlySales.total_orders).toFixed(2)}`
+        : "RM0.00",
+      peakWeek: "Week 4", // Keep this since it's not from the API
     },
   }
 
@@ -272,30 +302,38 @@ export default function InsightScreen() {
       <View style={styles.summaryContainer}>
         <View style={styles.summaryCard}>
           <Text style={styles.cardTitle}>Total Sales</Text>
-          {todayLoading ? (
-      <ActivityIndicator size="small" color="#2FAE60" />
-    ) : todayError ? (
-      <Text style={[styles.summaryValue, { fontSize: 14, color: "#FF3D00" }]}>Error</Text>
-    ) : (
-      <>
-        <Text style={[styles.summaryValue, { fontSize: 18 }]} numberOfLines={1} adjustsFontSizeToFit>
-          {todaySales?.total_sales_formatted || summaryData[timePeriod].totalSales}
-        </Text>
-        <View style={styles.trendContainer}>
-          <Ionicons name="trending-up" size={14} color="#2FAE60" />
-          <Text style={styles.summaryLabel}>12% from last {timePeriod}</Text>
-        </View>
-      </>
-    )}
+          {(timePeriod === "daily" && todayLoading) ||
+           (timePeriod === "weekly" && weeklyLoading) ||
+           (timePeriod === "monthly" && monthlyLoading) ? (
+            <ActivityIndicator size="small" color="#2FAE60" />
+          ) : (
+            <>
+              <Text style={[styles.summaryValue, { fontSize: 18 }]} numberOfLines={1} adjustsFontSizeToFit>
+                {summaryData[timePeriod].totalSales}
+              </Text>
+              <View style={styles.trendContainer}>
+                <Ionicons name="trending-up" size={14} color="#2FAE60" />
+                <Text style={styles.summaryLabel}>12% from last {timePeriod}</Text>
+              </View>
+            </>
+          )}
         </View>
 
         <View style={styles.summaryCard}>
           <Text style={styles.cardTitle}>Total Orders</Text>
-          <Text style={styles.summaryValue}>{summaryData[timePeriod].totalOrders}</Text>
-          <View style={styles.trendContainer}>
-            <Ionicons name="trending-up" size={14} color="#2FAE60" />
-            <Text style={styles.summaryLabel}>8% from last {timePeriod}</Text>
-          </View>
+          {(timePeriod === "daily" && todayLoading) ||
+           (timePeriod === "weekly" && weeklyLoading) ||
+           (timePeriod === "monthly" && monthlyLoading) ? (
+            <ActivityIndicator size="small" color="#2FAE60" />
+          ) : (
+            <>
+              <Text style={styles.summaryValue}>{summaryData[timePeriod].totalOrders}</Text>
+              <View style={styles.trendContainer}>
+                <Ionicons name="trending-up" size={14} color="#2FAE60" />
+                <Text style={styles.summaryLabel}>8% from last {timePeriod}</Text>
+              </View>
+            </>
+          )}
         </View>
 
         <View style={styles.summaryCard}>
