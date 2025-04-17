@@ -67,26 +67,6 @@ export const fetchForecast = async (merchantId = merchant_id, days = 7) => {
 };
 
 
-export const fetchTodaySales = async (merchantId = merchant_id) => {
-  try {
-    const url = `${API_URL}/merchant/${merchantId}/today`;
-    console.log('Fetching today sales data from:', url);
-
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`Network response was not ok: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log('Today sales data received:', data);
-    return data;
-  } catch (error) {
-    console.error('Error fetching today sales data:', error);
-    throw error;
-  }
-};
-
 export const generatePromoContent = async (prompt) => {
   try {
     console.log("Sending prompt to AI:", prompt)
@@ -113,3 +93,36 @@ export const generatePromoContent = async (prompt) => {
   }
 }
 
+
+/**
+ * Fetch sales data for different time periods
+ * @param {string} period - The time period ('today', 'week', or 'month')
+ * @param {string} merchantId - The merchant ID
+ * @returns {Promise<Object>} - Sales data for the specified period
+ */
+export const fetchSalesData = async (period = 'today', merchantId = merchant_id) => {
+  try {
+    // Determine the correct endpoint based on period
+    let endpoint;
+    if (period === 'today') {
+      endpoint = `${API_URL}/merchant/${merchantId}/today`;
+    } else {
+      endpoint = `${API_URL}/merchant/${merchantId}/summary/${period}`;
+    }
+    
+    console.log(`Fetching ${period} sales data from:`, endpoint);
+    
+    const response = await fetch(endpoint);
+    
+    if (!response.ok) {
+      throw new Error(`Network response was not ok: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(`${period} sales data received:`, data);
+    return data;
+  } catch (error) {
+    console.error(`Error fetching ${period} sales data:`, error);
+    throw error;
+  }
+};
