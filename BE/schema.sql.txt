@@ -1,0 +1,78 @@
+-- Database schema for Grablet application
+
+-- Merchants table
+CREATE TABLE IF NOT EXISTS merchants (
+    merchant_id VARCHAR(50) PRIMARY KEY,
+    merchant_name VARCHAR(100) NOT NULL,
+    city_id VARCHAR(20) NOT NULL,
+    join_date DATE NOT NULL,
+    business_type VARCHAR(50),
+    cuisine_type VARCHAR(50),
+    address TEXT,
+    contact_phone VARCHAR(20),
+    contact_email VARCHAR(100),
+    operating_hours TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Transactions table
+CREATE TABLE IF NOT EXISTS transactions (
+    order_id VARCHAR(50) PRIMARY KEY,
+    merchant_id VARCHAR(50) NOT NULL,
+    eater_id VARCHAR(50) NOT NULL,
+    order_time TIMESTAMP NOT NULL,
+    delivery_time TIMESTAMP,
+    order_value DECIMAL(10, 2) NOT NULL,
+    payment_method VARCHAR(20),
+    delivery_address TEXT,
+    status VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (merchant_id) REFERENCES merchants(merchant_id)
+);
+
+-- Items table
+CREATE TABLE IF NOT EXISTS items (
+    item_id VARCHAR(50) PRIMARY KEY,
+    merchant_id VARCHAR(50) NOT NULL,
+    item_name VARCHAR(100) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    cuisine_tag VARCHAR(50),
+    category VARCHAR(50),
+    description TEXT,
+    is_available BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (merchant_id) REFERENCES merchants(merchant_id)
+);
+
+-- Transaction items table
+CREATE TABLE IF NOT EXISTS transaction_items (
+    id SERIAL PRIMARY KEY,
+    order_id VARCHAR(50) NOT NULL,
+    item_id VARCHAR(50) NOT NULL,
+    quantity INT NOT NULL,
+    item_price DECIMAL(10, 2) NOT NULL,
+    special_instructions TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES transactions(order_id),
+    FOREIGN KEY (item_id) REFERENCES items(item_id)
+);
+
+-- Keywords table (for tracking item views and searches)
+CREATE TABLE IF NOT EXISTS keywords (
+    id SERIAL PRIMARY KEY,
+    merchant_id VARCHAR(50) NOT NULL,
+    item_id VARCHAR(50),
+    view INT DEFAULT 0,
+    search VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (merchant_id) REFERENCES merchants(merchant_id),
+    FOREIGN KEY (item_id) REFERENCES items(item_id)
+);
+
+-- Create indexes for performance
+CREATE INDEX IF NOT EXISTS idx_transactions_merchant_id ON transactions(merchant_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_eater_id ON transactions(eater_id);
+CREATE INDEX IF NOT EXISTS idx_items_merchant_id ON items(merchant_id);
+CREATE INDEX IF NOT EXISTS idx_transaction_items_order_id ON transaction_items(order_id);
+CREATE INDEX IF NOT EXISTS idx_transaction_items_item_id ON transaction_items(item_id);
+CREATE INDEX IF NOT EXISTS idx_keywords_merchant_id ON keywords(merchant_id);

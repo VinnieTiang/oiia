@@ -1,15 +1,15 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import os
-from rag import get_merchant_summary
 from datetime import datetime
 from openai import OpenAI
-from forecast import (
-    load_merchant_sales_series,
-    forecast_sales,
-    forecast_to_summary
-)
+from sqlalchemy.orm import Session
+
+# Import our modules
+from rag import get_merchant_summary
+from forecast import load_merchant_sales_series, forecast_sales, forecast_to_summary
+from database import get_db, import_csv_to_db
 
 # Load API key from .env
 load_dotenv()
@@ -31,7 +31,7 @@ class PromptRequest(BaseModel):
 
 # POST endpoint
 @app.post("/ask")
-async def ask_advice(request: ChatRequest):
+async def ask_advice(request: ChatRequest, db: Session = Depends(get_db)):
     
     # Step 1: Get summary for merchant
     summary = get_merchant_summary(request.merchant_id)
@@ -39,7 +39,6 @@ async def ask_advice(request: ChatRequest):
 
     # Step 2: Build prompt
     prompt = f"""
-
     Answer the question based on the question language.
 
     You are a helpful assistant for Southeast Asian food merchants.
@@ -67,9 +66,8 @@ Suggestions:
         "reply": response.choices[0].message.content
     }
 
-
 @app.get("/forecast/{merchant_id}")
-async def get_forecast(merchant_id: str, days: int = 7):
+async def get_forecast(merchant_id: str, days: int = 7, db: Session = Depends(get_db)):
     try:
         # Load merchant sales data
         df = load_merchant_sales_series(merchant_id)
@@ -105,3 +103,11 @@ async def ask_advice(request: PromptRequest):
         "reply": response.choices[0].message.content
     }
 
+@app.post("/initialize-db")
+async def initialize_database():
+    """Initialize the database by importing CSV files"""
+    try:
+        import_csv_to_db()
+        return {"message": "Database initialized successfully"}
+    except Exception as e:
+        return {"error": str(e)}
