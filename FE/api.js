@@ -113,3 +113,24 @@ export const generatePromoContent = async (prompt) => {
   }
 }
 
+export const preloadMerchantData = async (merchantId = merchant_id) => {
+  try {
+    console.log('Preloading merchant data for:', merchantId);
+    const endpoint = `${API_URL}/merchant/${merchantId}/summary`;
+    
+    const response = await fetch(endpoint);
+    
+    if (!response.ok) {
+      throw new Error(`Network response was not ok: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('Merchant data preloaded successfully');
+    return data;
+  } catch (error) {
+    console.error('Error preloading merchant data:', error);
+    // Don't throw the error - just log it since this is a preloading operation
+    return { status: 'error', message: error.toString() };
+  }
+};
+

@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 from openai import OpenAI
 from sqlalchemy.orm import Session
+from functools import lru_cache
 
 # Import our modules
 from rag import get_merchant_summary
@@ -30,12 +31,33 @@ class ChatRequest(BaseModel):
 class PromptRequest(BaseModel):
     prompt: str
 
+@lru_cache(maxsize=100)
+def get_cached_merchant_summary(merchant_id: str) -> str:
+    return get_merchant_summary(merchant_id)
+
+@app.get("/merchant/{merchant_id}/summary")
+async def get_merchant_summary_endpoint(merchant_id: str):
+    """Get cached merchant summary for a specific merchant"""
+    try:
+        summary = get_cached_merchant_summary(merchant_id)
+        return {
+            "merchant_id": merchant_id,
+            "summary": summary,
+            "status": "success"
+        }
+    except Exception as e:
+        return {
+            "merchant_id": merchant_id,
+            "summary": "",
+            "status": f"Error: {str(e)}"
+        }
+    
 # POST endpoint
 @app.post("/ask")
 async def ask_advice(request: ChatRequest, db: Session = Depends(get_db)):
     
     # Step 1: Get summary for merchant
-    summary = get_merchant_summary(request.merchant_id)
+    summary = get_cached_merchant_summary(request.merchant_id)
     print("Summary:", summary)
 
     # Step 2: Build prompt

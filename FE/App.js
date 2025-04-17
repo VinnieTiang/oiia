@@ -9,6 +9,7 @@ import { Provider as PaperProvider } from "react-native-paper"
 import * as Font from 'expo-font'
 import { Asset } from 'expo-asset'
 import { View, Text, ActivityIndicator } from 'react-native'
+import { preloadMerchantData } from "./api"
 
 export default function App() {
   const [appIsReady, setAppIsReady] = useState(false)
@@ -48,6 +49,8 @@ export default function App() {
           require("./assets/profile-placeholder3.png"),
           require("./assets/splash-icon.png")
         ])
+
+        await preloadMerchantData()
 
         // Artificially delay for two seconds to simulate a long loading
         // Remove this in production
