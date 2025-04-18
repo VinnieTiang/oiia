@@ -376,10 +376,10 @@ async def generate_insight(prompt: str) -> str:
 async def get_merchant_items(merchant_id: str):
     return get_items_by_merchant(merchant_id)
 
-@app.get("/merchant/{merchant_id}/top-items/{period}")
-async def get_merchant_top_items(merchant_id: str, period: str):
-    """Get top selling items for a specific period (daily/weekly/monthly)"""
-    if period not in ["daily", "weekly", "monthly"]:
-        return {"error": "Period must be 'daily', 'weekly', or 'monthly'"}
-    
-    return get_top_selling_items(merchant_id, period)
+@app.get("/merchant/{merchant_id}/top-items")
+async def get_merchant_top_items(merchant_id: str):
+    """
+    Get top selling items for a merchant
+    it always returns monthly data (last 30 days) regardless of period
+    """
+    return get_top_selling_items(merchant_id)

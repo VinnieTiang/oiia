@@ -357,39 +357,38 @@ export const useAdviceQueryData = () => {
 }
 
 
-export const fetchTopSellingItems = async (period, merchantId = merchant_id) => {
+export const fetchTopSellingItems = async ( merchantId = merchant_id) => {
   try {
-    const response = await fetch(`${API_URL}/merchant/${merchantId}/top-items/${period}`);
+    const response = await fetch(`${API_URL}/merchant/${merchantId}/top-items`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch top selling items: ${response.statusText}`);
     }
     
     const data = await response.json();
-    return data;
+    
+    // If we get a loading status, return it
+    if (data.status === "loading") {
+      return data;
+    }
+    
+    // If we got an error, return it
+    if (data.status === "error") {
+      console.error("Error from server:", data.message);
+      return data;
+    }
+    
+    // We got successful data - all data is now monthly regardless of period parameter
+    return {
+      ...data,
+      // Override with consistent time period message
+      time_period: "Last 30 Days" 
+    };
   } catch (error) {
     console.error("Error fetching top selling items data:", error);
-    
-    // Return default data as fallback
-    const multiplier = period === "daily" ? 1 : period === "weekly" ? 7 : 30;
     return {
-      items: [
-        { name: "Nasi Lemak", count: 25 * multiplier, percentage: 35 },
-        { name: "Ayam Goreng", count: 20 * multiplier, percentage: 25 },
-        { name: "Mee Goreng", count: 15 * multiplier, percentage: 20 },
-        { name: "Roti Canai", count: 10 * multiplier, percentage: 15 },
-        { name: "Teh Tarik", count: 5 * multiplier, percentage: 5 }
-      ],
-      chart_data: {
-        labels: ["Nasi L.", "Ayam G.", "Mee G.", "Roti C.", "Teh T."],
-        datasets: [
-          {
-            data: [25 * multiplier, 20 * multiplier, 15 * multiplier, 10 * multiplier, 5 * multiplier]
-          }
-        ]
-      },
-      best_seller: "Nasi Lemak",
-      best_seller_percent: 35
+      status: "error",
+      message: error.message
     };
   }
 };
