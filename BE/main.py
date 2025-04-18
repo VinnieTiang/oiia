@@ -6,12 +6,14 @@ from datetime import datetime
 from openai import OpenAI
 from sqlalchemy.orm import Session
 from functools import lru_cache
+from typing import List
 
 # Import our modules
 from rag import get_merchant_summary
 from forecast import load_merchant_sales_series, forecast_sales, forecast_to_summary
 from database import get_db, import_csv_to_db
 from sales import get_merchant_today_summary, get_merchant_period_summary
+from item_service import get_items_by_merchant
 
 # Load API key from .env
 load_dotenv()
@@ -30,6 +32,11 @@ class ChatRequest(BaseModel):
 
 class PromptRequest(BaseModel):
     prompt: str
+
+class Item(BaseModel):
+    item_name: str
+    item_price: float
+    cuisine_tag: str
 
 @lru_cache(maxsize=100)
 def get_cached_merchant_summary(merchant_id: str) -> str:
@@ -146,3 +153,7 @@ async def get_period_sales(merchant_id: str, period: str):
     if period not in ["week", "month"]:
         return {"error": "Period must be 'week' or 'month'"}
     return get_merchant_period_summary(merchant_id, period)
+
+@app.get("/merchant-items/{merchant_id}", response_model=List[Item])
+async def get_merchant_items(merchant_id: str):
+    return get_items_by_merchant(merchant_id)
