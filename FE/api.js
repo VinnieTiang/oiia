@@ -160,7 +160,7 @@ export const fetchSalesTrend = async (period, merchantId = merchant_id) => {
     // Create safe defaults based on period
     const safeDefaults = {
       daily: {
-        labels: ["8:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00"],
+        labels: ["8AM", "10AM", "12PM", "2PM", "4PM", "6PM", "8PM", "10PM"],
         defaultData: [0, 0, 0, 0, 0, 0, 0, 0]
       },
       weekly: {
@@ -231,7 +231,7 @@ function getDefaultTrendData(period) {
   switch (period) {
     case "daily":
       return {
-        labels: ["8:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00"],
+        labels: ["8AM", "10AM", "12PM", "2PM", "4PM", "6PM", "8PM", "10PM"],
         datasets: [{
           data: [0, 0, 0, 0, 0, 0, 0, 0],
           color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
