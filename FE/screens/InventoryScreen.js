@@ -418,16 +418,6 @@ export default function InventoryScreen() {
 
         {/* Inventory Table Card */}
         <Card style={styles.inventoryCard}>
-        <Button
-          mode="contained"
-          onPress={autoRestock}
-          style={styles.autoRestockButton}
-          labelStyle={{
-            color: "white",
-          }}
-        >
-          Auto Restock
-        </Button>
                 
           <Card.Content>
             <Searchbar
