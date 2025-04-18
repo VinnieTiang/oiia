@@ -18,18 +18,7 @@ import {
 import { Ionicons } from "@expo/vector-icons"
 import * as Notifications from "expo-notifications"
 import { FlatList, Image } from "react-native"
-
-// Sample inventory data
-const inventoryData = [
-  { id: 1, name: "Chicken thigh", current: 5, recommended: 20, status: "low", lastRestocked: "2 days ago" },
-  { id: 2, name: "Jasmine rice", current: 3, recommended: 15, status: "low", lastRestocked: "3 days ago" },
-  { id: 3, name: "Egg", current: 12, recommended: 15, status: "medium", lastRestocked: "1 day ago" },
-  { id: 4, name: "Roti Canai", current: 25, recommended: 20, status: "good", lastRestocked: "Today" },
-  { id: 5, name: "Ginger", current: 30, recommended: 25, status: "good", lastRestocked: "Today" },
-  { id: 6, name: "Cucumber", current: 8, recommended: 15, status: "medium", lastRestocked: "2 days ago" },
-  { id: 7, name: "Chili sauce", current: 4, recommended: 20, status: "low", lastRestocked: "4 days ago" },
-  { id: 8, name: "Soy sauce", current: 18, recommended: 20, status: "medium", lastRestocked: "Yesterday" },
-]
+import { formatDistanceToNow } from "date-fns";
 
 // Sample GrabMart vendor data
 const grabMartVendors = [
@@ -79,7 +68,7 @@ Notifications.setNotificationHandler({
 })
 
 export default function InventoryScreen() {
-  const [inventory, setInventory] = useState(inventoryData)
+  const [inventory, setInventory] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [sortBy, setSortBy] = useState("name")
@@ -95,8 +84,57 @@ export default function InventoryScreen() {
   const [paymentModalVisible, setPaymentModalVisible] = useState(false)
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("grabpay")
   const [orderDetails, setOrderDetails] = useState(null)
+  const [autoRestockVendorModalVisible, setAutoRestockVendorModalVisible] = useState(false);
+  const [selectedAutoRestockVendor, setSelectedAutoRestockVendor] = useState(null);
+  const [lowStockItems, setLowStockItems] = useState([]);
 
   const onChangeSearch = (query) => setSearchQuery(query)
+
+  const fetchInventory = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("http://192.168.100.25:8000/ingredients");
+      const data = await response.json();
+      if (data.ingredients) {
+        const formattedData = data.ingredients.map((item) => {
+          let lastRestocked = "Never"; // Default value
+          if (item.last_restock) {
+            try {
+              // Convert MM/DD/YYYY to a valid Date object
+              const [month, day, year] = item.last_restock.split("/");
+              const parsedDate = new Date(year, month - 1, day); // Month is 0-indexed
+              lastRestocked = formatDistanceToNow(parsedDate, { addSuffix: true });
+            } catch (error) {
+              console.warn(`Invalid date format for item ${item.ingredient_name}:`, item.last_restock);
+            }
+          }
+          return {
+            id: item.ingredient_id,
+            name: item.ingredient_name,
+            current: item.stock_left,
+            recommended: item.recommended,
+            status: getStatus(item.stock_left, item.recommended),
+            lastRestocked,
+          };
+        });
+        setInventory(formattedData);
+      } else {
+        showSnackbar("Failed to fetch inventory data.");
+      }
+    } catch (error) {
+      console.error("Error fetching inventory:", error);
+      showSnackbar("Error fetching inventory data.");
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const getStatus = (current, recommended) => {
+    if (current < recommended * 0.3) return "low";
+    if (current < recommended * 0.7) return "medium";
+    return "good";
+  };
 
   const refreshInventory = () => {
     setIsLoading(true)
@@ -108,18 +146,75 @@ export default function InventoryScreen() {
     }, 1000)
   }
 
-  const scheduleLowStockNotification = async (items) => {
-    const itemNames = items.map((item) => item.name).join(", ")
+  const autoRestock = () => {
+    const lowStockItemsList = inventory.filter((item) => item.status === "low");
+  
+    if (lowStockItemsList.length === 0) {
+      showSnackbar("No items with low stock to restock.");
+      return;
+    }
+  
+    setLowStockItems(lowStockItemsList); // Store low-stock items
+    setAutoRestockVendorModalVisible(true); // Show vendor selection modal
+  };
 
+  const confirmAutoRestock = () => {
+    if (!selectedAutoRestockVendor) {
+      showSnackbar("Please select a vendor for auto restock.");
+      return;
+    }
+  
+    const lowStockItems = inventory.filter((item) => item.status === "low");
+  
+    if (lowStockItems.length === 0) {
+      showSnackbar("No items with low stock to restock.");
+      return;
+    }
+  
+    const restockDetails = lowStockItems.map((item) => {
+      const restockQuantity = item.recommended - item.current;
+  
+      if (restockQuantity > 0) {
+        const basePrice = 10 * restockQuantity; // Example: $10 per unit
+        const deliveryFee = 5;
+        const processingFee = Math.round(basePrice * 0.05 * 100) / 100; // 5% processing fee
+        const totalAmount = basePrice + deliveryFee + processingFee;
+  
+        return {
+          item,
+          quantity: restockQuantity,
+          vendor: selectedAutoRestockVendor,
+          basePrice,
+          deliveryFee,
+          processingFee,
+          totalAmount,
+        };
+      }
+      return null;
+    }).filter(Boolean); // Remove null entries
+  
+    if (restockDetails.length === 0) {
+      showSnackbar("No restock needed for the selected items.");
+      return;
+    }
+  
+    // Set order details for all items and navigate to payment modal
+    setOrderDetails(restockDetails);
+    setAutoRestockVendorModalVisible(false);
+    setPaymentModalVisible(true);
+  };
+
+  const scheduleLowStockNotification = async (items) => {
+    const itemNames = items.map((item) => item.name).join(", ");
     await Notifications.scheduleNotificationAsync({
       content: {
         title: "Low Stock Alert",
         body: `The following items are low on stock: ${itemNames}`,
         data: { screen: "Inventory" },
       },
-      trigger: null, // Send immediately
-    })
-  }
+      trigger: { seconds: 3600 }, // Notify every hour
+    });
+  };
 
   // Check for notifications permission on component mount
   useEffect(() => {
@@ -146,8 +241,13 @@ export default function InventoryScreen() {
     checkLowStockAndNotify()
   }, [inventory])
 
+  useEffect(() => {
+    fetchInventory();
+  }, []);
+
   const onRefresh = () => {
     setRefreshing(true)
+    fetchInventory()
     refreshInventory()
   }
 
@@ -166,78 +266,83 @@ export default function InventoryScreen() {
 
   const confirmRestock = () => {
     if (!restockQuantity || isNaN(restockQuantity)) {
-      showSnackbar("Please enter a valid quantity")
-      return
+      showSnackbar("Please enter a valid quantity");
+      return;
     }
-
+  
     if (!selectedVendor) {
-      showSnackbar("Please select a vendor")
-      return
+      showSnackbar("Please select a vendor");
+      return;
     }
-
-    const quantity = Number.parseInt(restockQuantity, 10)
+  
+    const quantity = Number.parseInt(restockQuantity, 10);
     if (quantity <= 0) {
-      showSnackbar("Quantity must be greater than 0")
-      return
+      showSnackbar("Quantity must be greater than 0");
+      return;
     }
-
-    // Calculate order details
-    const basePrice = 10 * quantity // Example: $10 per unit
-    const deliveryFee = 5
-    const processingFee = Math.round(basePrice * 0.05 * 100) / 100 // 5% processing fee
-    const totalAmount = basePrice + deliveryFee + processingFee
-
+  
+    // Calculate order details for the specific item
+    const basePrice = 10 * quantity; // Example: $10 per unit
+    const deliveryFee = 5;
+    const processingFee = Math.round(basePrice * 0.05 * 100) / 100; // 5% processing fee
+    const totalAmount = basePrice + deliveryFee + processingFee;
+  
+    const restockDetails = [
+      {
+        item: currentlyRestockingItem,
+        quantity: quantity,
+        vendor: selectedVendor,
+        basePrice: basePrice,
+        deliveryFee: deliveryFee,
+        processingFee: processingFee,
+        totalAmount: totalAmount,
+      },
+    ];
+  
     // Set order details for payment modal
-    setOrderDetails({
-      item: currentlyRestockingItem,
-      quantity: quantity,
-      vendor: selectedVendor,
-      basePrice: basePrice,
-      deliveryFee: deliveryFee,
-      processingFee: processingFee,
-      totalAmount: totalAmount,
-    })
-
+    setOrderDetails(restockDetails);
+  
     // Close restock modal and open payment modal
-    setRestockModalVisible(false)
-    setPaymentModalVisible(true)
-  }
+    setRestockModalVisible(false);
+    setPaymentModalVisible(true);
+  };
 
   const confirmPayment = () => {
-    if (!orderDetails) return
-
-    // Update the inventory
+    if (!orderDetails || !Array.isArray(orderDetails)) return;
+  
+    // Update the inventory for all restocked items
     const updatedInventory = inventory.map((item) => {
-      if (item.id === orderDetails.item.id) {
-        const newQuantity = item.current + orderDetails.quantity
-        let newStatus = item.status
-
+      const restockDetail = orderDetails.find((detail) => detail.item.id === item.id);
+      if (restockDetail) {
+        const newQuantity = item.current + restockDetail.quantity;
+        let newStatus = item.status;
+  
         // Determine new status based on restocked quantity
         if (newQuantity >= item.recommended * 0.7) {
-          newStatus = "good"
+          newStatus = "good";
         } else if (newQuantity >= item.recommended * 0.3) {
-          newStatus = "medium"
+          newStatus = "medium";
         } else {
-          newStatus = "low"
+          newStatus = "low";
         }
-
+  
         return {
           ...item,
           current: newQuantity,
           status: newStatus,
           lastRestocked: "Today",
-        }
+        };
       }
-      return item
-    })
-
-    setInventory(updatedInventory)
+      return item;
+    });
+  
+    setInventory(updatedInventory);
     showSnackbar(
-      `Payment successful! ${orderDetails.quantity} ${orderDetails.item.name} will be delivered by ${orderDetails.vendor.name}`,
-    )
-    setPaymentModalVisible(false)
-    setOrderDetails(null)
-  }
+      `Payment successful! ${orderDetails.length} items will be delivered by ${orderDetails[0].vendor.name}.`
+    );
+    setPaymentModalVisible(false);
+    setOrderDetails(null);
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -323,8 +428,9 @@ export default function InventoryScreen() {
         {/* Summary Card */}
         <Card style={styles.summaryCard}>
           <Card.Content>
-            <View style={styles.summaryHeader}>
-              <Text style={styles.summaryTitle}>Inventory Summary</Text>
+          <View style={styles.summaryHeader}>
+            <Text style={styles.summaryTitle}>Inventory Summary</Text>
+            <View style={{ flexDirection: "row" }}>
               <Button
                 mode="text"
                 onPress={refreshInventory}
@@ -342,18 +448,25 @@ export default function InventoryScreen() {
                 Refresh
               </Button>
             </View>
+          </View>
 
             <View style={styles.statsRow}>
               <View style={[styles.statItem, styles.lowStat]}>
-                <Text style={styles.statValue}>{summaryStats.low}</Text>
+                <Text style={styles.statValue}>
+                  {inventory.filter((item) => item.status === "low").length}
+                </Text>
                 <Text style={styles.statLabel}>Low Stock</Text>
               </View>
               <View style={[styles.statItem, styles.mediumStat]}>
-                <Text style={styles.statValue}>{summaryStats.medium}</Text>
+                <Text style={styles.statValue}>
+                  {inventory.filter((item) => item.status === "medium").length}
+                </Text>
                 <Text style={styles.statLabel}>Medium Stock</Text>
               </View>
               <View style={[styles.statItem, styles.goodStat]}>
-                <Text style={styles.statValue}>{summaryStats.good}</Text>
+                <Text style={styles.statValue}>
+                  {inventory.filter((item) => item.status === "good").length}
+                </Text>
                 <Text style={styles.statLabel}>Good Stock</Text>
               </View>
             </View>
@@ -362,6 +475,17 @@ export default function InventoryScreen() {
 
         {/* Inventory Table Card */}
         <Card style={styles.inventoryCard}>
+        <Button
+          mode="contained"
+          onPress={autoRestock}
+          style={styles.autoRestockButton}
+          labelStyle={{
+            color: "white",
+          }}
+        >
+          Auto Restock
+        </Button>
+                
           <Card.Content>
             <Searchbar
               placeholder="Search by item name..."
@@ -580,27 +704,95 @@ export default function InventoryScreen() {
 
       <Portal>
         <Dialog
+          visible={autoRestockVendorModalVisible}
+          onDismiss={() => setAutoRestockVendorModalVisible(false)}
+        >
+          <Dialog.Title>Select Vendors</Dialog.Title>
+          <Dialog.Content>
+            {/* Display low-stock items */}
+            <Text style={styles.lowStockItemsTitle}>Items to be Restocked:</Text>
+            <FlatList
+              data={lowStockItems}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <View style={styles.lowStockItem}>
+                  <Text style={styles.lowStockItemName}>{item.name}</Text>
+                  <Text style={styles.lowStockItemQuantity}>
+                    Current: {item.current}, Recommended: {item.recommended}
+                  </Text>
+                </View>
+              )}
+              style={styles.lowStockItemsList}
+            />
+
+            {/* Vendor selection */}
+            <Text style={styles.vendorSectionTitle}>Select a Vendor:</Text>
+            <FlatList
+              data={grabMartVendors}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id.toString()}
+              contentContainerStyle={styles.vendorList}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.vendorCard,
+                    selectedAutoRestockVendor?.id === item.id && styles.selectedVendorCard,
+                  ]}
+                  onPress={() => setSelectedAutoRestockVendor(item)}
+                >
+                  <Image source={item.image} style={styles.vendorImage} />
+                  <Text style={styles.vendorName}>{item.name}</Text>
+                  <View style={styles.vendorRatingContainer}>
+                    <Ionicons name="star" size={14} color="#FFD700" />
+                    <Text style={styles.vendorRating}>{item.rating}</Text>
+                  </View>
+                  <Text style={styles.vendorDelivery}>{item.deliveryTime}</Text>
+
+                  {selectedAutoRestockVendor?.id === item.id && (
+                    <View style={styles.selectedVendorCheck}>
+                      <Ionicons name="checkmark-circle" size={24} color="#10B981" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setAutoRestockVendorModalVisible(false)}>Cancel</Button>
+            <Button mode="contained" onPress={confirmAutoRestock} style={styles.confirmRestockButton}>
+              Confirm
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
+
+      <Portal>
+        <Dialog
           visible={paymentModalVisible}
           onDismiss={() => setPaymentModalVisible(false)}
           style={styles.paymentDialog}
         >
           <Dialog.Title>Payment Details</Dialog.Title>
           <Dialog.Content>
-            {orderDetails && (
+            <ScrollView style={{ maxHeight: 400 }}>
+            {orderDetails && Array.isArray(orderDetails) && (
               <>
                 <View style={styles.orderSummary}>
                   <Text style={styles.orderSummaryTitle}>Order Summary</Text>
-                  <View style={styles.orderItem}>
-                    <Text style={styles.orderItemName}>{orderDetails.item.name}</Text>
-                    <Text style={styles.orderItemQuantity}>x{orderDetails.quantity}</Text>
-                    <Text style={styles.orderItemPrice}>RM{orderDetails.basePrice.toFixed(2)}</Text>
-                  </View>
+                  {orderDetails.map((detail, index) => (
+                    <View key={index} style={styles.orderItem}>
+                      <Text style={styles.orderItemName}>{detail.item.name}</Text>
+                      <Text style={styles.orderItemQuantity}>x{detail.quantity}</Text>
+                      <Text style={styles.orderItemPrice}>RM{detail.basePrice.toFixed(2)}</Text>
+                    </View>
+                  ))}
 
                   <View style={styles.vendorInfo}>
-                    <Image source={orderDetails.vendor.image} style={styles.vendorInfoImage} />
+                    <Image source={orderDetails[0].vendor.image} style={styles.vendorInfoImage} />
                     <View style={styles.vendorInfoDetails}>
-                      <Text style={styles.vendorInfoName}>{orderDetails.vendor.name}</Text>
-                      <Text style={styles.vendorInfoDelivery}>Est. delivery: {orderDetails.vendor.deliveryTime}</Text>
+                      <Text style={styles.vendorInfoName}>{orderDetails[0].vendor.name}</Text>
+                      <Text style={styles.vendorInfoDelivery}>Est. delivery: {orderDetails[0].vendor.deliveryTime}</Text>
                     </View>
                   </View>
                 </View>
@@ -608,54 +800,63 @@ export default function InventoryScreen() {
                 <View style={styles.feesContainer}>
                   <View style={styles.feeRow}>
                     <Text style={styles.feeLabel}>Subtotal</Text>
-                    <Text style={styles.feeValue}>RM{orderDetails.basePrice.toFixed(2)}</Text>
+                    <Text style={styles.feeValue}>
+                      RM{orderDetails.reduce((sum, detail) => sum + detail.basePrice, 0).toFixed(2)}
+                    </Text>
                   </View>
                   <View style={styles.feeRow}>
                     <Text style={styles.feeLabel}>Delivery Fee</Text>
-                    <Text style={styles.feeValue}>RM{orderDetails.deliveryFee.toFixed(2)}</Text>
+                    <Text style={styles.feeValue}>
+                      RM{orderDetails.reduce((sum, detail) => sum + detail.deliveryFee, 0).toFixed(2)}
+                    </Text>
                   </View>
                   <View style={styles.feeRow}>
                     <Text style={styles.feeLabel}>Processing Fee (5%)</Text>
-                    <Text style={styles.feeValue}>RM{orderDetails.processingFee.toFixed(2)}</Text>
+                    <Text style={styles.feeValue}>
+                      RM{orderDetails.reduce((sum, detail) => sum + detail.processingFee, 0).toFixed(2)}
+                    </Text>
                   </View>
                   <View style={[styles.feeRow, styles.totalRow]}>
                     <Text style={styles.totalLabel}>Total</Text>
-                    <Text style={styles.totalValue}>RM{orderDetails.totalAmount.toFixed(2)}</Text>
+                    <Text style={styles.totalValue}>
+                      RM{orderDetails.reduce((sum, detail) => sum + detail.totalAmount, 0).toFixed(2)}
+                    </Text>
                   </View>
                 </View>
 
-                <Text style={styles.paymentMethodTitle}>Select Payment Method</Text>
-                <View style={styles.paymentMethodsContainer}>
-                  {paymentMethods.map((method) => (
-                    <TouchableOpacity
-                      key={method.id}
-                      style={[
-                        styles.paymentMethodCard,
-                        selectedPaymentMethod === method.id && styles.selectedPaymentMethod,
-                      ]}
-                      onPress={() => setSelectedPaymentMethod(method.id)}
-                    >
-                      <Ionicons
-                        name={method.icon}
-                        size={24}
-                        color={selectedPaymentMethod === method.id ? "#10B981" : "#666"}
-                      />
-                      <Text
+                  <Text style={styles.paymentMethodTitle}>Select Payment Method</Text>
+                  <View style={styles.paymentMethodsContainer}>
+                    {paymentMethods.map((method) => (
+                      <TouchableOpacity
+                        key={method.id}
                         style={[
-                          styles.paymentMethodName,
-                          selectedPaymentMethod === method.id && styles.selectedPaymentMethodText,
+                          styles.paymentMethodCard,
+                          selectedPaymentMethod === method.id && styles.selectedPaymentMethod,
                         ]}
+                        onPress={() => setSelectedPaymentMethod(method.id)}
                       >
-                        {method.name}
-                      </Text>
-                      {selectedPaymentMethod === method.id && (
-                        <Ionicons name="checkmark-circle" size={18} color="#10B981" style={styles.paymentMethodCheck} />
-                      )}
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </>
-            )}
+                        <Ionicons
+                          name={method.icon}
+                          size={24}
+                          color={selectedPaymentMethod === method.id ? "#10B981" : "#666"}
+                        />
+                        <Text
+                          style={[
+                            styles.paymentMethodName,
+                            selectedPaymentMethod === method.id && styles.selectedPaymentMethodText,
+                          ]}
+                        >
+                          {method.name}
+                        </Text>
+                        {selectedPaymentMethod === method.id && (
+                          <Ionicons name="checkmark-circle" size={18} color="#10B981" style={styles.paymentMethodCheck} />
+                        )}
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </>
+              )}
+            </ScrollView>
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={() => setPaymentModalVisible(false)}>Cancel</Button>
@@ -1162,6 +1363,33 @@ const styles = StyleSheet.create({
   },
   confirmPaymentButton: {
     backgroundColor: "#10B981",
+  },
+  autoRestockButton: {
+    backgroundColor: "#10B981",
+    marginLeft: 8,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+  },
+  lowStockItemsTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 8,
+    color: "#333",
+  },
+  lowStockItemsList: {
+    marginBottom: 16,
+  },
+  lowStockItem: {
+    marginBottom: 8,
+  },
+  lowStockItemName: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  lowStockItemQuantity: {
+    fontSize: 12,
+    color: "#666",
   },
 })
 

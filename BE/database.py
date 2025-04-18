@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from sqlalchemy import create_engine, text, Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy import Date, create_engine, text, Column, Integer, String, Float, DateTime, ForeignKey
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 from dotenv import load_dotenv
@@ -64,6 +64,24 @@ class Keyword(Base):
     merchant_id = Column(String, index=True)
     keyword = Column(String)
     count = Column(Integer)
+    
+class Ingredient(Base):
+    __tablename__ = "ingredients"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    ingredient_id = Column(String, unique=True, index=True)
+    ingredient_name = Column(String)
+    stock_left = Column(Integer)
+    last_restock = Column(Date)
+    recommended = Column(Integer)
+
+class IngredientUsage(Base):
+    __tablename__ = "ingredient_usage"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    ingredient_id = Column(String, index=True)
+    date = Column(Date)
+    usage = Column(Integer)
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -125,6 +143,18 @@ def import_csv_to_db():
         keywords_df = pd.read_csv("data/keywords.csv")
         keywords_df.to_sql("keywords", engine, if_exists="replace", index=False)
         print("Keywords data imported")
+        
+    # Import ingredients
+    if os.path.exists("data/ingredient.csv"):
+        ingredients_df = pd.read_csv("data/ingredient.csv")
+        ingredients_df.to_sql("ingredients", engine, if_exists="replace", index=False)
+        print("Ingredients data imported")
+    
+    # Import ingredient usage
+    if os.path.exists("data/ingredient_usage.csv"):
+        ingredient_usage_df = pd.read_csv("data/ingredient_usage.csv")
+        ingredient_usage_df.to_sql("ingredient_usage", engine, if_exists="replace", index=False)
+        print("Ingredient usage data imported")
 
 # Only run this when directly executing this file
 if __name__ == "__main__":
