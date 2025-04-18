@@ -1,6 +1,8 @@
 import { API_URL } from '@env';
-import { useQuery } from "@tanstack/react-query";
-const merchant_id = "0e1b3"; //*****Set Merchant ID HEREEE***** 
+
+const merchant_id = "f3b8d"; //*****Set Merchant ID HEREEE***** 
+//6a0c3 (basmathi rice, graph not nice)
+//
 
 export const fetchLowStockItems = async () => {
   try {
