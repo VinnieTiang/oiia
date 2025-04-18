@@ -126,3 +126,64 @@ export const fetchSalesData = async (period = 'today', merchantId = merchant_id)
     throw error;
   }
 };
+
+export const fetchSalesTrend = async (period, merchantId = merchant_id) => {
+  try {
+    const response = await fetch(`${API_URL}/merchant/${merchantId}/trends/${period}`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch sales trend data: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    // Sanitize data to prevent invalid numbers
+    if (data.datasets && data.datasets.length > 0) {
+      data.datasets = data.datasets.map(dataset => {
+        // Replace Infinity or NaN values with 0
+        const sanitizedData = dataset.data.map(value => 
+          (isNaN(value) || !isFinite(value)) ? 0 : value
+        );
+        
+        return {
+          ...dataset,
+          data: sanitizedData,
+          // Ensure color is a function
+          color: typeof dataset.color === 'string' 
+            ? function(opacity = 1) { 
+                return dataset.color.includes('rgba') 
+                  ? dataset.color.replace('${opacity}', opacity)
+                  : `rgba(47, 174, 96, ${opacity})`;
+              } 
+            : dataset.color
+        };
+      });
+    }
+    
+    // Sanitize comparison data too
+    if (data.comparison_data) {
+      data.comparison_data = data.comparison_data.map(value => 
+        (isNaN(value) || !isFinite(value)) ? 0 : value
+      );
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error fetching sales trend data:", error);
+    
+    // Return default fallback data
+    return {
+      labels: period === "daily" 
+        ? ["8:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00"]
+        : period === "weekly"
+          ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] 
+          : ["Week 1", "Week 2", "Week 3", "Week 4"],
+      datasets: [{
+        data: [0, 0, 0, 0, 0, 0, 0],
+        color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
+        strokeWidth: 2
+      }],
+      comparison_data: [0, 0, 0, 0, 0, 0, 0]
+    };
+  }
+};
