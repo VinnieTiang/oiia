@@ -1,5 +1,5 @@
 {
-  "name": "gigboostapp",
+  "name": "grablet",
   "license": "0BSD",
   "version": "1.0.0",
   "main": "index.js",
@@ -29,7 +29,7 @@
     "expo-speech-recognition": "^1.1.1",
     "expo-status-bar": "~2.0.1",
     "expo-system-ui": "^4.0.9",
-    "gigboostapp": "file:",
+    "grablet": "file:",
     "react": "18.3.1",
     "react-native": "0.76.9",
     "react-native-chart-kit": "^6.12.0",

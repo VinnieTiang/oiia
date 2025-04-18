@@ -12,6 +12,7 @@ from rag import get_merchant_summary
 from forecast import load_merchant_sales_series, forecast_sales, forecast_to_summary
 from database import get_db, import_csv_to_db
 from sales import get_merchant_today_summary, get_merchant_period_summary
+from sales_trends import get_sales_trend
 
 # Load API key from .env
 load_dotenv()
@@ -146,3 +147,11 @@ async def get_period_sales(merchant_id: str, period: str):
     if period not in ["week", "month"]:
         return {"error": "Period must be 'week' or 'month'"}
     return get_merchant_period_summary(merchant_id, period)
+
+@app.get("/merchant/{merchant_id}/trends/{period}")
+async def get_merchant_sales_trend(merchant_id: str, period: str):
+    """Get sales trend data for charts"""
+    if period not in ["daily", "weekly", "monthly"]:
+        return {"error": "Period must be 'daily', 'weekly', or 'monthly'"}
+    
+    return get_sales_trend(merchant_id, period)
