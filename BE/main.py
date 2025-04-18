@@ -19,7 +19,7 @@ from database import get_db, import_csv_to_db, Ingredient
 from sales import get_merchant_today_summary, get_merchant_period_summary
 from item_service import get_items_by_merchant
 from sales_trends import get_sales_trend
-from top_items import get_top_selling_items
+from top_items import get_top_selling_items, get_best_seller
 
 
 # Load API key from .env
@@ -419,6 +419,11 @@ async def get_merchant_top_items(merchant_id: str):
     it always returns monthly data (last 30 days) regardless of period
     """
     return get_top_selling_items(merchant_id)
+
+@app.get("/merchant/{merchant_id}/best-seller")
+async def get_best_seller_item(merchant_id:str):
+    return get_best_seller(merchant_id)
+
 
 @app.get("/ingredients/predict")
 async def predict_ingredient_stock():
