@@ -1,6 +1,7 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from "react-native"
+import { useAdviceQueryData } from "../api"
+import { ActivityIndicator, View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { Ionicons } from "@expo/vector-icons"
+import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
 import { useState, useEffect } from "react"
 
 export default function AdviceScreen() {
@@ -8,7 +9,9 @@ export default function AdviceScreen() {
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [showAllInsights, setShowAllInsights] = useState(false)
   const [showAllResources, setShowAllResources] = useState(false)
-  
+
+  const { data: adviceItems = [], refetch, isFetching } = useAdviceQueryData();
+
   // Mock merchant data - in a real app, this would come from an API
   const merchantData = {
     name: "Vni",
@@ -53,63 +56,6 @@ export default function AdviceScreen() {
     },
   ]
 
-  const adviceItems = [
-    {
-        id: "1",
-        category: "sales",
-        title: "Add more spicy options",
-        impact: "Potential +18% new orders",
-        details: "85% of customers in your area prefer spicy food. Consider adding Sambal Udang and spicier versions of your Mee Goreng. Restaurants with spicy options see 18% higher repeat orders in your region.",
-        icon: "flame",
-        color: "#E74C3C",
-    },
-    {
-      id: "2",
-      category: "sales",
-      title: "Optimize peak hours",
-      impact: "Potential +15% revenue",
-      details: "Your restaurant is busiest from 12-2 PM and 7-9 PM. Consider offering a special combo of Nasi Lemak with Ayam Goreng during these hours to increase your average order value.",
-      icon: "trending-up",
-      color: "#2FAE60",
-    },
-    {
-      id: "3",
-      category: "sales",
-      title: "Expand delivery radius",
-      impact: "Potential +8% new customers",
-      details: "There's high demand for Malaysian food in the Bukit Timah area, just outside your current delivery zone. Expanding your radius could bring in 20-30 new customers weekly.",
-      icon: "location",
-      color: "#2D9CDB",
-    },
-    {
-      id: "4",
-      category: "customers",
-      title: "Boost your ratings",
-      impact: "Potential +15% repeat orders",
-      details: "Your rating is 4.2/5, with praise for your authentic flavors. However, 15% of reviews mention wait times. Responding to these reviews could improve customer retention.",
-      icon: "star",
-      color: "#F2994A",
-    },
-    {
-      id: "5",
-      category: "finance",
-      title: "Optimize rice costs",
-      impact: "Potential $1,440 annual savings",
-      details: "Your rice costs increased 8% this quarter. Switching to a local supplier could save approximately $120/month while maintaining the quality of your Nasi Lemak and other rice dishes.",
-      icon: "calculator",
-      color: "#9B51E0",
-    },
-    {
-      id: "6",
-      category: "inventory",
-      title: "Reduce food waste",
-      impact: "Potential 12% cost reduction",
-      details: "Data shows you're discarding 18% of prepared Mee Goreng on Mondays. Consider reducing your preparation by 15% on slower days or offering end-of-day discounts.",
-      icon: "cube",
-      color: "#2D9CDB",
-    },
-  ]
-  
   const learningResources = [
     {
         id: "1",
@@ -163,6 +109,10 @@ export default function AdviceScreen() {
     },
   ]
 
+  const handleAdviceRefresh = () => {
+    refetch();
+  };
+
   // Set first item expanded by default
   useEffect(() => {
     if (adviceItems.length > 0) {
@@ -178,7 +128,7 @@ export default function AdviceScreen() {
   const toggleAdvice = (id) => {
     setExpandedAdvice(expandedAdvice === id ? null : id)
   }
-  
+
   const toggleShowAllInsights = () => {
     setShowAllInsights(!showAllInsights)
   }
@@ -186,7 +136,7 @@ export default function AdviceScreen() {
   const toggleShowAllResources = () => {
     setShowAllResources(!showAllResources)
   }
-  
+
   const selectCategory = (categoryId) => {
     setSelectedCategory(categoryId === "all" ? "all" : categoryId)
     // Reset expanded state when changing categories
@@ -201,22 +151,22 @@ export default function AdviceScreen() {
       }
     }
   }
-  
-  const filteredAdvice = selectedCategory === "all" 
+
+  const filteredAdvice = selectedCategory === "all"
     ? adviceItems
     : adviceItems.filter(item => item.category === selectedCategory)
-    
+
   // Limit to 3 items unless showAllInsights is true
-  const displayedAdvice = showAllInsights 
-    ? filteredAdvice 
+  const displayedAdvice = showAllInsights
+    ? filteredAdvice
     : filteredAdvice.slice(0, 3)
-    
+
     const allCategoryResources = selectedCategory && selectedCategory !== "all"
     ? learningResources.filter(item => item.category === selectedCategory)
     : learningResources
-  
-    const filteredResources = showAllResources 
-    ? allCategoryResources 
+
+    const filteredResources = showAllResources
+    ? allCategoryResources
     : allCategoryResources.slice(0, 2)
 
   return (
@@ -250,23 +200,23 @@ export default function AdviceScreen() {
           contentContainerStyle={styles.categoriesContainer}
         >
           {adviceCategories.map((category) => (
-            <TouchableOpacity 
-              key={category.id} 
+            <TouchableOpacity
+              key={category.id}
               style={[
                 styles.categoryCard,
                 selectedCategory === category.id && styles.selectedCategoryCard
               ]}
               onPress={() => selectCategory(category.id)}
             >
-              <View 
+              <View
                 style={[
-                  styles.categoryIcon, 
+                  styles.categoryIcon,
                   { backgroundColor: `${category.color}20` }
                 ]}
               >
                 <Ionicons name={category.icon} size={22} color={category.color} />
               </View>
-              <Text 
+              <Text
                 style={[
                   styles.categoryTitle,
                   selectedCategory === category.id && styles.selectedCategoryTitle
@@ -280,12 +230,27 @@ export default function AdviceScreen() {
 
         {/* Advice items */}
         <View style={styles.todayAdviceContainer}>
-          <Text style={styles.sectionTitle}>
-            {selectedCategory && selectedCategory !== "all"
-              ? `${adviceCategories.find(c => c.id === selectedCategory)?.title} Tips` 
-              : "Personalized Tips"}
-          </Text>
+            <View style={{ flexDirection: "row" }}>
+                <Text style={styles.sectionTitle}>
+                    {selectedCategory && selectedCategory !== "all"
+                    ? `${adviceCategories.find(c => c.id === selectedCategory)?.title} Tips`
+                    : "Personalized Tips"}
+                </Text>
+                <TouchableOpacity
+                    style={{ marginLeft: 18 }} // move margin here instead of icon itself
+                    onPress={handleAdviceRefresh}
+                >
+                    <Feather name="refresh-cw" size={20} color="#999" />
+                </TouchableOpacity>
+            </View>
 
+            {isFetching ? (
+        <View style={styles.emptyState}>
+          <ActivityIndicator size="small" color="#2D9CDB" />
+          <Text>Regenerating advice...</Text>
+        </View>
+      ) : (
+        <>
           {filteredAdvice.length === 0 ? (
             <View style={styles.emptyState}>
               <Ionicons name="information-circle-outline" size={40} color="#999" />
@@ -294,8 +259,8 @@ export default function AdviceScreen() {
           ) : (
             <>
               {displayedAdvice.map((item) => (
-                <TouchableOpacity 
-                  key={item.id} 
+                <TouchableOpacity
+                  key={item.id}
                   style={[
                     styles.insightItem,
                     expandedAdvice === item.id && styles.expandedInsightItem
@@ -305,16 +270,16 @@ export default function AdviceScreen() {
                 >
                   <View style={styles.insightHeader}>
                     <View style={[styles.insightIconContainer, { backgroundColor: `${item.color}20` }]}>
-                      <Ionicons name={item.icon} size={18} color={item.color} />
+                      <MaterialCommunityIcons name={item.icon} size={18} color={item.color} />
                     </View>
                     <View style={styles.insightTitleContainer}>
                       <Text style={styles.insightTitle}>{item.title}</Text>
                       <Text style={styles.insightImpact}>{item.impact}</Text>
                     </View>
-                    <Ionicons 
-                      name={expandedAdvice === item.id ? "chevron-up" : "chevron-down"} 
-                      size={16} 
-                      color="#666" 
+                    <Ionicons
+                      name={expandedAdvice === item.id ? "chevron-up" : "chevron-down"}
+                      size={16}
+                      color="#666"
                     />
                   </View>
 
@@ -328,23 +293,25 @@ export default function AdviceScreen() {
 
               {/* Show "See more" / "See less" button only if there are more than 3 items */}
               {filteredAdvice.length > 3 && (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.seeMoreButton}
                   onPress={toggleShowAllInsights}
                 >
                   <Text style={styles.seeMoreText}>
                     {showAllInsights ? "See less" : "See more"}
                   </Text>
-                  <Ionicons 
-                    name={showAllInsights ? "chevron-up" : "chevron-down"} 
-                    size={16} 
-                    color="#2D9CDB" 
+                  <Ionicons
+                    name={showAllInsights ? "chevron-up" : "chevron-down"}
+                    size={16}
+                    color="#2D9CDB"
                   />
                 </TouchableOpacity>
               )}
             </>
           )}
-        </View>
+        </>
+      )}
+    </View>
 
         {/* Learning Resources */}
         {filteredResources.length > 0 && (
@@ -376,10 +343,10 @@ export default function AdviceScreen() {
                 <Text style={styles.seeMoreText}>
                 {showAllResources ? "See less" : "See more"}
                 </Text>
-                <Ionicons 
-                    name={showAllResources ? "chevron-up" : "chevron-down"} 
-                    size={16} 
-                    color="#2D9CDB" 
+                <Ionicons
+                    name={showAllResources ? "chevron-up" : "chevron-down"}
+                    size={16}
+                    color="#2D9CDB"
                   />
               </TouchableOpacity>
             )}
@@ -651,5 +618,14 @@ const styles = StyleSheet.create({
     color: "#2D9CDB",
     fontWeight: "500",
     marginRight: 6,
+  },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    width: 40,
+    height: 40,
+    backgroundColor: 'rgba(255,255,255,0.6)', // white overlay with transparency
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1, // make sure it sits on top
   },
 })

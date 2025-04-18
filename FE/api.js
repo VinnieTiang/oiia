@@ -1,16 +1,18 @@
 import { API_URL } from '@env';
+
 const merchant_id = "f3b8d"; //*****Set Merchant ID HEREEE***** 
 //6a0c3 (basmathi rice, graph not nice)
 //
+
 export const fetchLowStockItems = async () => {
   try {
     console.log('Fetching low stock items from:', `${API_URL}/inventory/low-stock`);
     const response = await fetch(`${API_URL}/inventory/low-stock`);
-    
+
     if (!response.ok) {
       throw new Error(`Network response was not ok: ${response.status}`);
     }
-    
+
     const data = await response.json();
     console.log('Received data:', data);
     return data;
@@ -46,6 +48,30 @@ export const askAI = async (question, merchantId = merchant_id) => {
     throw error
   }
 }
+
+export const getAdvice = async (merchantId = merchant_id) => {
+    try {
+      const response = await fetch(`${API_URL}/advice`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          merchant_id: merchantId,
+        }),
+      })
+  
+      if (!response.ok) {
+        throw new Error(`Network response was not ok: ${response.status}`)
+      }
+  
+      const data = await response.json()
+      return data.advice
+    } catch (error) {
+      console.error("Error asking AI:", error)
+      throw error
+    }
+  }
 
 export const fetchForecast = async (merchantId = merchant_id, days = 7) => {
   try {
@@ -267,4 +293,18 @@ function getDefaultTrendData(period) {
         peak_week_increase: "N/A"
       };
   }
+}
+
+export const useAdviceQueryData = () => {
+    return useQuery({
+        queryKey: ['advice-data'],
+        queryFn: async () => {
+            const advices = await getAdvice()
+            const advicesWithIds = advices.map((item, index) => ({
+                ...item,
+                id: index.toString(),
+              }))
+            return advicesWithIds;
+        },
+    })
 }
