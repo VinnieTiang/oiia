@@ -117,8 +117,12 @@ export default function InsightScreen() {
     const fetchTopItems = async () => {
       try {
         setTopItemsLoading(true);
-        const data = await fetchTopSellingItems(timePeriod);
-        setTopItems(data);
+        const data = await fetchTopSellingItems();
+        if (!data || data.status === "loading") {
+          setTopItems({ status: "loading" });
+        } else {
+          setTopItems(data);
+        }
         setTopItemsLoading(false);
       } catch (error) {
         console.error("Failed to fetch top items:", error);
@@ -127,7 +131,7 @@ export default function InsightScreen() {
     };
   
     fetchTopItems();
-  }, [timePeriod]);
+  }, []);
   
 
   useEffect(() => {
@@ -180,32 +184,6 @@ export default function InsightScreen() {
     },
   }
 
-  const itemsData = {
-    daily: {
-      labels: ["Nasi L.", "Ayam G.", "Mee G.", "Roti C.", "Teh T."],
-      datasets: [
-        {
-          data: [25, 20, 15, 10, 30],
-        },
-      ],
-    },
-    weekly: {
-      labels: ["Nasi L.", "Ayam G.", "Mee G.", "Roti C.", "Teh T."],
-      datasets: [
-        {
-          data: [85, 75, 65, 55, 45],
-        },
-      ],
-    },
-    monthly: {
-      labels: ["Nasi L.", "Ayam G.", "Mee G.", "Roti C.", "Teh T."],
-      datasets: [
-        {
-          data: [320, 280, 240, 200, 180],
-        },
-      ],
-    },
-  }
 
   const categoryData = [
     {
@@ -583,28 +561,41 @@ export default function InsightScreen() {
 
       {/* Top Selling Items Chart */}
       <View style={styles.chartCard}>
-        <Text style={styles.chartTitle}>Top Selling Items</Text>
-        <BarChart
-          data={topItems?.chart_data || itemsData[timePeriod]}
-          width={chartWidth}
-          height={220}
-          chartConfig={{
-            ...chartConfig,
-            barPercentage: 0.7,
-            color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
-          }}
-          style={styles.chart}
-          showValuesOnTopOfBars
-          fromZero
-        />
-        <View style={styles.insightBadge}>
-          <Ionicons name="star" size={16} color="#2FAE60" />
-          <Text style={styles.insightText}>
-            {topItems ? 
-              `${topItems.best_seller} is your best seller (${topItems.best_seller_percent}%)` : 
-              "Nasi Lemak is your best seller"}
-          </Text>
-        </View>
+        <Text style={styles.chartTitle}>Top Selling Items (Last 30 Days)</Text>
+        
+        {topItemsLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#2FAE60" />
+            <Text style={styles.loadingText}>Loading top items data...</Text>
+          </View>
+        ) : (
+          <>
+            <BarChart
+              data={topItems?.chart_data || {
+                labels: [],
+                datasets: [{ data: [] }]
+              }}
+              width={chartWidth}
+              height={220}
+              chartConfig={{
+                ...chartConfig,
+                barPercentage: 0.7,
+                color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
+              }}
+              style={styles.chart}
+              showValuesOnTopOfBars
+              fromZero
+            />
+            <View style={styles.insightBadge}>
+              <Ionicons name="star" size={16} color="#2FAE60" />
+              <Text style={styles.insightText}>
+                {topItems && topItems.status === "success" ? 
+                  `${topItems.best_seller} is your best seller (${topItems.best_seller_percent}%)` : 
+                  topItemsLoading ? "Loading..." : "No top items data available"}
+              </Text>
+            </View>
+          </>
+        )}
       </View>
 
        {/* Sales Forecast Section */}
