@@ -7,6 +7,7 @@ from datetime import datetime
 from openai import OpenAI
 from sqlalchemy.orm import Session
 from functools import lru_cache
+import asyncio
 
 # Import our modules
 from rag import get_merchant_summary
@@ -226,3 +227,118 @@ async def get_merchant_sales_trend(merchant_id: str, period: str):
         return {"error": "Period must be 'daily', 'weekly', or 'monthly'"}
     
     return get_sales_trend(merchant_id, period)
+
+@app.get("/insights/{merchant_id}/{period}")
+async def get_insights(merchant_id: str, period: str, db: Session = Depends(get_db)):
+    """Generate AI-powered insights specific to a time period"""
+    
+    if period not in ["daily", "weekly", "monthly"]:
+        return {"error": "Period must be 'daily', 'weekly', or 'monthly'"}
+    
+    try:
+        # Step 1: Get merchant summary and sales data for the period
+        summary = get_cached_merchant_summary(merchant_id)
+        
+        # Get period-specific data
+        if period == "daily":
+            sales_data = get_merchant_today_summary(merchant_id)
+        else:
+            sales_data = get_merchant_period_summary(merchant_id, period.replace("ly", ""))
+            
+        # Get trend data for the period
+        trend_data = get_sales_trend(merchant_id, period)
+        
+        # Convert json data to strings first to avoid backslash issues in f-strings
+        sales_data_json = json.dumps(sales_data)
+        trend_data_json = json.dumps(trend_data)
+        
+        # Build improved prompts specific to each insight type
+        time_prompt = f"""
+        You are providing a direct insight to a food merchant about their business performance.
+        
+        Analyze this {period} sales data and give ONE clear insight about the merchant's best selling time.
+        
+        Your response must:
+        1. Speak directly to the merchant using "you" and "your", no need to mention about the name of merchant.
+        2. Be extremely concise (15-25 words)
+        3. Contain one specific, data-backed observation
+        4. Include a clear action the merchant should take
+        
+        Sales data: {sales_data_json}
+        Trend data: {trend_data_json}
+        Merchant summary: {summary}
+        """
+        
+        menu_prompt = f"""
+        You are providing a direct insight to a food merchant about their menu performance.
+        
+        Analyze this {period} sales data and give ONE clear insight about the merchant's menu items.
+        
+        Your response must:
+        1. Speak directly to the merchant using "you" and "your", no need to mention about the name of merchant.
+        2. Be extremely concise (15-25 words)
+        3. Refer to a specific menu item or category
+        4. Include a clear action the merchant should take
+        
+        Sales data: {sales_data_json}
+        Trend data: {trend_data_json}
+        Merchant summary: {summary}
+        """
+        
+        opportunity_prompt = f"""
+        You are providing a direct insight to a food merchant about a business opportunity.
+        
+        Analyze this {period} sales data and identify ONE clear business opportunity.
+        
+        Your response must:
+        1. Speak directly to the merchant using "you" and "your", no need to mention about the name of merchant.
+        2. Be extremely concise (15-25 words)
+        3. Highlight one specific growth opportunity
+        4. Include a clear, actionable recommendation
+        
+        Sales data: {sales_data_json}
+        Trend data: {trend_data_json}
+        Merchant summary: {summary}
+        """
+        
+        # Generate insights using OpenAI in parallel
+        responses = await asyncio.gather(
+            generate_insight(time_prompt),
+            generate_insight(menu_prompt),
+            generate_insight(opportunity_prompt)
+        )
+        
+        return {
+            "best_selling_time": {
+                "title": "Best Selling Time",
+                "description": responses[0]
+            },
+            "menu_performance": {
+                "title": "Menu Performance",
+                "description": responses[1]
+            },
+            "opportunity": {
+                "title": "Opportunity",
+                "description": responses[2]
+            }
+        }
+        
+    except Exception as e:
+        print(f"Error generating insights: {str(e)}")
+        return {
+            "error": f"Failed to generate insights: {str(e)}"
+        }
+
+async def generate_insight(prompt: str) -> str:
+    """Generate a single insight using OpenAI"""
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            max_tokens=100
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"Error in generate_insight: {str(e)}")
+        return "Could not generate insight at this time."
