@@ -393,6 +393,28 @@ export const fetchTopSellingItems = async ( merchantId = merchant_id) => {
   }
 };
 
+export const fetchBestSeller = async(merchantId=merchant_id) => {
+  try{
+    const response = await fetch(`${API_URL}/merchant/${merchantId}/best-seller`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch best seller: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return {
+      name: data.name || "No best seller found",
+      percentage: data.percentage || 0
+    };
+  } catch (error) {
+    console.error("Error fetching best seller:", error);
+    return {
+      name: "Unable to load",
+      percentage: 0,
+      error: error.message
+    };
+  }
+}
+
 export async function getMerchantItems(merchantId = merchant_id) {
   try {
     const response = await fetch(`${API_URL}/merchant-items/${merchantId}`);

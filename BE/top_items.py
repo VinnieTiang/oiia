@@ -100,3 +100,77 @@ def get_top_selling_items(merchant_id: str, limit: int = 5):
             "status": "error",
             "message": "Internal server error while fetching top items."
         }
+
+def get_best_seller(merchant_id: str) -> dict:
+    """
+    Get only the best selling item and its percentage for a merchant.
+    Returns cached data if available to avoid reprocessing.
+    
+    Args:
+        merchant_id: The ID of the merchant
+        
+    Returns:
+        dict: {'name': str, 'percentage': int} or empty dict if no data
+    """
+    try:
+        # First try to get from cache
+        if merchant_id in merchant_cache:
+            cached = merchant_cache[merchant_id]
+            return {
+                'name': cached['best_seller'],
+                'percentage': cached['best_seller_percent']
+            }
+        
+        # If not cached, use a simplified query
+        end_date = get_latest_transaction_date()
+        start_date = end_date - timedelta(days=30)
+
+        query = """
+        SELECT 
+            i.item_name,
+            COUNT(*) as item_count
+        FROM transaction_items ti
+        JOIN items i ON ti.item_id = i.item_id
+        JOIN transactions t ON t.order_id = ti.order_id
+        WHERE 
+            i.merchant_id = :merchant_id AND 
+            t.merchant_id = :merchant_id AND 
+            DATE(t.order_time) BETWEEN :start_date AND :end_date
+        GROUP BY i.item_name
+        ORDER BY item_count DESC
+        LIMIT 1
+        """
+        
+        result = query_to_dataframe(query, {
+            "merchant_id": merchant_id,
+            "start_date": str(start_date),
+            "end_date": str(end_date)
+        })
+
+        if not result.empty:
+            total_query = """
+            SELECT COUNT(*) as total
+            FROM transaction_items ti
+            JOIN transactions t ON t.order_id = ti.order_id
+            WHERE 
+                t.merchant_id = :merchant_id AND 
+                DATE(t.order_time) BETWEEN :start_date AND :end_date
+            """
+            total = query_to_dataframe(total_query, {
+                "merchant_id": merchant_id,
+                "start_date": str(start_date),
+                "end_date": str(end_date)
+            }).iloc[0]['total']
+            
+            percentage = round((result.iloc[0]['item_count'] / total * 100))
+            
+            return {
+                'name': str(result.iloc[0]['item_name']),
+                'percentage': int(percentage)
+            }
+            
+        return {}
+
+    except Exception as e:
+        print(f"Error in get_best_seller: {str(e)}")
+        return {}

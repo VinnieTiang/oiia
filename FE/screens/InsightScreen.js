@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { LineChart, BarChart, PieChart, ProgressChart } from "react-native-chart-kit"
 import { useRef, useEffect, useState } from "react"
 import { useRoute } from "@react-navigation/native"
-import { fetchForecast, fetchSalesData, fetchSalesTrend, fetchInsights, fetchTopSellingItems } from "../api"
+import { fetchForecast, fetchSalesData, fetchSalesTrend, fetchInsights, fetchTopSellingItems, fetchBestSeller } from "../api"
 
 export default function InsightScreen() {
   const [timePeriod, setTimePeriod] = useState("weekly")
@@ -32,6 +32,8 @@ export default function InsightScreen() {
   const [insightsLoading, setInsightsLoading] = useState(true)
   const [topItems, setTopItems] = useState(null);
   const [topItemsLoading, setTopItemsLoading] = useState(true);
+  const [bestSeller, setBestSeller] = useState(null);
+  const [bestSellerLoading, setBestSellerLoading] = useState(true);
 
   useEffect(() => {
     if (route.params?.scrollToBottom) {
@@ -131,6 +133,22 @@ export default function InsightScreen() {
     };
   
     fetchTopItems();
+  }, []);
+
+  useEffect(() => {
+    const loadBestSeller = async () => {
+      try {
+        setBestSellerLoading(true);
+        const data = await fetchBestSeller();
+        setBestSeller(data);
+      } catch (error) {
+        console.error("Error loading best seller:", error);
+      } finally {
+        setBestSellerLoading(false);
+      }
+    };
+  
+    loadBestSeller();
   }, []);
   
 
@@ -579,19 +597,39 @@ export default function InsightScreen() {
               height={220}
               chartConfig={{
                 ...chartConfig,
-                barPercentage: 0.7,
+                barPercentage: 1.3, 
+                categoryPercentage: 1.6, // Added this property
+                barRadius: 5, // Optional: adds rounded corners to bars
                 color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
+                fillShadowGradient: '#2FAE60', // gradient fill
+                fillShadowGradientOpacity: 1,
+                propsForBackgroundLines: {
+                  strokeWidth: 1,
+                  stroke: "#e3e3e3",
+                },
+                horizontalOffset: 0, // Makes sure y-axis stays on left
+                yAxisLabel: "", // Empty label to ensure spacing
+                yAxisSide: "left", // Explicitly set y-axis on left
               }}
               style={styles.chart}
-              showValuesOnTopOfBars
               fromZero
+              showValuesOnTopOfBars
+              withInnerLines={true}
+              showBarTops={true}
+              segments={5} // Makes the y-axis have 5 segments for cleaner look
             />
             <View style={styles.insightBadge}>
               <Ionicons name="star" size={16} color="#2FAE60" />
               <Text style={styles.insightText}>
-                {topItems && topItems.status === "success" ? 
-                  `${topItems.best_seller} is your best seller (${topItems.best_seller_percent}%)` : 
-                  topItemsLoading ? "Loading..." : "No top items data available"}
+                {bestSellerLoading ? (
+                  "Loading best seller..."
+                ) : bestSeller && bestSeller.name ? (
+                  `${bestSeller.name} is your best seller (${bestSeller.percentage}%)`
+                ) : topItems && topItems.best_seller ? (
+                  `${topItems.best_seller} is your best seller (${topItems.best_seller_percent}%)`
+                ) : (
+                  "No top seller data available"
+                )}
               </Text>
             </View>
           </>
