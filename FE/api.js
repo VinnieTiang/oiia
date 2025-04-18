@@ -1,7 +1,7 @@
 import { API_URL } from '@env';
 import { useQuery } from "@tanstack/react-query";
 
-const merchant_id = "6a0c3"; //*****Set Merchant ID HEREEE***** 
+const merchant_id = "e8b3c"; //*****Set Merchant ID HEREEE***** 
 //6a0c3 (basmathi rice, graph not nice)
 //e8b3c (good bundle wed is peak)
 //0e1b3 (ori)
@@ -309,4 +309,25 @@ export const useAdviceQueryData = () => {
             return advicesWithIds;
         },
     })
+}
+
+export async function getMerchantItems(merchantId = merchant_id) {
+  try {
+    const response = await fetch(`${API_URL}/merchant-items/${merchantId}`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch merchant items");
+    }
+
+    const data = await response.json();
+
+    return data.map((item, index) => ({
+      id: index + 1, 
+      name: item.item_name,
+      price: item.item_price,
+      category: item.cuisine_tag,
+    }));
+  } catch (error) {
+    console.error("Error fetching merchant items:", error);
+    return [];
+  }
 }
