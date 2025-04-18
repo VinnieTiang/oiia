@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { LineChart, BarChart, PieChart, ProgressChart } from "react-native-chart-kit"
 import { useRef, useEffect, useState } from "react"
 import { useRoute } from "@react-navigation/native"
-import { fetchForecast, fetchSalesData } from "../api"
+import { fetchForecast, fetchSalesData, fetchSalesTrend } from "../api"
 
 export default function InsightScreen() {
   const [timePeriod, setTimePeriod] = useState("weekly")
@@ -25,6 +25,9 @@ export default function InsightScreen() {
   const [monthlySales, setMonthlySales] = useState(null)
   const [monthlyLoading, setMonthlyLoading] = useState(true)
   const [monthlyError, setMonthlyError] = useState(null)
+  const [salesTrend, setSalesTrend] = useState(null)
+  const [salesTrendLoading, setSalesTrendLoading] = useState(true)
+  const [salesTrendError, setSalesTrendError] = useState(null)
 
   useEffect(() => {
     if (route.params?.scrollToBottom) {
@@ -52,7 +55,6 @@ export default function InsightScreen() {
 
     loadForecastData()
   }, [])
-
 
   useEffect(() => {
     const fetchAllSalesData = async () => {
@@ -88,34 +90,52 @@ export default function InsightScreen() {
     fetchAllSalesData()
   }, []) // Empty dependency array - run once on mount
 
+  useEffect(() => {
+    const fetchTrendData = async () => {
+      try {
+        setSalesTrendLoading(true)
+        setSalesTrendError(null)
+        const data = await fetchSalesTrend(timePeriod)
+        setSalesTrend(data)
+      } catch (error) {
+        console.error(`Error fetching ${timePeriod} trend data:`, error)
+        setSalesTrendError(error.message)
+      } finally {
+        setSalesTrendLoading(false)
+      }
+    }
+
+    fetchTrendData()
+  }, [timePeriod])
+
   // Sample data for different time periods
   const salesData = {
-    daily: {
-      labels: ["8AM", "10AM", "12PM", "2PM", "4PM", "6PM", "8PM"],
+    daily: salesTrend || {
+      labels: [],
       datasets: [
         {
-          data: [200, 350, 1200, 800, 400, 900, 600],
-          color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
+          data: [],
+          color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
           strokeWidth: 2,
         },
       ],
     },
-    weekly: {
-      labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    weekly: salesTrend || {
+      labels: [],
       datasets: [
         {
-          data: [850, 1200, 950, 1100, 1400, 1800, 1500],
-          color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
+          data: [],
+          color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
           strokeWidth: 2,
         },
       ],
     },
-    monthly: {
-      labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+    monthly: salesTrend || {
+      labels: [],
       datasets: [
         {
-          data: [5200, 5800, 6200, 7000],
-          color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
+          data: [],
+          color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
           strokeWidth: 2,
         },
       ],
@@ -177,29 +197,26 @@ export default function InsightScreen() {
     daily: {
       totalSales: todaySales?.total_sales_formatted || "RM0.00",
       totalOrders: todaySales?.total_orders?.toString() || "0",
-      rating: "4.7", // HARDCODED,  it's not from the API
-      avgOrderValue: todaySales?.total_sales && todaySales?.total_orders 
-        ? `RM${(todaySales.total_sales / todaySales.total_orders).toFixed(2)}`
-        : "RM0.00",
-      peakHour: "12PM", // HARDCODED,   it's not from the API
+      // Keep hardcoded values for data not provided by API
+      rating: "4.7",
+      // Use API-calculated average order value when available
+      avgOrderValue: todaySales?.avg_order_value_formatted || "RM0.00",
+      // Use dynamic peak hour from salesTrend when available
+      peakHour: salesTrend?.peak_hour || "...",
     },
     weekly: {
       totalSales: weeklySales?.total_sales_formatted || "RM0.00",
       totalOrders: weeklySales?.total_orders?.toString() || "0",
-      rating: "4.8", // Keep this since it's not from the API
-      avgOrderValue: weeklySales?.total_sales && weeklySales?.total_orders 
-        ? `RM${(weeklySales.total_sales / weeklySales.total_orders).toFixed(2)}`
-        : "RM0.00",
-      peakDay: "Saturday", // Keep this since it's not from the API
+      rating: "4.8",
+      avgOrderValue: weeklySales?.avg_order_value_formatted || "RM0.00",
+      peakDay: salesTrend?.peak_day || "...",
     },
     monthly: {
       totalSales: monthlySales?.total_sales_formatted || "RM0.00",
       totalOrders: monthlySales?.total_orders?.toString() || "0",
-      rating: "4.8", // Keep this since it's not from the API
-      avgOrderValue: monthlySales?.total_sales && monthlySales?.total_orders 
-        ? `RM${(monthlySales.total_sales / monthlySales.total_orders).toFixed(2)}`
-        : "RM0.00",
-      peakWeek: "Week 4", // Keep this since it's not from the API
+      rating: "4.8",
+      avgOrderValue: monthlySales?.avg_order_value_formatted || "RM0.00",
+      peakWeek: salesTrend?.peak_week || "...",
     },
   }
 
@@ -256,6 +273,72 @@ export default function InsightScreen() {
 
   const forecastChartData = prepareForecastChart()
 
+  // Ensure your chart data has valid defaults
+  const chartData = {
+    labels: salesData[timePeriod]?.labels || [],
+    datasets: [
+      {
+        data: (salesData[timePeriod]?.datasets?.[0]?.data || [])
+          .filter(value => isFinite(value)), // Filter out Infinity values
+        color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
+        strokeWidth: 2,
+      }
+    ]
+  };
+
+  ///////////// Define a reusable SummaryCard (Second Row) ////////////
+  const SummaryCard = ({ 
+    title, 
+    value, 
+    isLoading, 
+    trendPercentage, 
+    trendValue, 
+    customStyles = {} 
+  }) => {
+    // Changed: Consider 0% as positive (or neutral) for UI purposes
+    // This ensures 0% always shows trending up icon
+    const isTrendPositive = trendValue >= 0;
+    const trendIconName = isTrendPositive ? "trending-up" : "trending-down";
+    const trendColor = isTrendPositive ? "#2FAE60" : "#FF3D00";
+    
+    // Determine the comparison text based on time period using proper nouns
+    let comparisonText;
+    switch(timePeriod) {
+      case "daily":
+        comparisonText = "yesterday";
+        break;
+      case "weekly":
+        comparisonText = "last week";
+        break;
+      case "monthly":
+        comparisonText = "last month";
+        break;
+      default:
+        comparisonText = `last ${timePeriod}`;
+    }
+    
+    return (
+      <View style={styles.summaryCard}>
+        <Text style={styles.cardTitle}>{title}</Text>
+        {isLoading ? (
+          <ActivityIndicator size="small" color="#2FAE60" />
+        ) : (
+          <>
+            <Text style={[styles.summaryValue, customStyles]} numberOfLines={1} adjustsFontSizeToFit>
+              {value}
+            </Text>
+            <View style={styles.trendContainer}>
+              <Ionicons name={trendIconName} size={14} color={trendColor} />
+              <Text style={[styles.summaryLabel, customStyles.label || {}]}>
+                {trendPercentage} from {comparisonText}
+              </Text>
+            </View>
+          </>
+        )}
+      </View>
+    );
+  };
+
   return (
     <ScrollView ref={scrollViewRef} style={styles.container}>
       {/* Time period selector */}
@@ -300,56 +383,88 @@ export default function InsightScreen() {
 
       {/* Summary Cards */}
       <View style={styles.summaryContainer}>
-        <View style={styles.summaryCard}>
-          <Text style={styles.cardTitle}>Total Sales</Text>
-          {(timePeriod === "daily" && todayLoading) ||
-           (timePeriod === "weekly" && weeklyLoading) ||
-           (timePeriod === "monthly" && monthlyLoading) ? (
-            <ActivityIndicator size="small" color="#2FAE60" />
-          ) : (
-            <>
-              <Text style={[styles.summaryValue, { fontSize: 18 }]} numberOfLines={1} adjustsFontSizeToFit>
-                {summaryData[timePeriod].totalSales}
-              </Text>
-              <View style={styles.trendContainer}>
-                <Ionicons name="trending-up" size={14} color="#2FAE60" />
-                <Text style={styles.summaryLabel}>12% from last {timePeriod}</Text>
-              </View>
-            </>
-          )}
-        </View>
+        {/* Total Sales Card */}
+        <SummaryCard
+          title="Total Sales"
+          value={summaryData[timePeriod].totalSales}
+          isLoading={(timePeriod === "daily" && todayLoading) ||
+                    (timePeriod === "weekly" && weeklyLoading) ||
+                    (timePeriod === "monthly" && monthlyLoading)}
+          trendValue={
+            timePeriod === "daily"
+              ? todaySales?.vs_last_period
+              : timePeriod === "weekly"
+                ? weeklySales?.vs_last_period
+                : monthlySales?.vs_last_period
+          }
+          trendPercentage={
+            timePeriod === "daily" 
+              ? todaySales?.vs_last_period_formatted || "+0%" 
+              : timePeriod === "weekly" 
+                ? weeklySales?.vs_last_period_formatted || "+0%"
+                : monthlySales?.vs_last_period_formatted || "+0%"
+          }
+          customStyles={{ fontSize: 18 }}
+        />
 
-        <View style={styles.summaryCard}>
-          <Text style={styles.cardTitle}>Total Orders</Text>
-          {(timePeriod === "daily" && todayLoading) ||
-           (timePeriod === "weekly" && weeklyLoading) ||
-           (timePeriod === "monthly" && monthlyLoading) ? (
-            <ActivityIndicator size="small" color="#2FAE60" />
-          ) : (
-            <>
-              <Text style={styles.summaryValue}>{summaryData[timePeriod].totalOrders}</Text>
-              <View style={styles.trendContainer}>
-                <Ionicons name="trending-up" size={14} color="#2FAE60" />
-                <Text style={styles.summaryLabel}>8% from last {timePeriod}</Text>
-              </View>
-            </>
-          )}
-        </View>
+        {/* Total Orders Card */}
+        <SummaryCard
+          title="Total Orders"
+          value={summaryData[timePeriod].totalOrders}
+          isLoading={(timePeriod === "daily" && todayLoading) ||
+                    (timePeriod === "weekly" && weeklyLoading) ||
+                    (timePeriod === "monthly" && monthlyLoading)}
+          trendValue={
+            timePeriod === "daily"
+              ? todaySales?.orders_vs_last_period
+              : timePeriod === "weekly"
+                ? weeklySales?.orders_vs_last_period
+                : monthlySales?.orders_vs_last_period
+          }
+          trendPercentage={
+            timePeriod === "daily" 
+              ? todaySales?.orders_vs_last_period_formatted || "+0%" 
+              : timePeriod === "weekly" 
+                ? weeklySales?.orders_vs_last_period_formatted || "+0%"
+                : monthlySales?.orders_vs_last_period_formatted || "+0%"
+          }
+        />
 
-        <View style={styles.summaryCard}>
-          <Text style={styles.cardTitle}>Avg. Order</Text>
-          <Text style={styles.summaryValue}>{summaryData[timePeriod].avgOrderValue}</Text>
-          <View style={styles.trendContainer}>
-            <Ionicons
-              name={timePeriod === "monthly" ? "trending-down" : "trending-up"}
-              size={14}
-              color={timePeriod === "monthly" ? "#FF3D00" : "#2FAE60"}
-            />
-            <Text style={[styles.summaryLabel, { color: timePeriod === "monthly" ? "#FF3D00" : "#2FAE60" }]}>
-              {timePeriod === "monthly" ? "5% decrease" : "3% increase"}
-            </Text>
-          </View>
-        </View>
+        {/* Average Order Value Card */}
+        <SummaryCard
+          title="Avg. Order"
+          value={
+            timePeriod === "daily"
+              ? todaySales?.avg_order_value_formatted || "RM0.00"
+              : timePeriod === "weekly"
+                ? weeklySales?.avg_order_value_formatted || "RM0.00"
+                : monthlySales?.avg_order_value_formatted || "RM0.00"
+          }
+          isLoading={false} // This card doesn't show a loader
+          trendValue={
+            timePeriod === "daily"
+              ? todaySales?.avg_order_vs_last_period
+              : timePeriod === "weekly"
+                ? weeklySales?.avg_order_vs_last_period
+                : monthlySales?.avg_order_vs_last_period
+          }
+          trendPercentage={
+            timePeriod === "daily"
+              ? todaySales?.avg_order_vs_last_period_formatted || "+0%"
+              : timePeriod === "weekly"
+                ? weeklySales?.avg_order_vs_last_period_formatted || "+0%"
+                : monthlySales?.avg_order_vs_last_period_formatted || "+0%"
+          }
+          customStyles={{
+            label: { 
+              color: timePeriod === "daily"
+                ? todaySales?.avg_order_vs_last_period >= 0 ? "#2FAE60" : "#FF3D00" 
+                : timePeriod === "weekly"
+                  ? weeklySales?.avg_order_vs_last_period >= 0 ? "#2FAE60" : "#FF3D00"
+                  : monthlySales?.avg_order_vs_last_period >= 0 ? "#2FAE60" : "#FF3D00"
+            }
+          }}
+        />
       </View>
 
       {/* Sales Trend Chart */}
@@ -369,17 +484,22 @@ export default function InsightScreen() {
         </View>
         <LineChart
           data={{
-            ...salesData[timePeriod],
+            labels: chartData.labels,
             datasets: [
-              ...salesData[timePeriod].datasets,
               {
-                data:
-                  timePeriod === "daily"
-                    ? [180, 300, 1000, 700, 350, 800, 500]
-                    : timePeriod === "weekly"
-                      ? [700, 1000, 800, 900, 1200, 1500, 1300]
-                      : [5000, 5200, 5800, 6500],
-                color: (opacity = 1) => `rgba(224, 224, 224, ${opacity})`,
+                data: chartData.datasets[0].data.length > 0 ? 
+                      chartData.datasets[0].data : 
+                      [0], // Provide fallback data if empty
+                color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
+                strokeWidth: 2,
+              },
+              {
+                data: salesTrend && Array.isArray(salesTrend.comparison_data) ? 
+                      salesTrend.comparison_data.filter(value => 
+                        typeof value === 'number' && isFinite(value) && !isNaN(value)
+                      ) : 
+                      [0], // More robust filtering and fallback
+                color: function(opacity = 1) { return `rgba(224, 224, 224, ${opacity})`; },
                 strokeWidth: 2,
               },
             ],
@@ -387,8 +507,11 @@ export default function InsightScreen() {
           width={chartWidth}
           height={220}
           chartConfig={{
-            ...chartConfig,
-            color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
+            backgroundGradientFrom: "#fff",
+            backgroundGradientTo: "#fff",
+            decimalPlaces: 0,
+            color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
+            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
             propsForDots: {
               r: "5",
               strokeWidth: "2",
@@ -402,10 +525,10 @@ export default function InsightScreen() {
           <Ionicons name="trending-up" size={16} color="#2FAE60" />
           <Text style={styles.insightText}>
             {timePeriod === "daily"
-              ? `Peak at ${summaryData.daily.peakHour}`
+              ? `Peak at ${salesTrend?.peak_hour || summaryData.daily.peakHour}`
               : timePeriod === "weekly"
-                ? `30% higher on ${summaryData.weekly.peakDay}`
-                : `Best performance in ${summaryData.monthly.peakWeek}`}
+                ? `${salesTrend?.peak_day_increase || ""} higher on ${salesTrend?.peak_day || summaryData.weekly.peakDay}`
+                : `Best performance in ${salesTrend?.peak_week || summaryData.monthly.peakWeek}`}
           </Text>
         </View>
       </View>

@@ -1,5 +1,5 @@
 "use client"
-import { fetchLowStockItems, askAI } from "../api"
+import { fetchLowStockItems, askAI, fetchSalesData, useAdviceQueryData } from "../api"
 import { useState, useRef, useEffect } from "react"
 import {
   View,
@@ -42,6 +42,7 @@ export default function MainChatScreen({ navigation }) {
   const [lowStockItems, setLowStockItems] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [isAILoading, setIsAILoading] = useState(false)
+  const { data } = useAdviceQueryData(); // triggers fetch
 
   const checkInventory = async () => {
     try {
@@ -977,6 +978,30 @@ export default function MainChatScreen({ navigation }) {
     }
   }
 
+  //////////////// Fetch Sales Data from DB //////////////////
+  const [chatTodaySales, setChatTodaySales] = useState(null);
+  const [chatWeeklySales, setChatWeeklySales] = useState(null);
+  const [chatSalesLoading, setChatSalesLoading] = useState(true);
+  useEffect(() => {
+    const fetchSalesForChat = async () => {
+      try {
+        setChatSalesLoading(true);
+        const todayData = await fetchSalesData('today');
+        const weekData = await fetchSalesData('week');
+        
+        setChatTodaySales(todayData);
+        setChatWeeklySales(weekData);
+      } catch (error) {
+        console.error("Error fetching sales for chat:", error);
+      } finally {
+        setChatSalesLoading(false);
+      }
+    };
+    
+    fetchSalesForChat();
+  }, []);
+
+
   ///////////// Main Funtion for Mascot to render message out /////////////
   const renderMessage = ({ item }) => {
     const isMascot = item.sender === "mascot"
@@ -1071,20 +1096,26 @@ export default function MainChatScreen({ navigation }) {
             <View style={[styles.messageContent, styles.cardContent]}>
               <View style={styles.salesCard}>
                 <Text style={styles.cardTitle}>Sales Summary</Text>
-                <View style={styles.salesRow}>
-                  <View style={styles.salesItem}>
-                    <Text style={styles.salesValue}>RM1,250</Text>
-                    <Text style={styles.salesLabel}>Today</Text>
-                  </View>
-                  <View style={styles.salesItem}>
-                    <Text style={styles.salesValue}>RM8,800</Text>
-                    <Text style={styles.salesLabel}>This Week</Text>
-                  </View>
-                  <View style={styles.salesItem}>
-                    <Text style={styles.salesValue}>+12%</Text>
-                    <Text style={styles.salesLabel}>vs Last Week</Text>
-                  </View>
-                </View>
+                  {chatSalesLoading ? (
+                    <ActivityIndicator size="small" color="#2FAE60" style={{marginVertical: 20}} />
+                  ) : (
+                    <View style={styles.salesRow}>
+                      <View style={styles.salesItem}>
+                        <Text style={styles.salesValue}>{chatTodaySales?.total_sales_formatted || "N/A"}</Text>
+                        <Text style={styles.salesLabel}>Today</Text>
+                      </View>
+                      <View style={styles.salesItem}>
+                        <Text style={styles.salesValue}>{chatWeeklySales?.total_sales_formatted || "N/A"}</Text>
+                        <Text style={styles.salesLabel}>This Week</Text>
+                      </View>
+                      <View style={styles.salesItem}>
+                      <Text style={styles.salesValue}>
+                        {chatWeeklySales?.vs_last_period_formatted || "+N/A%"}
+                      </Text>
+                        <Text style={styles.salesLabel}>vs Last Week</Text>
+                      </View>
+                    </View>
+                  )}
                 <TouchableOpacity style={styles.cardButton} onPress={() => navigation.navigate("Insight")}>
                   <Text style={styles.cardButtonText}>View Details</Text>
                   <Ionicons name="arrow-forward" size={16} color="#2FAE60" />
