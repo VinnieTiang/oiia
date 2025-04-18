@@ -210,13 +210,25 @@ def get_merchant_summary(merchant_id: str) -> str:
     # --- Product Analysis ---
     df_joined = df_tx_items.merge(df_merchant_tx[["order_id"]], on="order_id")
     
-    # Top items
-    top_item_ids = df_joined["item_id"].value_counts().head(3).index.tolist()
+    # Top items - modified to filter by merchant_id
+    # First, get the item_ids from transactions for this specific merchant
+    merchant_items_df = df_items[df_items["merchant_id"] == merchant_id]
+    merchant_item_ids = set(merchant_items_df["item_id"].tolist())
+    
+    # Now filter transaction items to only include those belonging to this merchant
+    merchant_tx_items = df_joined[df_joined["item_id"].isin(merchant_item_ids)]
+    
+    # Get top selling items for this merchant
+    top_item_ids = merchant_tx_items["item_id"].value_counts().head(3).index.tolist()
     df_top_items = df_items[df_items["item_id"].isin(top_item_ids)]
     top_items_str = ", ".join(df_top_items[item_name_col].values.tolist())
     
-    # Top category
-    category_counts = df_items[df_items["item_id"].isin(df_joined["item_id"])][cuisine_tag_col].value_counts()
+    # Top category - also modified to consider only merchant's items
+    category_counts = df_items[
+        (df_items["merchant_id"] == merchant_id) & 
+        (df_items["item_id"].isin(merchant_tx_items["item_id"]))
+    ][cuisine_tag_col].value_counts()
+    
     top_category = category_counts.idxmax() if not category_counts.empty else "Unknown"
     top_category_count = category_counts.max() if not category_counts.empty else 0
     
@@ -239,14 +251,15 @@ def get_merchant_summary(merchant_id: str) -> str:
             view_to_purchase_ratio = "\n🚨 Underperforming Items (High Views, Low Purchases):\n- " + "\n- ".join(underperforming_items)
     
     # --- Basket Analysis ---
-    avg_basket_size = df_joined.groupby("order_id").size().mean()
+    avg_basket_size = merchant_tx_items.groupby("order_id").size().mean()
 
-    # Build a list of all item combinations per order
-    order_items = df_joined.groupby("order_id")["item_id"].apply(list)
+    # Build a list of all item combinations per order, but only for this merchant's items
+    # First ensure we're only considering orders with this merchant's items
+    merchant_orders = merchant_tx_items.groupby("order_id")["item_id"].apply(list)
 
     pair_counter = Counter()
 
-    for items in order_items:
+    for items in merchant_orders:
         unique_items = list(set(items))  # Avoid duplicate items in the same order
         if len(unique_items) > 1:
             pairs = combinations(sorted(unique_items), 2)
@@ -255,13 +268,19 @@ def get_merchant_summary(merchant_id: str) -> str:
     # Get top 3 most common item pairs
     top_pairs = pair_counter.most_common(3)
 
-    # Convert item IDs to item names
+    # Convert item IDs to item names, ensuring they belong to this merchant
     pair_names = []
     for (item1, item2), count in top_pairs:
-        name1 = df_items[df_items["item_id"] == item1]["item_name"].values[0]
-        name2 = df_items[df_items["item_id"] == item2]["item_name"].values[0]
-        pair_names.append(f"{name1} + {name2} ({count} times)")
+        # Verify these items belong to the merchant
+        if item1 in merchant_item_ids and item2 in merchant_item_ids:
+            name1 = df_items[df_items["item_id"] == item1][item_name_col].values[0]
+            name2 = df_items[df_items["item_id"] == item2][item_name_col].values[0]
+            pair_names.append(f"{name1} + {name2} ({count} times)")
     
+    # Handle the case when we don't have enough item pairs
+    while len(pair_names) < 3:
+        pair_names.append("No other frequent combinations")
+
     # --- Delivery Performance ---
     if "delivery_time" in df_merchant_tx.columns:
         df_merchant_tx["delivery_time"] = pd.to_datetime(df_merchant_tx["delivery_time"])
