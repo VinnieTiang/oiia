@@ -58,8 +58,15 @@ def get_daily_sales_trend(merchant_id: str):
         # Create 2-hour blocks from 8AM to 10PM (typical business hours)
         hour_blocks = list(range(8, 23, 2))  # [8, 10, 12, 14, 16, 18, 20, 22]
         
-        # Prepare data for chart with 2-hour labels
-        hour_labels = [f"{h}:00" for h in hour_blocks]
+        # Prepare data for chart with 2-hour labels in AM/PM format
+        hour_labels = []
+        for h in hour_blocks:
+            if h == 12:
+                hour_labels.append("12PM")
+            elif h > 12:
+                hour_labels.append(f"{h-12}PM")
+            else:
+                hour_labels.append(f"{h}AM")
         
         # Get sales for each 2-hour block (filling in zeros for blocks with no sales)
         sales_data = []
@@ -317,16 +324,16 @@ def get_monthly_sales_trend(merchant_id: str):
 def default_daily_sales_trend():
     """Return default data for daily sales trend when no data is available"""
     return {
-        "labels": ["8:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00"],
+        "labels": ["8AM", "10AM", "12PM", "2PM", "4PM", "6PM", "8PM", "10PM"],
         "datasets": [
             {
-                "data": [200, 350, 1200, 800, 400, 900, 600, 300],
-                "color": "rgba(47, 174, 96, 1)",
+                "data": [0, 0, 0, 0, 0, 0, 0, 0],
+                "color": lambda opacity=1: f"rgba(47, 174, 96, {opacity})",
                 "strokeWidth": 2,
             },
         ],
         "comparison_data": [180, 300, 1000, 700, 350, 800, 500, 250],
-        "peak_hour": "12:00-14:00"
+        "peak_hour": "..."
     }
 
 
