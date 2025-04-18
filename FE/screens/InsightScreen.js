@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { LineChart, BarChart, PieChart, ProgressChart } from "react-native-chart-kit"
 import { useRef, useEffect, useState } from "react"
 import { useRoute } from "@react-navigation/native"
-import { fetchForecast, fetchSalesData, fetchSalesTrend, fetchInsights } from "../api"
+import { fetchForecast, fetchSalesData, fetchSalesTrend, fetchInsights, fetchTopSellingItems } from "../api"
 
 export default function InsightScreen() {
   const [timePeriod, setTimePeriod] = useState("weekly")
@@ -30,6 +30,8 @@ export default function InsightScreen() {
   const [salesTrendError, setSalesTrendError] = useState(null)
   const [insights, setInsights] = useState(null)
   const [insightsLoading, setInsightsLoading] = useState(true)
+  const [topItems, setTopItems] = useState(null);
+  const [topItemsLoading, setTopItemsLoading] = useState(true);
 
   useEffect(() => {
     if (route.params?.scrollToBottom) {
@@ -109,6 +111,24 @@ export default function InsightScreen() {
 
     fetchTrendData()
   }, [timePeriod])
+
+
+  useEffect(() => {
+    const fetchTopItems = async () => {
+      try {
+        setTopItemsLoading(true);
+        const data = await fetchTopSellingItems(timePeriod);
+        setTopItems(data);
+        setTopItemsLoading(false);
+      } catch (error) {
+        console.error("Failed to fetch top items:", error);
+        setTopItemsLoading(false);
+      }
+    };
+  
+    fetchTopItems();
+  }, [timePeriod]);
+  
 
   useEffect(() => {
     const loadInsights = async () => {
@@ -565,13 +585,13 @@ export default function InsightScreen() {
       <View style={styles.chartCard}>
         <Text style={styles.chartTitle}>Top Selling Items</Text>
         <BarChart
-          data={itemsData[timePeriod]}
+          data={topItems?.chart_data || itemsData[timePeriod]}
           width={chartWidth}
           height={220}
           chartConfig={{
             ...chartConfig,
             barPercentage: 0.7,
-            color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
+            color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
           }}
           style={styles.chart}
           showValuesOnTopOfBars
@@ -579,7 +599,11 @@ export default function InsightScreen() {
         />
         <View style={styles.insightBadge}>
           <Ionicons name="star" size={16} color="#2FAE60" />
-          <Text style={styles.insightText}>Nasi Lemak is your best seller</Text>
+          <Text style={styles.insightText}>
+            {topItems ? 
+              `${topItems.best_seller} is your best seller (${topItems.best_seller_percent}%)` : 
+              "Nasi Lemak is your best seller"}
+          </Text>
         </View>
       </View>
 

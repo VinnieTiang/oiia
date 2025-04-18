@@ -19,6 +19,8 @@ from database import get_db, import_csv_to_db, Ingredient
 from sales import get_merchant_today_summary, get_merchant_period_summary
 from item_service import get_items_by_merchant
 from sales_trends import get_sales_trend
+from top_items import get_top_selling_items
+
 
 # Load API key from .env
 load_dotenv()
@@ -282,7 +284,7 @@ async def get_insights(merchant_id: str, period: str, db: Session = Depends(get_
         # Build improved prompts specific to each insight type
         time_prompt = f"""
         You are providing a direct insight to a food merchant about their business performance.
-        
+        This insight will be displayed in an app under the section key insight. The merchant will be able to see when he click in, keep it simple but meaningful!
         Analyze this {period} sales data and give ONE clear insight about the merchant's best selling time.
         
         Your response must:
@@ -298,7 +300,7 @@ async def get_insights(merchant_id: str, period: str, db: Session = Depends(get_
         
         menu_prompt = f"""
         You are providing a direct insight to a food merchant about their menu performance.
-        
+        This insight will be displayed in an app under the section key insight. The merchant will be able to see when he click in, keep it simple but meaningful!
         Analyze this {period} sales data and give ONE clear insight about the merchant's menu items.
         
         Your response must:
@@ -314,7 +316,7 @@ async def get_insights(merchant_id: str, period: str, db: Session = Depends(get_
         
         opportunity_prompt = f"""
         You are providing a direct insight to a food merchant about a business opportunity.
-        
+        This insight will be displayed in an app under the section key insight. The merchant will be able to see when he click in, keep it simple but meaningful!
         Analyze this {period} sales data and identify ONE clear business opportunity.
         
         Your response must:
@@ -374,3 +376,10 @@ async def generate_insight(prompt: str) -> str:
 async def get_merchant_items(merchant_id: str):
     return get_items_by_merchant(merchant_id)
 
+@app.get("/merchant/{merchant_id}/top-items/{period}")
+async def get_merchant_top_items(merchant_id: str, period: str):
+    """Get top selling items for a specific period (daily/weekly/monthly)"""
+    if period not in ["daily", "weekly", "monthly"]:
+        return {"error": "Period must be 'daily', 'weekly', or 'monthly'"}
+    
+    return get_top_selling_items(merchant_id, period)
