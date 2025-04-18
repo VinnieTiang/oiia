@@ -1,9 +1,10 @@
-import { NavigationContainer } from "@react-navigation/native"
+import { NavigationContainer, useNavigationContainerRef } from "@react-navigation/native"
 import { StatusBar } from "expo-status-bar"
 import { SafeAreaProvider } from "react-native-safe-area-context"
 import AppNavigator from "./navigation/AppNavigator"
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 import * as Notifications from "expo-notifications"
+import * as Linking from "expo-linking";
 import { useEffect, useState, useCallback } from "react"
 import { Provider as PaperProvider } from "react-native-paper"
 import * as Font from 'expo-font'
@@ -11,6 +12,7 @@ import { Asset } from 'expo-asset'
 import { View, Text, ActivityIndicator } from 'react-native'
 import { fetchInsights, preloadMerchantData } from "./api"
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { fetchInventoryData } from "./api"
 
 const queryClient = new QueryClient({
     defaultOptions: {
@@ -22,7 +24,9 @@ const queryClient = new QueryClient({
 })
 
 export default function App() {
+  const navigationRef = useNavigationContainerRef();
   const [appIsReady, setAppIsReady] = useState(false)
+  const [inventory, setInventory] = useState([]);
 
   useEffect(() => {
     // Set up notification handler
@@ -32,6 +36,64 @@ export default function App() {
 
     return () => subscription.remove()
   }, [])
+
+  useEffect(() => {
+    // Set up notification handler
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+      }),
+    });
+
+    // Listen for notification responses (when user clicks the notification)
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const screen = response.notification.request.content.data?.screen;
+      if (screen && navigationRef.isReady()) {
+        navigationRef.navigate(screen); // Navigate to the specified screen
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
+
+  useEffect(() => {
+    const fetchAndCheckInventory = async () => {
+      try {
+        const data = await fetchInventoryData();
+        setInventory(data);
+  
+        // Check for low stock items with daysLeft <= 3
+        const lowStockItems = data.filter((item) => item.daysLeft <= 3);
+        if (lowStockItems.length > 0) {
+          // Create a single notification message for all low-stock items
+          const notificationBody = lowStockItems
+            .map((item) => `- ${item.name}: ${item.daysLeft} days left`)
+            .join("\n");
+  
+          const message = `⚠️ Low Stock Alert ⚠️\n${notificationBody}\n📦 Click to restock!`;
+  
+          // Send a single notification
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              body: message,
+              data: { screen: "Inventory" }, // Navigate to InventoryScreen
+            },
+            trigger: null, // Trigger immediately
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching inventory data:", error);
+      }
+    };
+  
+    // Fetch inventory data periodically (e.g., every 1 hour)
+    const interval = setInterval(fetchAndCheckInventory, 3600000); // 1 hour
+    fetchAndCheckInventory(); // Run immediately on mount
+  
+    return () => clearInterval(interval); // Cleanup on unmount
+  }, []);
 
   useEffect(() => {
     async function prepare() {
@@ -93,17 +155,17 @@ export default function App() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-    <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
-      <SafeAreaProvider>
-        <PaperProvider>
-          <NavigationContainer>
-            <AppNavigator />
-            <StatusBar style="auto" />
-          </NavigationContainer>
-        </PaperProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
-    </QueryClientProvider>
-  )
+    <NavigationContainer ref={navigationRef}>
+      <QueryClientProvider client={queryClient}>
+        <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
+          <SafeAreaProvider>
+            <PaperProvider>
+              <AppNavigator />
+              <StatusBar style="auto" />
+            </PaperProvider>
+          </SafeAreaProvider>
+        </GestureHandlerRootView>
+      </QueryClientProvider>
+    </NavigationContainer>
+  );
 }

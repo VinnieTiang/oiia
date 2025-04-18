@@ -4,7 +4,6 @@ import { useEffect, useState } from "react"
 import { StyleSheet, View, ScrollView, TouchableOpacity, RefreshControl, TextInput } from "react-native"
 import {Text,Card,Button,DataTable,Chip,ActivityIndicator,Searchbar,Snackbar,Portal,Dialog,} from "react-native-paper"
 import { Ionicons } from "@expo/vector-icons"
-import * as Notifications from "expo-notifications"
 import { FlatList, Image } from "react-native"
 import { formatDistanceToNow } from "date-fns";
 import { fetchInventoryData, updateInventoryItem } from "../api"; 
@@ -47,14 +46,6 @@ const grabMartVendors = [
     image: require("../assets/mascot-avatar2.png"),
   },
 ]
-
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-})
 
 export default function InventoryScreen() {
   const [inventory, setInventory] = useState([])
@@ -182,43 +173,6 @@ export default function InventoryScreen() {
     setAutoRestockVendorModalVisible(false);
     setPaymentModalVisible(true);
   };
-
-  const scheduleLowStockNotification = async (items) => {
-    const itemNames = items.map((item) => item.name).join(", ");
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: "Low Stock Alert",
-        body: `The following items are low on stock: ${itemNames}`,
-        data: { screen: "Inventory" },
-      },
-      trigger: { seconds: 3600 }, // Notify every hour
-    });
-  };
-
-  // Check for notifications permission on component mount
-  useEffect(() => {
-    const requestNotificationPermission = async () => {
-      const { status } = await Notifications.requestPermissionsAsync()
-      if (status !== "granted") {
-        alert("Please enable notifications for low stock alerts")
-      }
-    }
-
-    requestNotificationPermission()
-  }, [])
-
-  const checkLowStockAndNotify = async () => {
-    const lowStockItems = inventory.filter((item) => item.status === "low")
-
-    if (lowStockItems.length > 0) {
-      await scheduleLowStockNotification(lowStockItems)
-    }
-  }
-
-  // Check for low stock whenever inventory changes
-  useEffect(() => {
-    checkLowStockAndNotify()
-  }, [inventory])
 
   useEffect(() => {
     fetchInventory();

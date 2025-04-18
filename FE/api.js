@@ -417,21 +417,26 @@ export async function getMerchantItems(merchantId = merchant_id) {
 
 export const fetchInventoryData = async () => {
   try {
-    const response = await fetch(`${API_URL}/ingredients`);
+    const response = await fetch(`${API_URL}/ingredients/predict`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch inventory data: ${response.statusText}`);
     }
     
-    const data = await response.json();
+    const responseData = await response.json();
     
-    if (!data.ingredients) {
-      throw new Error("No ingredients found in response");
+    // Access the ingredients array inside the data field
+    const ingredients = responseData.data;
+    
+    if (!ingredients || !Array.isArray(ingredients)) {
+      console.warn("No ingredients found in response or invalid format");
+      return []; // Return an empty array as a fallback
     }
     
     // Process the inventory data
-    const formattedData = data.ingredients.map((item) => {
+    const formattedData = ingredients.map((item) => {
       let lastRestocked = "Never"; // Default value
+      let daysLeft = "N/A"; // Default value
       
       if (item.last_restock) {
         try {
@@ -439,8 +444,6 @@ export const fetchInventoryData = async () => {
           const [month, day, year] = item.last_restock.split("/");
           const parsedDate = new Date(year, month - 1, day); // Month is 0-indexed
           
-          // Import is handled in the component that uses this function
-          // This just returns the date for formatting
           lastRestocked = {
             parsedDate,
             rawFormat: item.last_restock
@@ -449,13 +452,17 @@ export const fetchInventoryData = async () => {
           console.warn(`Invalid date format for item ${item.ingredient_name}:`, item.last_restock);
         }
       }
-      
+
+      // Use the predicted days_left from the API response
+      daysLeft = item.days_left || "N/A";
+
       return {
         id: item.ingredient_id,
         name: item.ingredient_name,
         current: item.stock_left,
         recommended: item.recommended,
         lastRestocked,
+        daysLeft, // Include days_left in the returned data
       };
     });
     
