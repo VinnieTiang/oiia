@@ -759,7 +759,6 @@ export default function MainChatScreen({ navigation }) {
         addMascotMessage("Would you like to create a new promotion or view your existing ones?", MESSAGE_TYPES.TEXT)
         addQuickReplies([
           { text: "Create New Promotion", action: "promo" },
-          { text: "View Promotions", action: "promoMonitor" },
           { text: "Not now", action: "dismiss" },
         ])
       }, 500)
@@ -961,7 +960,6 @@ export default function MainChatScreen({ navigation }) {
           setTimeout(() => {
             addQuickReplies([
               { text: "Create New Promotion", action: "promo" },
-              { text: "View Promotions", action: "promoMonitor" },
               { text: "Not now", action: "dismiss" },
             ])
           }, 500)

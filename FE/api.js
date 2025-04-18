@@ -498,3 +498,32 @@ export const updateInventoryItem = async (itemId, newQuantity) => {
   }
 };
 
+export const generateImage = async (prompt, size = "1024x1024") => {
+  try {
+    console.log("Generating image with prompt:", prompt);
+    
+    const response = await fetch(`${API_URL}/generate-image`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+        size: size
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Network response was not ok: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Image generation complete");
+    return data;
+  } catch (error) {
+    console.error("Error generating image:", error);
+    throw error;
+  }
+};
+
+

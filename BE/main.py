@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from functools import lru_cache
 import asyncio
 from typing import List
-
+import base64
 
 # Import our modules
 from rag import get_merchant_summary
@@ -47,10 +47,46 @@ class Item(BaseModel):
     item_name: str
     item_price: float
     cuisine_tag: str
+    
+class ImageRequest(BaseModel):
+    prompt: str
+    size: str = "1024x1024"
+
 
 @lru_cache(maxsize=100)
 def get_cached_merchant_summary(merchant_id: str) -> str:
     return get_merchant_summary(merchant_id)
+
+@app.post("/generate-image")
+async def generate_image(request: ImageRequest):
+    """Generate an image using OpenAI DALL-E 3"""
+    try:
+        # Call OpenAI's DALL-E API to generate the image
+        response = client.images.generate(
+            model="dall-e-3",  # Use DALL-E 3 model
+            prompt=request.prompt,
+            size=request.size,
+            quality="standard",
+            n=1,  # Generate 1 image
+            response_format="b64_json"  # Get base64 encoded image
+        )
+        
+        # Extract the base64 image data
+        image_data = response.data[0].b64_json
+        image_url = response.data[0].url if hasattr(response.data[0], 'url') else None
+        
+        # Return both base64 and URL (if available)
+        return {
+            "success": True,
+            "image_data": image_data,
+            "image_url": image_url
+        }
+    except Exception as e:
+        print(f"Error generating image: {str(e)}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
 
 @app.get("/merchant/{merchant_id}/summary")
 async def get_merchant_summary_endpoint(merchant_id: str):
