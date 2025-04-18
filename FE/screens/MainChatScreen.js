@@ -1,5 +1,5 @@
 "use client"
-import { fetchLowStockItems, askAI, fetchSalesData } from "../api"
+import { fetchLowStockItems, askAI, fetchSalesData, useAdviceQueryData } from "../api"
 import { useState, useRef, useEffect } from "react"
 import {
   View,
@@ -42,6 +42,7 @@ export default function MainChatScreen({ navigation }) {
   const [lowStockItems, setLowStockItems] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [isAILoading, setIsAILoading] = useState(false)
+  const { data } = useAdviceQueryData(); // triggers fetch
 
   const checkInventory = async () => {
     try {
