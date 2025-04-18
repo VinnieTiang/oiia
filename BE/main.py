@@ -14,7 +14,7 @@ import base64
 # Import our modules
 from rag import get_merchant_summary
 from forecast import load_merchant_sales_series, forecast_sales, forecast_to_summary
-from ingredient import load_all_ingredients
+from ingredient import load_all_ingredients, predict_stock_and_restock
 from database import get_db, import_csv_to_db, Ingredient
 from sales import get_merchant_today_summary, get_merchant_period_summary
 from item_service import get_items_by_merchant
@@ -419,3 +419,26 @@ async def get_merchant_top_items(merchant_id: str):
     it always returns monthly data (last 30 days) regardless of period
     """
     return get_top_selling_items(merchant_id)
+
+@app.get("/ingredients/predict")
+async def predict_ingredient_stock():
+    """
+    Predict how many days the current stock of ingredients can last
+    and identify if restocking is needed.
+    """
+    try:
+        # Call the prediction function
+        prediction_df = predict_stock_and_restock()
+        
+        # Convert the DataFrame to a list of dictionaries for JSON response
+        prediction_data = prediction_df.to_dict(orient="records")
+        
+        return {
+            "status": "success",
+            "data": prediction_data
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
