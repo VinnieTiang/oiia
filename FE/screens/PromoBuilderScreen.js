@@ -205,8 +205,8 @@ export default function PromoBuilderScreen({ navigation }) {
         The promotion offers ${discountInfo}. 
         This is the promotion description: ${promoDescription}.
         Generate a catchy tagline, a short description, 3 hashtags for social media .
-        And also a prompt to be fed to AI model to generate a catchy promotion poster. After the prompt is generated,
-        add this line behind the image prompt: 'Dont include any text in the image'.
+        And also a prompt to be fed to AI model to generate a catchy promotion poster include how much is the discount. After the prompt is generated,
+        add this line behind the image prompt: 'Only include how many % OFF. Dont include any text in the image'.
         
         Generate the result in the following JSON format with a tagline of string, a description of string, a hastags of array of string and an imagePrompt of string
         `
