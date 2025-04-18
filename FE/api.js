@@ -157,53 +157,113 @@ export const fetchSalesTrend = async (period, merchantId = merchant_id) => {
     
     const data = await response.json();
     
-    // Sanitize data to prevent invalid numbers
+    // Create safe defaults based on period
+    const safeDefaults = {
+      daily: {
+        labels: ["8:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00"],
+        defaultData: [0, 0, 0, 0, 0, 0, 0, 0]
+      },
+      weekly: {
+        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        defaultData: [0, 0, 0, 0, 0, 0, 0]
+      },
+      monthly: {
+        labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+        defaultData: [0, 0, 0, 0]
+      }
+    };
+    
+    // Ensure we have the basic structure with defaults
+    const safeData = {
+      labels: data.labels || safeDefaults[period].labels,
+      datasets: [],
+      comparison_data: [],
+      peak_hour: data.peak_hour || "",
+      peak_day: data.peak_day || "",
+      peak_week: data.peak_week || "",
+      peak_day_increase: data.peak_day_increase || "",
+      peak_week_increase: data.peak_week_increase || ""
+    };
+    
+    // Process the main dataset first
     if (data.datasets && data.datasets.length > 0) {
-      data.datasets = data.datasets.map(dataset => {
-        // Replace Infinity or NaN values with 0
-        const sanitizedData = dataset.data.map(value => 
-          (isNaN(value) || !isFinite(value)) ? 0 : value
-        );
-        
-        return {
-          ...dataset,
-          data: sanitizedData,
-          // Ensure color is a function
-          color: typeof dataset.color === 'string' 
-            ? function(opacity = 1) { 
-                return dataset.color.includes('rgba') 
-                  ? dataset.color.replace('${opacity}', opacity)
-                  : `rgba(47, 174, 96, ${opacity})`;
-              } 
-            : dataset.color
-        };
+      // Sanitize the data array - remove any NaN or Infinity values
+      const safeDataArray = data.datasets[0].data?.map(val => 
+        (val === null || val === undefined || isNaN(val) || !isFinite(val)) ? 0 : val
+      ) || safeDefaults[period].defaultData;
+      
+      // Create the main dataset with proper color function
+      safeData.datasets.push({
+        data: safeDataArray,
+        color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
+        strokeWidth: 2
+      });
+    } else {
+      // Add default dataset if none exists
+      safeData.datasets.push({
+        data: safeDefaults[period].defaultData,
+        color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
+        strokeWidth: 2
       });
     }
     
-    // Sanitize comparison data too
+    // Process the comparison dataset
     if (data.comparison_data) {
-      data.comparison_data = data.comparison_data.map(value => 
-        (isNaN(value) || !isFinite(value)) ? 0 : value
+      // Sanitize comparison data
+      safeData.comparison_data = data.comparison_data.map(val => 
+        (val === null || val === undefined || isNaN(val) || !isFinite(val)) ? 0 : val
       );
+    } else {
+      safeData.comparison_data = safeDefaults[period].defaultData;
     }
     
-    return data;
+    return safeData;
   } catch (error) {
     console.error("Error fetching sales trend data:", error);
     
-    // Return default fallback data
-    return {
-      labels: period === "daily" 
-        ? ["8:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00"]
-        : period === "weekly"
-          ? ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] 
-          : ["Week 1", "Week 2", "Week 3", "Week 4"],
-      datasets: [{
-        data: [0, 0, 0, 0, 0, 0, 0],
-        color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
-        strokeWidth: 2
-      }],
-      comparison_data: [0, 0, 0, 0, 0, 0, 0]
-    };
+    // Return complete default safe data
+    return getDefaultTrendData(period);
   }
 };
+
+// Helper function for default trend data
+function getDefaultTrendData(period) {
+  switch (period) {
+    case "daily":
+      return {
+        labels: ["8:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00"],
+        datasets: [{
+          data: [0, 0, 0, 0, 0, 0, 0, 0],
+          color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
+          strokeWidth: 2
+        }],
+        comparison_data: [0, 0, 0, 0, 0, 0, 0, 0],
+        peak_hour: "N/A" 
+      };
+    case "weekly":
+      return {
+        labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        datasets: [{
+          data: [0, 0, 0, 0, 0, 0, 0],
+          color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
+          strokeWidth: 2
+        }],
+        comparison_data: [0, 0, 0, 0, 0, 0, 0],
+        peak_day: "N/A",
+        peak_day_increase: "N/A"
+      };
+    case "monthly":
+    default:
+      return {
+        labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+        datasets: [{
+          data: [0, 0, 0, 0],
+          color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
+          strokeWidth: 2
+        }],
+        comparison_data: [0, 0, 0, 0],
+        peak_week: "N/A",
+        peak_week_increase: "N/A"
+      };
+  }
+}

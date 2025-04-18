@@ -273,6 +273,19 @@ export default function InsightScreen() {
 
   const forecastChartData = prepareForecastChart()
 
+  // Ensure your chart data has valid defaults
+  const chartData = {
+    labels: salesData[timePeriod]?.labels || [],
+    datasets: [
+      {
+        data: (salesData[timePeriod]?.datasets?.[0]?.data || [])
+          .filter(value => isFinite(value)), // Filter out Infinity values
+        color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
+        strokeWidth: 2,
+      }
+    ]
+  };
+
   ///////////// Define a reusable SummaryCard (Second Row) ////////////
   const SummaryCard = ({ 
     title, 
@@ -471,11 +484,21 @@ export default function InsightScreen() {
         </View>
         <LineChart
           data={{
-            ...salesData[timePeriod],
+            labels: chartData.labels,
             datasets: [
-              ...salesData[timePeriod].datasets,
               {
-                data: salesTrend?.comparison_data || [],
+                data: chartData.datasets[0].data.length > 0 ? 
+                      chartData.datasets[0].data : 
+                      [0], // Provide fallback data if empty
+                color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
+                strokeWidth: 2,
+              },
+              {
+                data: salesTrend && Array.isArray(salesTrend.comparison_data) ? 
+                      salesTrend.comparison_data.filter(value => 
+                        typeof value === 'number' && isFinite(value) && !isNaN(value)
+                      ) : 
+                      [0], // More robust filtering and fallback
                 color: function(opacity = 1) { return `rgba(224, 224, 224, ${opacity})`; },
                 strokeWidth: 2,
               },
@@ -484,8 +507,11 @@ export default function InsightScreen() {
           width={chartWidth}
           height={220}
           chartConfig={{
-            ...chartConfig,
+            backgroundGradientFrom: "#fff",
+            backgroundGradientTo: "#fff",
+            decimalPlaces: 0,
             color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
+            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
             propsForDots: {
               r: "5",
               strokeWidth: "2",
