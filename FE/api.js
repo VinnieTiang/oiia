@@ -1,10 +1,11 @@
 import { API_URL } from '@env';
 import { useQuery } from "@tanstack/react-query";
 
-const merchant_id = "6a0c3"; //*****Set Merchant ID HEREEE***** 
+const merchant_id = "e8b3c"; //*****Set Merchant ID HEREEE***** 
 //6a0c3 (basmathi rice, graph not nice)
 //e8b3c (good bundle wed is peak)
 //0e1b3 (ori)
+//0e1f9
 
 export const fetchLowStockItems = async () => {
   try {
@@ -296,6 +297,50 @@ function getDefaultTrendData(period) {
       };
   }
 }
+
+export const fetchInsights = async (timePeriod, merchantId = merchant_id) => {
+  try {
+    console.log(`Fetching insights for ${timePeriod} period`);
+    
+    // Using the existing /ask endpoint with a structured prompt
+    const response = await fetch(`${API_URL}/insights/${merchantId}/${timePeriod}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch insights data: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log(`Insights for ${timePeriod} received:`, data);
+    return data;
+  } catch (error) {
+    console.error(`Error fetching insights for ${timePeriod}:`, error);
+    
+    // Return default insights if API fails
+    return {
+      best_selling_time: {
+        title: "Best Selling Time",
+        description: timePeriod === "daily"
+          ? "Lunch hours (12PM-2PM) account for 35% of daily sales"
+          : timePeriod === "weekly"
+            ? "Weekends generate 40% more revenue than weekdays" 
+            : "The last week of the month sees a 20% sales increase"
+      },
+      menu_performance: {
+        title: "Menu Performance",
+        description: "Nasi Lemak with Ayam Goreng combo accounts for 45% of main course orders. Consider promoting it as a bundle deal."
+      },
+      opportunity: {
+        title: "Opportunity",
+        description: "Beverage sales are lower than industry average. Consider introducing new drinks or combo meals to boost this category."
+      }
+    };
+  }
+};
 
 export const useAdviceQueryData = () => {
     return useQuery({

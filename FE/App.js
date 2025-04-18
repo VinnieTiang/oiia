@@ -9,7 +9,7 @@ import { Provider as PaperProvider } from "react-native-paper"
 import * as Font from 'expo-font'
 import { Asset } from 'expo-asset'
 import { View, Text, ActivityIndicator } from 'react-native'
-import { preloadMerchantData } from "./api"
+import { fetchInsights, preloadMerchantData } from "./api"
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 const queryClient = new QueryClient({
