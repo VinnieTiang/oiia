@@ -1138,17 +1138,17 @@ export default function MainChatScreen({ navigation }) {
                 <View style={styles.inventoryList}>
                   <View style={styles.inventoryItem}>
                     <View style={[styles.inventoryStatus, { backgroundColor: "#ffebee" }]} />
-                    <Text style={styles.inventoryName}>Chicken thigh</Text>
-                    <Text style={styles.inventoryCount}>5 left</Text>
+                    <Text style={styles.inventoryName}>Black Beans</Text>
+                    <Text style={styles.inventoryCount}>10 left</Text>
                   </View>
                   <View style={styles.inventoryItem}>
                     <View style={[styles.inventoryStatus, { backgroundColor: "#ffebee" }]} />
-                    <Text style={styles.inventoryName}>Chili sauce</Text>
-                    <Text style={styles.inventoryCount}>4 left</Text>
+                    <Text style={styles.inventoryName}>Chicken</Text>
+                    <Text style={styles.inventoryCount}>9 left</Text>
                   </View>
                   <View style={styles.inventoryItem}>
                     <View style={[styles.inventoryStatus, { backgroundColor: "#fff8e1" }]} />
-                    <Text style={styles.inventoryName}>Jasmine rice</Text>
+                    <Text style={styles.inventoryName}>Chili Powder</Text>
                     <Text style={styles.inventoryCount}>3 left</Text>
                   </View>
                 </View>
