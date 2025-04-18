@@ -205,8 +205,8 @@ export default function PromoBuilderScreen({ navigation }) {
         The promotion offers ${discountInfo}. 
         This is the promotion description: ${promoDescription}.
         Generate a catchy tagline, a short description, 3 hashtags for social media .
-        And also a prompt to be fed to AI model to generate a catchy promotion poster include how much is the discount. After the prompt is generated,
-        add this line behind the image prompt: 'Only include how many % OFF. Dont include any text in the image'.
+        And also a prompt to be fed to AI model to generate a catchy promotion poster. After the prompt is generated,
+        Add this line behind the image prompt: 'Dont include any text in the image'.
         
         Generate the result in the following JSON format with a tagline of string, a description of string, a hastags of array of string and an imagePrompt of string
         `
@@ -271,14 +271,14 @@ export default function PromoBuilderScreen({ navigation }) {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={[styles.discountTypeButton, discountType === "bundle" && styles.discountTypeButtonActive]}
             onPress={() => setDiscountType("bundle")}
           >
             <Text style={[styles.discountTypeText, discountType === "bundle" && styles.discountTypeTextActive]}>
               Bundle
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
 
@@ -439,16 +439,6 @@ export default function PromoBuilderScreen({ navigation }) {
 
       {optimalTimes && (
         <View style={styles.formGroup}>
-          <View style={styles.optimalTimesHeader}>
-            <Text style={styles.label}>Use AI-Recommended Times</Text>
-            <Switch
-              value={useOptimalTimes}
-              onValueChange={setUseOptimalTimes}
-              trackColor={{ false: "#e0e0e0", true: "#a7e9c3" }}
-              thumbColor={useOptimalTimes ? "#2FAE60" : "#f4f3f4"}
-            />
-          </View>
-
           {useOptimalTimes && (
             <View style={styles.optimalTimesContainer}>
               <View style={styles.optimalTimesSection}>
