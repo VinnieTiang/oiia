@@ -9,6 +9,17 @@ import { Provider as PaperProvider } from "react-native-paper"
 import * as Font from 'expo-font'
 import { Asset } from 'expo-asset'
 import { View, Text, ActivityIndicator } from 'react-native'
+import { fetchInsights, preloadMerchantData } from "./api"
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            refetchOnMount: false,
+            retry: false,
+        }
+    }
+})
 
 export default function App() {
   const [appIsReady, setAppIsReady] = useState(false)
@@ -49,6 +60,8 @@ export default function App() {
           require("./assets/splash-icon.png")
         ])
 
+        await preloadMerchantData()
+
         // Artificially delay for two seconds to simulate a long loading
         // Remove this in production
         await new Promise(resolve => setTimeout(resolve, 1000))
@@ -80,6 +93,7 @@ export default function App() {
   }
 
   return (
+    <QueryClientProvider client={queryClient}>
     <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <SafeAreaProvider>
         <PaperProvider>
@@ -90,5 +104,6 @@ export default function App() {
         </PaperProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
+    </QueryClientProvider>
   )
 }

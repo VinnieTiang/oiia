@@ -1,19 +1,11 @@
 "use client"
 
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  useWindowDimensions,
-  ActivityIndicator,
-} from "react-native"
+import {View,Text,StyleSheet,ScrollView,TouchableOpacity,useWindowDimensions,ActivityIndicator,} from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import { LineChart, BarChart, PieChart, ProgressChart } from "react-native-chart-kit"
 import { useRef, useEffect, useState } from "react"
 import { useRoute } from "@react-navigation/native"
-import { fetchForecast } from "../api" // Import the new forecast API
+import { fetchForecast, fetchSalesData, fetchSalesTrend, fetchInsights } from "../api"
 
 export default function InsightScreen() {
   const [timePeriod, setTimePeriod] = useState("weekly")
@@ -24,6 +16,20 @@ export default function InsightScreen() {
   const chartWidth = windowWidth - 32 - 32
   const scrollViewRef = useRef(null)
   const route = useRoute()
+  const [todaySales, setTodaySales] = useState(null)
+  const [todayLoading, setTodayLoading] = useState(true)
+  const [todayError, setTodayError] = useState(null)
+  const [weeklySales, setWeeklySales] = useState(null)
+  const [weeklyLoading, setWeeklyLoading] = useState(true)
+  const [weeklyError, setWeeklyError] = useState(null)
+  const [monthlySales, setMonthlySales] = useState(null)
+  const [monthlyLoading, setMonthlyLoading] = useState(true)
+  const [monthlyError, setMonthlyError] = useState(null)
+  const [salesTrend, setSalesTrend] = useState(null)
+  const [salesTrendLoading, setSalesTrendLoading] = useState(true)
+  const [salesTrendError, setSalesTrendError] = useState(null)
+  const [insights, setInsights] = useState(null)
+  const [insightsLoading, setInsightsLoading] = useState(true)
 
   useEffect(() => {
     if (route.params?.scrollToBottom) {
@@ -52,34 +58,102 @@ export default function InsightScreen() {
     loadForecastData()
   }, [])
 
+  useEffect(() => {
+    const fetchAllSalesData = async () => {
+      try {
+        // Fetch today's data
+        setTodayLoading(true)
+        const todaySales = await fetchSalesData('today')
+        setTodaySales(todaySales)
+        setTodayLoading(false)
+        
+        // Fetch weekly data
+        setWeeklyLoading(true)
+        const weeklySales = await fetchSalesData('week');
+        setWeeklySales(weeklySales)
+        setWeeklyLoading(false)
+        
+        // Fetch monthly data
+        setMonthlyLoading(true)
+        const monthlySales = await fetchSalesData('month');
+        setMonthlySales(monthlySales)
+        setMonthlyLoading(false)
+      } catch (error) {
+        console.error("Error fetching sales data:", error)
+        setTodayError(error.message)
+        setWeeklyError(error.message)
+        setMonthlyError(error.message)
+      } finally {
+        setTodayLoading(false)
+        setWeeklyLoading(false)
+        setMonthlyLoading(false)
+      }
+    }
+    fetchAllSalesData()
+  }, []) // Empty dependency array - run once on mount
+
+  useEffect(() => {
+    const fetchTrendData = async () => {
+      try {
+        setSalesTrendLoading(true)
+        setSalesTrendError(null)
+        const data = await fetchSalesTrend(timePeriod)
+        setSalesTrend(data)
+      } catch (error) {
+        console.error(`Error fetching ${timePeriod} trend data:`, error)
+        setSalesTrendError(error.message)
+      } finally {
+        setSalesTrendLoading(false)
+      }
+    }
+
+    fetchTrendData()
+  }, [timePeriod])
+
+  useEffect(() => {
+    const loadInsights = async () => {
+      try {
+        setInsightsLoading(true);
+        const data = await fetchInsights(timePeriod);
+        setInsights(data);
+      } catch (error) {
+        console.error(`Error loading insights for ${timePeriod}:`, error);
+      } finally {
+        setInsightsLoading(false);
+      }
+    };
+    
+    loadInsights();
+  }, [timePeriod]);
+
   // Sample data for different time periods
   const salesData = {
-    daily: {
-      labels: ["8AM", "10AM", "12PM", "2PM", "4PM", "6PM", "8PM"],
+    daily: salesTrend || {
+      labels: [],
       datasets: [
         {
-          data: [200, 350, 1200, 800, 400, 900, 600],
-          color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
+          data: [],
+          color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
           strokeWidth: 2,
         },
       ],
     },
-    weekly: {
-      labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    weekly: salesTrend || {
+      labels: [],
       datasets: [
         {
-          data: [850, 1200, 950, 1100, 1400, 1800, 1500],
-          color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
+          data: [],
+          color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
           strokeWidth: 2,
         },
       ],
     },
-    monthly: {
-      labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
+    monthly: salesTrend || {
+      labels: [],
       datasets: [
         {
-          data: [5200, 5800, 6200, 7000],
-          color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
+          data: [],
+          color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
           strokeWidth: 2,
         },
       ],
@@ -139,25 +213,28 @@ export default function InsightScreen() {
 
   const summaryData = {
     daily: {
-      totalSales: "RM3,450",
-      totalOrders: "128",
+      totalSales: todaySales?.total_sales_formatted || "RM0.00",
+      totalOrders: todaySales?.total_orders?.toString() || "0",
+      // Keep hardcoded values for data not provided by API
       rating: "4.7",
-      avgOrderValue: "RM26.95",
-      peakHour: "12PM",
+      // Use API-calculated average order value when available
+      avgOrderValue: todaySales?.avg_order_value_formatted || "RM0.00",
+      // Use dynamic peak hour from salesTrend when available
+      peakHour: salesTrend?.peak_hour || "...",
     },
     weekly: {
-      totalSales: "RM8,800",
-      totalOrders: "342",
+      totalSales: weeklySales?.total_sales_formatted || "RM0.00",
+      totalOrders: weeklySales?.total_orders?.toString() || "0",
       rating: "4.8",
-      avgOrderValue: "RM25.73",
-      peakDay: "Saturday",
+      avgOrderValue: weeklySales?.avg_order_value_formatted || "RM0.00",
+      peakDay: salesTrend?.peak_day || "...",
     },
     monthly: {
-      totalSales: "RM24,200",
-      totalOrders: "1,150",
+      totalSales: monthlySales?.total_sales_formatted || "RM0.00",
+      totalOrders: monthlySales?.total_orders?.toString() || "0",
       rating: "4.8",
-      avgOrderValue: "RM21.04",
-      peakWeek: "Week 4",
+      avgOrderValue: monthlySales?.avg_order_value_formatted || "RM0.00",
+      peakWeek: salesTrend?.peak_week || "...",
     },
   }
 
@@ -214,6 +291,72 @@ export default function InsightScreen() {
 
   const forecastChartData = prepareForecastChart()
 
+  // Ensure your chart data has valid defaults
+  const chartData = {
+    labels: salesData[timePeriod]?.labels || [],
+    datasets: [
+      {
+        data: (salesData[timePeriod]?.datasets?.[0]?.data || [])
+          .filter(value => isFinite(value)), // Filter out Infinity values
+        color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
+        strokeWidth: 2,
+      }
+    ]
+  };
+
+  ///////////// Define a reusable SummaryCard (Second Row) ////////////
+  const SummaryCard = ({ 
+    title, 
+    value, 
+    isLoading, 
+    trendPercentage, 
+    trendValue, 
+    customStyles = {} 
+  }) => {
+    // Changed: Consider 0% as positive (or neutral) for UI purposes
+    // This ensures 0% always shows trending up icon
+    const isTrendPositive = trendValue >= 0;
+    const trendIconName = isTrendPositive ? "trending-up" : "trending-down";
+    const trendColor = isTrendPositive ? "#2FAE60" : "#FF3D00";
+    
+    // Determine the comparison text based on time period using proper nouns
+    let comparisonText;
+    switch(timePeriod) {
+      case "daily":
+        comparisonText = "yesterday";
+        break;
+      case "weekly":
+        comparisonText = "last week";
+        break;
+      case "monthly":
+        comparisonText = "last month";
+        break;
+      default:
+        comparisonText = `last ${timePeriod}`;
+    }
+    
+    return (
+      <View style={styles.summaryCard}>
+        <Text style={styles.cardTitle}>{title}</Text>
+        {isLoading ? (
+          <ActivityIndicator size="small" color="#2FAE60" />
+        ) : (
+          <>
+            <Text style={[styles.summaryValue, customStyles]} numberOfLines={1} adjustsFontSizeToFit>
+              {value}
+            </Text>
+            <View style={styles.trendContainer}>
+              <Ionicons name={trendIconName} size={14} color={trendColor} />
+              <Text style={[styles.summaryLabel, customStyles.label || {}]}>
+                {trendPercentage} from {comparisonText}
+              </Text>
+            </View>
+          </>
+        )}
+      </View>
+    );
+  };
+
   return (
     <ScrollView ref={scrollViewRef} style={styles.container}>
       {/* Time period selector */}
@@ -258,40 +401,88 @@ export default function InsightScreen() {
 
       {/* Summary Cards */}
       <View style={styles.summaryContainer}>
-        <View style={styles.summaryCard}>
-          <Text style={styles.cardTitle}>Total Sales</Text>
-          <Text style={[styles.summaryValue, { fontSize: 18 }]} numberOfLines={1} adjustsFontSizeToFit>
-            {summaryData[timePeriod].totalSales}
-          </Text>
-          <View style={styles.trendContainer}>
-            <Ionicons name="trending-up" size={14} color="#2FAE60" />
-            <Text style={styles.summaryLabel}>12% from last {timePeriod}</Text>
-          </View>
-        </View>
+        {/* Total Sales Card */}
+        <SummaryCard
+          title="Total Sales"
+          value={summaryData[timePeriod].totalSales}
+          isLoading={(timePeriod === "daily" && todayLoading) ||
+                    (timePeriod === "weekly" && weeklyLoading) ||
+                    (timePeriod === "monthly" && monthlyLoading)}
+          trendValue={
+            timePeriod === "daily"
+              ? todaySales?.vs_last_period
+              : timePeriod === "weekly"
+                ? weeklySales?.vs_last_period
+                : monthlySales?.vs_last_period
+          }
+          trendPercentage={
+            timePeriod === "daily" 
+              ? todaySales?.vs_last_period_formatted || "+0%" 
+              : timePeriod === "weekly" 
+                ? weeklySales?.vs_last_period_formatted || "+0%"
+                : monthlySales?.vs_last_period_formatted || "+0%"
+          }
+          customStyles={{ fontSize: 18 }}
+        />
 
-        <View style={styles.summaryCard}>
-          <Text style={styles.cardTitle}>Total Orders</Text>
-          <Text style={styles.summaryValue}>{summaryData[timePeriod].totalOrders}</Text>
-          <View style={styles.trendContainer}>
-            <Ionicons name="trending-up" size={14} color="#2FAE60" />
-            <Text style={styles.summaryLabel}>8% from last {timePeriod}</Text>
-          </View>
-        </View>
+        {/* Total Orders Card */}
+        <SummaryCard
+          title="Total Orders"
+          value={summaryData[timePeriod].totalOrders}
+          isLoading={(timePeriod === "daily" && todayLoading) ||
+                    (timePeriod === "weekly" && weeklyLoading) ||
+                    (timePeriod === "monthly" && monthlyLoading)}
+          trendValue={
+            timePeriod === "daily"
+              ? todaySales?.orders_vs_last_period
+              : timePeriod === "weekly"
+                ? weeklySales?.orders_vs_last_period
+                : monthlySales?.orders_vs_last_period
+          }
+          trendPercentage={
+            timePeriod === "daily" 
+              ? todaySales?.orders_vs_last_period_formatted || "+0%" 
+              : timePeriod === "weekly" 
+                ? weeklySales?.orders_vs_last_period_formatted || "+0%"
+                : monthlySales?.orders_vs_last_period_formatted || "+0%"
+          }
+        />
 
-        <View style={styles.summaryCard}>
-          <Text style={styles.cardTitle}>Avg. Order</Text>
-          <Text style={styles.summaryValue}>{summaryData[timePeriod].avgOrderValue}</Text>
-          <View style={styles.trendContainer}>
-            <Ionicons
-              name={timePeriod === "monthly" ? "trending-down" : "trending-up"}
-              size={14}
-              color={timePeriod === "monthly" ? "#FF3D00" : "#2FAE60"}
-            />
-            <Text style={[styles.summaryLabel, { color: timePeriod === "monthly" ? "#FF3D00" : "#2FAE60" }]}>
-              {timePeriod === "monthly" ? "5% decrease" : "3% increase"}
-            </Text>
-          </View>
-        </View>
+        {/* Average Order Value Card */}
+        <SummaryCard
+          title="Avg. Order"
+          value={
+            timePeriod === "daily"
+              ? todaySales?.avg_order_value_formatted || "RM0.00"
+              : timePeriod === "weekly"
+                ? weeklySales?.avg_order_value_formatted || "RM0.00"
+                : monthlySales?.avg_order_value_formatted || "RM0.00"
+          }
+          isLoading={false} // This card doesn't show a loader
+          trendValue={
+            timePeriod === "daily"
+              ? todaySales?.avg_order_vs_last_period
+              : timePeriod === "weekly"
+                ? weeklySales?.avg_order_vs_last_period
+                : monthlySales?.avg_order_vs_last_period
+          }
+          trendPercentage={
+            timePeriod === "daily"
+              ? todaySales?.avg_order_vs_last_period_formatted || "+0%"
+              : timePeriod === "weekly"
+                ? weeklySales?.avg_order_vs_last_period_formatted || "+0%"
+                : monthlySales?.avg_order_vs_last_period_formatted || "+0%"
+          }
+          customStyles={{
+            label: { 
+              color: timePeriod === "daily"
+                ? todaySales?.avg_order_vs_last_period >= 0 ? "#2FAE60" : "#FF3D00" 
+                : timePeriod === "weekly"
+                  ? weeklySales?.avg_order_vs_last_period >= 0 ? "#2FAE60" : "#FF3D00"
+                  : monthlySales?.avg_order_vs_last_period >= 0 ? "#2FAE60" : "#FF3D00"
+            }
+          }}
+        />
       </View>
 
       {/* Sales Trend Chart */}
@@ -311,17 +502,22 @@ export default function InsightScreen() {
         </View>
         <LineChart
           data={{
-            ...salesData[timePeriod],
+            labels: chartData.labels,
             datasets: [
-              ...salesData[timePeriod].datasets,
               {
-                data:
-                  timePeriod === "daily"
-                    ? [180, 300, 1000, 700, 350, 800, 500]
-                    : timePeriod === "weekly"
-                      ? [700, 1000, 800, 900, 1200, 1500, 1300]
-                      : [5000, 5200, 5800, 6500],
-                color: (opacity = 1) => `rgba(224, 224, 224, ${opacity})`,
+                data: chartData.datasets[0].data.length > 0 ? 
+                      chartData.datasets[0].data : 
+                      [0], // Provide fallback data if empty
+                color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
+                strokeWidth: 2,
+              },
+              {
+                data: salesTrend && Array.isArray(salesTrend.comparison_data) ? 
+                      salesTrend.comparison_data.filter(value => 
+                        typeof value === 'number' && isFinite(value) && !isNaN(value)
+                      ) : 
+                      [0], // More robust filtering and fallback
+                color: function(opacity = 1) { return `rgba(224, 224, 224, ${opacity})`; },
                 strokeWidth: 2,
               },
             ],
@@ -329,8 +525,11 @@ export default function InsightScreen() {
           width={chartWidth}
           height={220}
           chartConfig={{
-            ...chartConfig,
-            color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
+            backgroundGradientFrom: "#fff",
+            backgroundGradientTo: "#fff",
+            decimalPlaces: 0,
+            color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
+            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
             propsForDots: {
               r: "5",
               strokeWidth: "2",
@@ -341,13 +540,23 @@ export default function InsightScreen() {
           style={styles.chart}
         />
         <View style={styles.insightBadge}>
-          <Ionicons name="trending-up" size={16} color="#2FAE60" />
-          <Text style={styles.insightText}>
+          <Ionicons 
+            name={salesTrend?.peak_week_increase?.includes('-') ? "trending-down" : "trending-up"} 
+            size={16} 
+            color={salesTrend?.peak_week_increase?.includes('-') ? "#FF3D00" : "#2FAE60"} 
+          />
+          <Text style={[
+            styles.insightText, 
+            {color: salesTrend?.peak_week_increase?.includes('-') ? "#FF3D00" : "#2FAE60"}
+          ]}>
             {timePeriod === "daily"
-              ? `Peak at ${summaryData.daily.peakHour}`
+              ? `Peak at ${salesTrend?.peak_hour || summaryData.daily.peakHour}`
               : timePeriod === "weekly"
-                ? `30% higher on ${summaryData.weekly.peakDay}`
-                : `Best performance in ${summaryData.monthly.peakWeek}`}
+                ? `${salesTrend?.peak_day_increase || ""} ${salesTrend?.peak_day_increase?.includes('-') ? 'lower' : 'higher'} on ${salesTrend?.peak_day || summaryData.weekly.peakDay}`
+                : salesTrend?.peak_week_increase?.includes('-')
+                  ? `${salesTrend?.peak_week_increase || ""} in ${salesTrend?.peak_week || summaryData.monthly.peakWeek}`
+                  : `Best performance (+${salesTrend?.peak_week_increase || ""}) in ${salesTrend?.peak_week || summaryData.monthly.peakWeek}`
+            }
           </Text>
         </View>
       </View>
@@ -557,80 +766,59 @@ export default function InsightScreen() {
         </View>
       </View>
 
-      {/* Progress Chart for Goals */}
-      <View style={styles.chartCard}>
-        <Text style={styles.chartTitle}>Monthly Goals Progress</Text>
-        <ProgressChart
-          data={{
-            labels: ["Sales", "Orders", "Rating"],
-            data: [0.75, 0.9, 0.96],
-            colors: ["#2FAE60", "#FFC107", "#4FC3F7"],
-          }}
-          width={chartWidth}
-          height={220}
-          strokeWidth={8}
-          radius={32}
-          chartConfig={{
-            backgroundGradientFrom: "#fff",
-            backgroundGradientTo: "#fff",
-            decimalPlaces: 0,
-            color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
-            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-          }}
-          hideLegend={false}
-          style={styles.chart}
-        />
-        <View style={styles.insightBadge}>
-          <Ionicons name="trophy" size={16} color="#2FAE60" />
-          <Text style={styles.insightText}>You're on track to meet monthly goals</Text>
-        </View>
-      </View>
-
-      {/* Additional Insights */}
+      {/* Key Insights */}
       <View style={styles.insightsContainer}>
         <Text style={styles.sectionTitle}>Key Insights</Text>
 
-        <View style={styles.insightCard}>
-          <View style={[styles.insightIconContainer, { backgroundColor: "#E3F2FD" }]}>
-            <Ionicons name="time" size={20} color="#1976D2" />
-          </View>
-          <View style={styles.insightContent}>
-            <Text style={styles.insightTitle}>Best Selling Time</Text>
-            <Text style={styles.insightDescription}>
-              {timePeriod === "daily"
-                ? "Lunch hours (12PM-2PM) account for 35% of daily sales"
-                : timePeriod === "weekly"
-                  ? "Weekends generate 40% more revenue than weekdays"
-                  : "The last week of the month sees a 20% sales increase"}
-            </Text>
-          </View>
-        </View>
+        {insightsLoading ? (
+          <ActivityIndicator size="large" color="#2FAE60" />
+        ) : (
+          <>
+            <View style={styles.insightCard}>
+              <View style={[styles.insightIconContainer, { backgroundColor: "#E3F2FD" }]}>
+                <Ionicons name="time" size={20} color="#1976D2" />
+              </View>
+              <View style={styles.insightContent}>
+                <Text style={styles.insightTitle}>{insights?.best_selling_time?.title || "Best Selling Time"}</Text>
+                <Text style={styles.insightDescription}>
+                  {insights?.best_selling_time?.description || 
+                    (timePeriod === "daily"
+                      ? "Lunch hours (12PM-2PM) account for 35% of daily sales"
+                      : timePeriod === "weekly"
+                        ? "Weekends generate 40% more revenue than weekdays"
+                        : "The last week of the month sees a 20% sales increase")
+                  }
+                </Text>
+              </View>
+            </View>
 
-        <View style={styles.insightCard}>
-          <View style={[styles.insightIconContainer, { backgroundColor: "#E8F5E9" }]}>
-            <Ionicons name="restaurant" size={20} color="#2FAE60" />
-          </View>
-          <View style={styles.insightContent}>
-            <Text style={styles.insightTitle}>Menu Performance</Text>
-            <Text style={styles.insightDescription}>
-              Nasi Lemak with Ayam Goreng combo accounts for 45% of main course orders. Consider promoting it as a
-              bundle deal.
-            </Text>
-          </View>
-        </View>
+            <View style={styles.insightCard}>
+              <View style={[styles.insightIconContainer, { backgroundColor: "#E8F5E9" }]}>
+                <Ionicons name="restaurant" size={20} color="#2FAE60" />
+              </View>
+              <View style={styles.insightContent}>
+                <Text style={styles.insightTitle}>{insights?.menu_performance?.title || "Menu Performance"}</Text>
+                <Text style={styles.insightDescription}>
+                  {insights?.menu_performance?.description || 
+                    "Nasi Lemak with Ayam Goreng combo accounts for 45% of main course orders. Consider promoting it as a bundle deal."}
+                </Text>
+              </View>
+            </View>
 
-        <View style={styles.insightCard}>
-          <View style={[styles.insightIconContainer, { backgroundColor: "#FFF8E1" }]}>
-            <Ionicons name="alert-circle" size={20} color="#FFA000" />
-          </View>
-          <View style={styles.insightContent}>
-            <Text style={styles.insightTitle}>Opportunity</Text>
-            <Text style={styles.insightDescription}>
-              Beverage sales are lower than industry average. Consider introducing new drinks or combo meals to boost
-              this category.
-            </Text>
-          </View>
-        </View>
+            <View style={styles.insightCard}>
+              <View style={[styles.insightIconContainer, { backgroundColor: "#FFF8E1" }]}>
+                <Ionicons name="alert-circle" size={20} color="#FFA000" />
+              </View>
+              <View style={styles.insightContent}>
+                <Text style={styles.insightTitle}>{insights?.opportunity?.title || "Opportunity"}</Text>
+                <Text style={styles.insightDescription}>
+                  {insights?.opportunity?.description || 
+                    "Beverage sales are lower than industry average. Consider introducing new drinks or combo meals to boost this category."}
+                </Text>
+              </View>
+            </View>
+          </>
+        )}
       </View>
     </ScrollView>
   )

@@ -13,8 +13,8 @@
       ],
       "expo-font"
     ],
-    "name": "GigBoostApp",
-    "slug": "GigBoostApp",
+    "name": "Grablet",
+    "slug": "Grablet",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -37,7 +37,7 @@
         "RECORD_AUDIO",
         "RECORD_AUDIO"
       ],
-      "package": "com.anonymous.GigBoostApp"
+      "package": "com.anonymous.Grablet"
     },
     "web": {
       "favicon": "./assets/favicon.png"

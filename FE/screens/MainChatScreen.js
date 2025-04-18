@@ -1,5 +1,5 @@
 "use client"
-import { fetchLowStockItems, askAI } from "../api"
+import { fetchLowStockItems, askAI, fetchSalesData, useAdviceQueryData } from "../api"
 import { useState, useRef, useEffect } from "react"
 import {
   View,
@@ -42,6 +42,7 @@ export default function MainChatScreen({ navigation }) {
   const [lowStockItems, setLowStockItems] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [isAILoading, setIsAILoading] = useState(false)
+  const { data } = useAdviceQueryData(); // triggers fetch
 
   const checkInventory = async () => {
     try {
@@ -746,6 +747,22 @@ export default function MainChatScreen({ navigation }) {
           { text: "Not now", action: "dismiss" },
         ])
       }, 500)
+    } else if (
+      lowerCaseMessage.includes("promo") ||
+      lowerCaseMessage.includes("discount") ||
+      lowerCaseMessage.includes("offer") ||
+      lowerCaseMessage.includes("deal") ||
+      lowerCaseMessage.includes("bundle")
+    ) {
+      // Promotion related query
+      setTimeout(() => {
+        addMascotMessage("Would you like to create a new promotion or view your existing ones?", MESSAGE_TYPES.TEXT)
+        addQuickReplies([
+          { text: "Create New Promotion", action: "promo" },
+          { text: "View Promotions", action: "promoMonitor" },
+          { text: "Not now", action: "dismiss" },
+        ])
+      }, 500)
     }
     // else {
     //   // General response
@@ -822,6 +839,8 @@ export default function MainChatScreen({ navigation }) {
     "Best selling items?",
     "How can I increase my revenue?",
     "Tips for customer retention",
+    "Create a promotion",
+    "View my promotions",
     // Malay quick replies
     "Tunjukkan analisis jualan saya",
     "Item paling laris?",
@@ -870,6 +889,14 @@ export default function MainChatScreen({ navigation }) {
         case "leaderboard":
           navigation.navigate("Leaderboard")
           break
+        // Add new cases for promotions
+        case "promo":
+          navigation.navigate("PromoBuilder")
+          break
+        case "promoMonitor":
+          navigation.navigate("PromoMonitor")
+          break
+
         default:
           addMascotMessage(
             "I'm not sure how to help with that yet. Is there something else you'd like to know?",
@@ -928,6 +955,17 @@ export default function MainChatScreen({ navigation }) {
             navigation.navigate("Leaderboard")
           }, 500)
           break
+        // Add new case for promotions
+        case "manage promotions":
+          addMascotMessage("Let's manage your promotions! What would you like to do?", MESSAGE_TYPES.TEXT)
+          setTimeout(() => {
+            addQuickReplies([
+              { text: "Create New Promotion", action: "promo" },
+              { text: "View Promotions", action: "promoMonitor" },
+              { text: "Not now", action: "dismiss" },
+            ])
+          }, 500)
+          break
         default:
           addMascotMessage(
             "I'm not sure how to help with that yet. Is there something else you'd like to know?",
@@ -939,6 +977,30 @@ export default function MainChatScreen({ navigation }) {
       }
     }
   }
+
+  //////////////// Fetch Sales Data from DB //////////////////
+  const [chatTodaySales, setChatTodaySales] = useState(null);
+  const [chatWeeklySales, setChatWeeklySales] = useState(null);
+  const [chatSalesLoading, setChatSalesLoading] = useState(true);
+  useEffect(() => {
+    const fetchSalesForChat = async () => {
+      try {
+        setChatSalesLoading(true);
+        const todayData = await fetchSalesData('today');
+        const weekData = await fetchSalesData('week');
+        
+        setChatTodaySales(todayData);
+        setChatWeeklySales(weekData);
+      } catch (error) {
+        console.error("Error fetching sales for chat:", error);
+      } finally {
+        setChatSalesLoading(false);
+      }
+    };
+    
+    fetchSalesForChat();
+  }, []);
+
 
   ///////////// Main Funtion for Mascot to render message out /////////////
   const renderMessage = ({ item }) => {
@@ -1034,20 +1096,26 @@ export default function MainChatScreen({ navigation }) {
             <View style={[styles.messageContent, styles.cardContent]}>
               <View style={styles.salesCard}>
                 <Text style={styles.cardTitle}>Sales Summary</Text>
-                <View style={styles.salesRow}>
-                  <View style={styles.salesItem}>
-                    <Text style={styles.salesValue}>RM1,250</Text>
-                    <Text style={styles.salesLabel}>Today</Text>
-                  </View>
-                  <View style={styles.salesItem}>
-                    <Text style={styles.salesValue}>RM8,800</Text>
-                    <Text style={styles.salesLabel}>This Week</Text>
-                  </View>
-                  <View style={styles.salesItem}>
-                    <Text style={styles.salesValue}>+12%</Text>
-                    <Text style={styles.salesLabel}>vs Last Week</Text>
-                  </View>
-                </View>
+                  {chatSalesLoading ? (
+                    <ActivityIndicator size="small" color="#2FAE60" style={{marginVertical: 20}} />
+                  ) : (
+                    <View style={styles.salesRow}>
+                      <View style={styles.salesItem}>
+                        <Text style={styles.salesValue}>{chatTodaySales?.total_sales_formatted || "N/A"}</Text>
+                        <Text style={styles.salesLabel}>Today</Text>
+                      </View>
+                      <View style={styles.salesItem}>
+                        <Text style={styles.salesValue}>{chatWeeklySales?.total_sales_formatted || "N/A"}</Text>
+                        <Text style={styles.salesLabel}>This Week</Text>
+                      </View>
+                      <View style={styles.salesItem}>
+                      <Text style={styles.salesValue}>
+                        {chatWeeklySales?.vs_last_period_formatted || "+N/A%"}
+                      </Text>
+                        <Text style={styles.salesLabel}>vs Last Week</Text>
+                      </View>
+                    </View>
+                  )}
                 <TouchableOpacity style={styles.cardButton} onPress={() => navigation.navigate("Insight")}>
                   <Text style={styles.cardButtonText}>View Details</Text>
                   <Ionicons name="arrow-forward" size={16} color="#2FAE60" />
@@ -1195,12 +1263,20 @@ export default function MainChatScreen({ navigation }) {
                 </View>
                 <Text style={styles.quickActionText}>Check Inventory</Text>
               </TouchableOpacity>
-              
+
               <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("View Leaderboard")}>
                 <View style={[styles.quickActionIcon, { backgroundColor: "#FFF0F5" }]}>
                   <Ionicons name="trophy-outline" size={20} color="#E91E63" />
                 </View>
                 <Text style={styles.quickActionText}>View Leaderboard</Text>
+              </TouchableOpacity>
+
+              {/* Add new button for Promotions */}
+              <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("Manage Promotions")}>
+                <View style={[styles.quickActionIcon, { backgroundColor: "#FFF0E0" }]}>
+                  <Ionicons name="pricetag-outline" size={20} color="#FF9800" />
+                </View>
+                <Text style={styles.quickActionText}>Promotions</Text>
               </TouchableOpacity>
 
               {/* <TouchableOpacity style={styles.quickActionButton} onPress={checkInventory} disabled={isLoading}>
@@ -1715,7 +1791,6 @@ const styles = StyleSheet.create({
     marginRight: 12,
     alignItems: "center",
     width: 100,
-
   },
   quickActionIcon: {
     width: 40,
