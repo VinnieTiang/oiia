@@ -415,3 +415,79 @@ export async function getMerchantItems(merchantId = merchant_id) {
   }
 }
 
+export const fetchInventoryData = async () => {
+  try {
+    const response = await fetch(`${API_URL}/ingredients`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch inventory data: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.ingredients) {
+      throw new Error("No ingredients found in response");
+    }
+    
+    // Process the inventory data
+    const formattedData = data.ingredients.map((item) => {
+      let lastRestocked = "Never"; // Default value
+      
+      if (item.last_restock) {
+        try {
+          // Convert MM/DD/YYYY to a valid Date object
+          const [month, day, year] = item.last_restock.split("/");
+          const parsedDate = new Date(year, month - 1, day); // Month is 0-indexed
+          
+          // Import is handled in the component that uses this function
+          // This just returns the date for formatting
+          lastRestocked = {
+            parsedDate,
+            rawFormat: item.last_restock
+          };
+        } catch (error) {
+          console.warn(`Invalid date format for item ${item.ingredient_name}:`, item.last_restock);
+        }
+      }
+      
+      return {
+        id: item.ingredient_id,
+        name: item.ingredient_name,
+        current: item.stock_left,
+        recommended: item.recommended,
+        lastRestocked,
+      };
+    });
+    
+    return formattedData;
+  } catch (error) {
+    console.error("Error fetching inventory data:", error);
+    throw error;
+  }
+};
+
+export const updateInventoryItem = async (itemId, newQuantity) => {
+  try {
+    const response = await fetch(`${API_URL}/ingredients/${itemId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        stock_left: newQuantity,
+        last_restock: new Date().toLocaleDateString("en-US") // MM/DD/YYYY format
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to update inventory: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error updating inventory:", error);
+    throw error;
+  }
+};
+

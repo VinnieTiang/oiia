@@ -1,24 +1,13 @@
-
 "use client"
 
 import { useEffect, useState } from "react"
 import { StyleSheet, View, ScrollView, TouchableOpacity, RefreshControl, TextInput } from "react-native"
-import {
-  Text,
-  Card,
-  Button,
-  DataTable,
-  Chip,
-  ActivityIndicator,
-  Searchbar,
-  Snackbar,
-  Portal,
-  Dialog,
-} from "react-native-paper"
+import {Text,Card,Button,DataTable,Chip,ActivityIndicator,Searchbar,Snackbar,Portal,Dialog,} from "react-native-paper"
 import { Ionicons } from "@expo/vector-icons"
 import * as Notifications from "expo-notifications"
 import { FlatList, Image } from "react-native"
 import { formatDistanceToNow } from "date-fns";
+import { fetchInventoryData, updateInventoryItem } from "../api"; 
 
 // Sample GrabMart vendor data
 const grabMartVendors = [
@@ -93,34 +82,24 @@ export default function InventoryScreen() {
   const fetchInventory = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("http://192.168.100.25:8000/ingredients");
-      const data = await response.json();
-      if (data.ingredients) {
-        const formattedData = data.ingredients.map((item) => {
-          let lastRestocked = "Never"; // Default value
-          if (item.last_restock) {
-            try {
-              // Convert MM/DD/YYYY to a valid Date object
-              const [month, day, year] = item.last_restock.split("/");
-              const parsedDate = new Date(year, month - 1, day); // Month is 0-indexed
-              lastRestocked = formatDistanceToNow(parsedDate, { addSuffix: true });
-            } catch (error) {
-              console.warn(`Invalid date format for item ${item.ingredient_name}:`, item.last_restock);
-            }
-          }
-          return {
-            id: item.ingredient_id,
-            name: item.ingredient_name,
-            current: item.stock_left,
-            recommended: item.recommended,
-            status: getStatus(item.stock_left, item.recommended),
-            lastRestocked,
-          };
-        });
-        setInventory(formattedData);
-      } else {
-        showSnackbar("Failed to fetch inventory data.");
-      }
+      const formattedData = await fetchInventoryData();
+      
+      // Process the data, adding the status and formatting dates
+      const processedData = formattedData.map(item => {
+        // Format the date using formatDistanceToNow
+        let formattedLastRestocked = "Never";
+        if (item.lastRestocked && item.lastRestocked.parsedDate) {
+          formattedLastRestocked = formatDistanceToNow(item.lastRestocked.parsedDate, { addSuffix: true });
+        }
+        
+        return {
+          ...item,
+          status: getStatus(item.current, item.recommended),
+          lastRestocked: formattedLastRestocked
+        };
+      });
+      
+      setInventory(processedData);
     } catch (error) {
       console.error("Error fetching inventory:", error);
       showSnackbar("Error fetching inventory data.");
@@ -307,41 +286,48 @@ export default function InventoryScreen() {
     setPaymentModalVisible(true);
   };
 
-  const confirmPayment = () => {
+  const confirmPayment = async () => {
     if (!orderDetails || !Array.isArray(orderDetails)) return;
   
-    // Update the inventory for all restocked items
-    const updatedInventory = inventory.map((item) => {
-      const restockDetail = orderDetails.find((detail) => detail.item.id === item.id);
-      if (restockDetail) {
-        const newQuantity = item.current + restockDetail.quantity;
-        let newStatus = item.status;
-  
-        // Determine new status based on restocked quantity
-        if (newQuantity >= item.recommended * 0.7) {
-          newStatus = "good";
-        } else if (newQuantity >= item.recommended * 0.3) {
-          newStatus = "medium";
-        } else {
-          newStatus = "low";
-        }
-  
-        return {
-          ...item,
-          current: newQuantity,
-          status: newStatus,
-          lastRestocked: "Today",
-        };
+    try {
+      // Process each order detail
+      for (const detail of orderDetails) {
+        const item = detail.item;
+        const newQuantity = item.current + detail.quantity;
+        
+        // Update the item in the backend
+        await updateInventoryItem(item.id, newQuantity);
       }
-      return item;
-    });
-  
-    setInventory(updatedInventory);
-    showSnackbar(
-      `Payment successful! ${orderDetails.length} items will be delivered by ${orderDetails[0].vendor.name}.`
-    );
-    setPaymentModalVisible(false);
-    setOrderDetails(null);
+      
+      // Update the local inventory state
+      const updatedInventory = inventory.map((item) => {
+        const restockDetail = orderDetails.find((detail) => detail.item.id === item.id);
+        if (restockDetail) {
+          const newQuantity = item.current + restockDetail.quantity;
+          let newStatus = getStatus(newQuantity, item.recommended);
+    
+          return {
+            ...item,
+            current: newQuantity,
+            status: newStatus,
+            lastRestocked: "Today",
+          };
+        }
+        return item;
+      });
+    
+      setInventory(updatedInventory);
+      showSnackbar(
+        `Payment successful! ${orderDetails.length} items will be delivered by ${orderDetails[0].vendor.name}.`
+      );
+      
+    } catch (error) {
+      console.error("Error updating inventory:", error);
+      showSnackbar("Error updating inventory. Please try again.");
+    } finally {
+      setPaymentModalVisible(false);
+      setOrderDetails(null);
+    }
   };
 
   const getStatusColor = (status) => {
