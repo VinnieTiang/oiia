@@ -1,6 +1,18 @@
 import pandas as pd
 from datetime import datetime, timedelta
 from database import query_to_dataframe
+import math
+
+# Add this helper function to sanitize numerical values
+def safe_float(value):
+    """Convert value to float safely, replacing NaN or infinity with 0."""
+    try:
+        result = float(value)
+        if math.isnan(result) or math.isinf(result):
+            return 0.0
+        return result
+    except (ValueError, TypeError):
+        return 0.0
 
 def get_daily_sales_trend(merchant_id: str):
     """
@@ -53,7 +65,7 @@ def get_daily_sales_trend(merchant_id: str):
         sales_data = []
         for hour_block in hour_blocks:
             block_sales = today_hourly[today_hourly["two_hour_block"] == hour_block]["order_value"].sum() if not today_hourly.empty else 0
-            sales_data.append(float(block_sales))
+            sales_data.append(safe_float(block_sales))
         
         # Get previous day comparison data with the same 2-hour blocks
         yesterday_df["hour"] = yesterday_df["order_time"].dt.hour
@@ -63,7 +75,7 @@ def get_daily_sales_trend(merchant_id: str):
         prev_sales_data = []
         for hour_block in hour_blocks:
             block_sales = yesterday_hourly[yesterday_hourly["two_hour_block"] == hour_block]["order_value"].sum() if not yesterday_hourly.empty else 0
-            prev_sales_data.append(float(block_sales))
+            prev_sales_data.append(safe_float(block_sales))
             
         # Find peak 2-hour block
         if not today_hourly.empty:
@@ -141,7 +153,7 @@ def get_weekly_sales_trend(merchant_id: str):
             daily_sales[day] = current_week_df[current_week_df["date"] == day]["order_value"].sum()
         
         # Create sales data array matching the order of day_labels
-        sales_data = [float(daily_sales.get(day, 0)) for day in days]
+        sales_data = [safe_float(daily_sales.get(day, 0)) for day in days]
         
         # Aggregate previous week's sales by date
         prev_week_days = [(prev_week_end - timedelta(days=i)) for i in range(6, -1, -1)]
@@ -150,7 +162,7 @@ def get_weekly_sales_trend(merchant_id: str):
             prev_daily_sales[day] = prev_week_df[prev_week_df["date"] == day]["order_value"].sum()
         
         # Create previous week sales data array
-        prev_sales_data = [float(prev_daily_sales.get(day, 0)) for day in prev_week_days]
+        prev_sales_data = [safe_float(prev_daily_sales.get(day, 0)) for day in prev_week_days]
         
         # Find peak day based on sales
         if sales_data:
@@ -248,7 +260,7 @@ def get_monthly_sales_trend(merchant_id: str):
         for start, end in week_boundaries:
             week_sales = current_month_df[(current_month_df["date"] >= start) & 
                                         (current_month_df["date"] <= end)]["order_value"].sum()
-            weekly_sales.append(float(week_sales))
+            weekly_sales.append(safe_float(week_sales))
         
         # Calculate previous month's weekly sales
         prev_week_boundaries = [
@@ -262,7 +274,7 @@ def get_monthly_sales_trend(merchant_id: str):
         for start, end in prev_week_boundaries:
             week_sales = prev_month_df[(prev_month_df["date"] >= start) & 
                                      (prev_month_df["date"] <= end)]["order_value"].sum()
-            prev_weekly_sales.append(float(week_sales))
+            prev_weekly_sales.append(safe_float(week_sales))
         
         # Find peak week
         if weekly_sales:
