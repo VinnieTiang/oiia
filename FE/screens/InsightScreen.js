@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons"
 import { LineChart, BarChart, PieChart, ProgressChart } from "react-native-chart-kit"
 import { useRef, useEffect, useState } from "react"
 import { useRoute } from "@react-navigation/native"
-import { fetchForecast, fetchSalesData, fetchSalesTrend } from "../api"
+import { fetchForecast, fetchSalesData, fetchSalesTrend, fetchInsights } from "../api"
 
 export default function InsightScreen() {
   const [timePeriod, setTimePeriod] = useState("weekly")
@@ -28,6 +28,8 @@ export default function InsightScreen() {
   const [salesTrend, setSalesTrend] = useState(null)
   const [salesTrendLoading, setSalesTrendLoading] = useState(true)
   const [salesTrendError, setSalesTrendError] = useState(null)
+  const [insights, setInsights] = useState(null)
+  const [insightsLoading, setInsightsLoading] = useState(true)
 
   useEffect(() => {
     if (route.params?.scrollToBottom) {
@@ -107,6 +109,22 @@ export default function InsightScreen() {
 
     fetchTrendData()
   }, [timePeriod])
+
+  useEffect(() => {
+    const loadInsights = async () => {
+      try {
+        setInsightsLoading(true);
+        const data = await fetchInsights(timePeriod);
+        setInsights(data);
+      } catch (error) {
+        console.error(`Error loading insights for ${timePeriod}:`, error);
+      } finally {
+        setInsightsLoading(false);
+      }
+    };
+    
+    loadInsights();
+  }, [timePeriod]);
 
   // Sample data for different time periods
   const salesData = {
@@ -522,13 +540,23 @@ export default function InsightScreen() {
           style={styles.chart}
         />
         <View style={styles.insightBadge}>
-          <Ionicons name="trending-up" size={16} color="#2FAE60" />
-          <Text style={styles.insightText}>
+          <Ionicons 
+            name={salesTrend?.peak_week_increase?.includes('-') ? "trending-down" : "trending-up"} 
+            size={16} 
+            color={salesTrend?.peak_week_increase?.includes('-') ? "#FF3D00" : "#2FAE60"} 
+          />
+          <Text style={[
+            styles.insightText, 
+            {color: salesTrend?.peak_week_increase?.includes('-') ? "#FF3D00" : "#2FAE60"}
+          ]}>
             {timePeriod === "daily"
               ? `Peak at ${salesTrend?.peak_hour || summaryData.daily.peakHour}`
               : timePeriod === "weekly"
-                ? `${salesTrend?.peak_day_increase || ""} higher on ${salesTrend?.peak_day || summaryData.weekly.peakDay}`
-                : `Best performance in ${salesTrend?.peak_week || summaryData.monthly.peakWeek}`}
+                ? `${salesTrend?.peak_day_increase || ""} ${salesTrend?.peak_day_increase?.includes('-') ? 'lower' : 'higher'} on ${salesTrend?.peak_day || summaryData.weekly.peakDay}`
+                : salesTrend?.peak_week_increase?.includes('-')
+                  ? `${salesTrend?.peak_week_increase || ""} in ${salesTrend?.peak_week || summaryData.monthly.peakWeek}`
+                  : `Best performance (+${salesTrend?.peak_week_increase || ""}) in ${salesTrend?.peak_week || summaryData.monthly.peakWeek}`
+            }
           </Text>
         </View>
       </View>
@@ -738,80 +766,59 @@ export default function InsightScreen() {
         </View>
       </View>
 
-      {/* Progress Chart for Goals */}
-      <View style={styles.chartCard}>
-        <Text style={styles.chartTitle}>Monthly Goals Progress</Text>
-        <ProgressChart
-          data={{
-            labels: ["Sales", "Orders", "Rating"],
-            data: [0.75, 0.9, 0.96],
-            colors: ["#2FAE60", "#FFC107", "#4FC3F7"],
-          }}
-          width={chartWidth}
-          height={220}
-          strokeWidth={8}
-          radius={32}
-          chartConfig={{
-            backgroundGradientFrom: "#fff",
-            backgroundGradientTo: "#fff",
-            decimalPlaces: 0,
-            color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
-            labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-          }}
-          hideLegend={false}
-          style={styles.chart}
-        />
-        <View style={styles.insightBadge}>
-          <Ionicons name="trophy" size={16} color="#2FAE60" />
-          <Text style={styles.insightText}>You're on track to meet monthly goals</Text>
-        </View>
-      </View>
-
-      {/* Additional Insights */}
+      {/* Key Insights */}
       <View style={styles.insightsContainer}>
         <Text style={styles.sectionTitle}>Key Insights</Text>
 
-        <View style={styles.insightCard}>
-          <View style={[styles.insightIconContainer, { backgroundColor: "#E3F2FD" }]}>
-            <Ionicons name="time" size={20} color="#1976D2" />
-          </View>
-          <View style={styles.insightContent}>
-            <Text style={styles.insightTitle}>Best Selling Time</Text>
-            <Text style={styles.insightDescription}>
-              {timePeriod === "daily"
-                ? "Lunch hours (12PM-2PM) account for 35% of daily sales"
-                : timePeriod === "weekly"
-                  ? "Weekends generate 40% more revenue than weekdays"
-                  : "The last week of the month sees a 20% sales increase"}
-            </Text>
-          </View>
-        </View>
+        {insightsLoading ? (
+          <ActivityIndicator size="large" color="#2FAE60" />
+        ) : (
+          <>
+            <View style={styles.insightCard}>
+              <View style={[styles.insightIconContainer, { backgroundColor: "#E3F2FD" }]}>
+                <Ionicons name="time" size={20} color="#1976D2" />
+              </View>
+              <View style={styles.insightContent}>
+                <Text style={styles.insightTitle}>{insights?.best_selling_time?.title || "Best Selling Time"}</Text>
+                <Text style={styles.insightDescription}>
+                  {insights?.best_selling_time?.description || 
+                    (timePeriod === "daily"
+                      ? "Lunch hours (12PM-2PM) account for 35% of daily sales"
+                      : timePeriod === "weekly"
+                        ? "Weekends generate 40% more revenue than weekdays"
+                        : "The last week of the month sees a 20% sales increase")
+                  }
+                </Text>
+              </View>
+            </View>
 
-        <View style={styles.insightCard}>
-          <View style={[styles.insightIconContainer, { backgroundColor: "#E8F5E9" }]}>
-            <Ionicons name="restaurant" size={20} color="#2FAE60" />
-          </View>
-          <View style={styles.insightContent}>
-            <Text style={styles.insightTitle}>Menu Performance</Text>
-            <Text style={styles.insightDescription}>
-              Nasi Lemak with Ayam Goreng combo accounts for 45% of main course orders. Consider promoting it as a
-              bundle deal.
-            </Text>
-          </View>
-        </View>
+            <View style={styles.insightCard}>
+              <View style={[styles.insightIconContainer, { backgroundColor: "#E8F5E9" }]}>
+                <Ionicons name="restaurant" size={20} color="#2FAE60" />
+              </View>
+              <View style={styles.insightContent}>
+                <Text style={styles.insightTitle}>{insights?.menu_performance?.title || "Menu Performance"}</Text>
+                <Text style={styles.insightDescription}>
+                  {insights?.menu_performance?.description || 
+                    "Nasi Lemak with Ayam Goreng combo accounts for 45% of main course orders. Consider promoting it as a bundle deal."}
+                </Text>
+              </View>
+            </View>
 
-        <View style={styles.insightCard}>
-          <View style={[styles.insightIconContainer, { backgroundColor: "#FFF8E1" }]}>
-            <Ionicons name="alert-circle" size={20} color="#FFA000" />
-          </View>
-          <View style={styles.insightContent}>
-            <Text style={styles.insightTitle}>Opportunity</Text>
-            <Text style={styles.insightDescription}>
-              Beverage sales are lower than industry average. Consider introducing new drinks or combo meals to boost
-              this category.
-            </Text>
-          </View>
-        </View>
+            <View style={styles.insightCard}>
+              <View style={[styles.insightIconContainer, { backgroundColor: "#FFF8E1" }]}>
+                <Ionicons name="alert-circle" size={20} color="#FFA000" />
+              </View>
+              <View style={styles.insightContent}>
+                <Text style={styles.insightTitle}>{insights?.opportunity?.title || "Opportunity"}</Text>
+                <Text style={styles.insightDescription}>
+                  {insights?.opportunity?.description || 
+                    "Beverage sales are lower than industry average. Consider introducing new drinks or combo meals to boost this category."}
+                </Text>
+              </View>
+            </View>
+          </>
+        )}
       </View>
     </ScrollView>
   )

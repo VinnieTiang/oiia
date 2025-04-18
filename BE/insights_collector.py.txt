@@ -1,0 +1,99 @@
+import json
+from datetime import datetime, timedelta
+from sales import get_merchant_today_summary, get_merchant_period_summary
+from sales_trends import get_sales_trend
+from rag import get_merchant_summary
+
+def collect_insight_data(merchant_id: str, period: str):
+    """
+    Collect and organize all data needed for generating insights.
+    
+    Args:
+        merchant_id: The ID of the merchant
+        period: One of "daily", "weekly", or "monthly"
+        
+    Returns:
+        dict: Structured data ready for insight generation
+    """
+    # Get base merchant summary from RAG
+    merchant_summary = get_merchant_summary(merchant_id)
+    
+    # Get period-specific sales data
+    if period == "daily":
+        sales_data = get_merchant_today_summary(merchant_id)
+        comparison_period = "yesterday"
+    elif period == "weekly":
+        sales_data = get_merchant_period_summary(merchant_id, "week")
+        comparison_period = "last week"
+    else:  # monthly
+        sales_data = get_merchant_period_summary(merchant_id, "month")
+        comparison_period = "last month"
+    
+    # Get trend data
+    trend_data = get_sales_trend(merchant_id, period)
+    
+    # Extract key metrics for easier access in prompts
+    sales_metrics = {
+        "total_sales": sales_data.get("total_sales", 0),
+        "sales_growth": sales_data.get("vs_last_period", 0),
+        "total_orders": sales_data.get("total_orders", 0),
+        "avg_order_value": sales_data.get("avg_order_value", 0),
+    }
+    
+    # Extract peak times from trend data
+    peak_info = {}
+    if period == "daily" and "peak_hour" in trend_data:
+        peak_info["peak_time"] = trend_data["peak_hour"]
+        peak_info["type"] = "hours"
+    elif period == "weekly" and "peak_day" in trend_data:
+        peak_info["peak_time"] = trend_data["peak_day"]
+        peak_info["peak_increase"] = trend_data.get("peak_day_increase", "N/A")
+        peak_info["type"] = "day"
+    elif period == "monthly" and "peak_week" in trend_data:
+        peak_info["peak_time"] = trend_data["peak_week"]
+        peak_info["peak_increase"] = trend_data.get("peak_week_increase", "N/A")
+        peak_info["type"] = "week"
+    
+    # Extract data from merchant summary
+    summary_data = {
+        "top_items": [],
+        "frequent_combinations": [],
+        "customer_retention": 0,
+        "business_scale": "",
+    }
+    
+    # Parse merchant summary to extract structured data
+    if "Top-Selling Items:" in merchant_summary:
+        items_line = merchant_summary.split("Top-Selling Items:")[1].split("\n")[0].strip()
+        summary_data["top_items"] = [item.strip() for item in items_line.split(",")]
+    
+    if "Frequently Bought Together:" in merchant_summary:
+        combos_section = merchant_summary.split("Frequently Bought Together:")[1].split("\n\n")[0]
+        combo_lines = [line.strip().replace("- ", "") for line in combos_section.strip().split("\n") if line.strip()]
+        summary_data["frequent_combinations"] = combo_lines
+    
+    if "Returning Customers:" in merchant_summary:
+        retention_line = merchant_summary.split("Returning Customers:")[1].split("\n")[0]
+        if "(" in retention_line and "%" in retention_line:
+            retention_text = retention_line.split("(")[1].split("%")[0]
+            try:
+                summary_data["customer_retention"] = float(retention_text)
+            except ValueError:
+                summary_data["customer_retention"] = 0
+    
+    if "Business Scale:" in merchant_summary:
+        scale_line = merchant_summary.split("Business Scale:")[1].split("\n")[0].strip()
+        summary_data["business_scale"] = scale_line
+
+    # Combine all data
+    return {
+        "merchant_id": merchant_id,
+        "period": period,
+        "comparison_period": comparison_period,
+        "sales_data": sales_data,
+        "trend_data": trend_data,
+        "sales_metrics": sales_metrics,
+        "peak_info": peak_info,
+        "summary_data": summary_data,
+        "full_merchant_summary": merchant_summary
+    }
