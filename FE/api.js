@@ -357,7 +357,6 @@ export const useAdviceQueryData = () => {
 }
 
 
-
 export const fetchTopSellingItems = async (period, merchantId = merchant_id) => {
   try {
     const response = await fetch(`${API_URL}/merchant/${merchantId}/top-items/${period}`);
@@ -394,3 +393,25 @@ export const fetchTopSellingItems = async (period, merchantId = merchant_id) => 
     };
   }
 };
+
+export async function getMerchantItems(merchantId = merchant_id) {
+  try {
+    const response = await fetch(`${API_URL}/merchant-items/${merchantId}`);
+    if (!response.ok) {
+      throw new Error("Failed to fetch merchant items");
+    }
+
+    const data = await response.json();
+
+    return data.map((item, index) => ({
+      id: index + 1, 
+      name: item.item_name,
+      price: item.item_price,
+      category: item.cuisine_tag,
+    }));
+  } catch (error) {
+    console.error("Error fetching merchant items:", error);
+    return [];
+  }
+}
+

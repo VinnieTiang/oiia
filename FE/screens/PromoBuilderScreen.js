@@ -16,7 +16,7 @@ import {
 import { Ionicons } from "@expo/vector-icons"
 import { SafeAreaView } from "react-native-safe-area-context"
 import DateTimePickerModal from "react-native-modal-datetime-picker"
-import { generatePromoContent, fetchForecast } from "../api"
+import { generatePromoContent, fetchForecast, getMerchantItems } from "../api"
 
 export default function PromoBuilderScreen({ navigation }) {
   // Promo details
@@ -37,45 +37,16 @@ export default function PromoBuilderScreen({ navigation }) {
   const [currentStep, setCurrentStep] = useState(1)
   const [bundleSuggestions, setBundleSuggestions] = useState([])
   const [selectedBundle, setSelectedBundle] = useState(null)
+  const [menuItems, setMenuItems] = useState([]);
 
-  // Sample menu items
-  const menuItems = [
-    {
-      id: 1,
-      name: "Nasi Lemak",
-      price: 8.5,
-      category: "Main Course",
-      image: require("../assets/profile-placeholder1.png"),
-    },
-    {
-      id: 2,
-      name: "Ayam Goreng",
-      price: 10.0,
-      category: "Main Course",
-      image: require("../assets/profile-placeholder2.png"),
-    },
-    {
-      id: 3,
-      name: "Mee Goreng",
-      price: 7.5,
-      category: "Noodles",
-      image: require("../assets/profile-placeholder3.png"),
-    },
-    {
-      id: 4,
-      name: "Teh Tarik",
-      price: 3.0,
-      category: "Beverages",
-      image: require("../assets/profile-placeholder1.png"),
-    },
-    {
-      id: 5,
-      name: "Roti Canai",
-      price: 4.5,
-      category: "Breakfast",
-      image: require("../assets/profile-placeholder2.png"),
-    },
-  ]
+  useEffect(() => {
+    const fetchData = async () => {
+      const items = await getMerchantItems();
+      setMenuItems(items);
+    };
+
+    fetchData();
+  }, []);
 
   // Sample bundle suggestions
   const sampleBundleSuggestions = [
@@ -360,7 +331,6 @@ export default function PromoBuilderScreen({ navigation }) {
               style={[styles.itemCard, selectedItems.some((i) => i.id === item.id) && styles.itemCardSelected]}
               onPress={() => toggleItemSelection(item)}
             >
-              <Image source={item.image} style={styles.itemImage} />
               <View style={styles.itemDetails}>
                 <Text style={styles.itemName}>{item.name}</Text>
                 <Text style={styles.itemCategory}>{item.category}</Text>

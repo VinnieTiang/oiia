@@ -14,7 +14,8 @@ from typing import List
 # Import our modules
 from rag import get_merchant_summary
 from forecast import load_merchant_sales_series, forecast_sales, forecast_to_summary
-from database import get_db, import_csv_to_db
+from ingredient import load_all_ingredients
+from database import get_db, import_csv_to_db, Ingredient
 from sales import get_merchant_today_summary, get_merchant_period_summary
 from item_service import get_items_by_merchant
 from sales_trends import get_sales_trend
@@ -217,6 +218,23 @@ async def initialize_database():
         return {"message": "Database initialized successfully"}
     except Exception as e:
         return {"error": str(e)}
+    
+@app.get("/ingredients")
+async def get_ingredients(db: Session = Depends(get_db)):
+    try:
+        # Load merchant sales data
+        df = load_all_ingredients()
+        if df.empty:
+            return {"error": "No ingredients data available."}
+
+        # Return ingredients data
+        return {
+            "ingredients": df.to_dict(orient="records")
+        }
+    except Exception as e:
+        return {"error": str(e)}
+    
+        
     
 
 @app.get("/merchant/{merchant_id}/today")
