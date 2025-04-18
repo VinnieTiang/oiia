@@ -16,7 +16,7 @@ import {
 import { Ionicons } from "@expo/vector-icons"
 import { SafeAreaView } from "react-native-safe-area-context"
 import DateTimePickerModal from "react-native-modal-datetime-picker"
-import { generatePromoContent, fetchForecast, getMerchantItems } from "../api"
+import { generatePromoContent, fetchForecast, getMerchantItems, generateImage } from "../api"
 
 export default function PromoBuilderScreen({ navigation }) {
   // Promo details
@@ -38,6 +38,8 @@ export default function PromoBuilderScreen({ navigation }) {
   const [bundleSuggestions, setBundleSuggestions] = useState([])
   const [selectedBundle, setSelectedBundle] = useState(null)
   const [menuItems, setMenuItems] = useState([]);
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+  const [generatedImage, setGeneratedImage] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -126,6 +128,28 @@ export default function PromoBuilderScreen({ navigation }) {
     }
   }
 
+  const handleGenerateImage = async () => {
+    if (!generatedContent?.imagePrompt) {
+      Alert.alert("Missing Prompt", "No image prompt available.");
+      return;
+    }
+  
+    setIsGeneratingImage(true);
+    try {
+      const result = await generateImage(generatedContent.imagePrompt);
+      if (result.success && result.image_data) {
+        setGeneratedImage(`data:image/png;base64,${result.image_data}`);
+      } else {
+        Alert.alert("Error", "Failed to generate image. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error generating image:", error);
+      Alert.alert("Error", "Failed to generate image. Please try again.");
+    } finally {
+      setIsGeneratingImage(false);
+    }
+  };
+
   const handleStartDateConfirm = (date) => {
     setStartDate(date)
     setStartDatePickerVisibility(false)
@@ -180,7 +204,9 @@ export default function PromoBuilderScreen({ navigation }) {
       const prompt = `Create a food promotion for ${promoName} featuring ${itemNames}. 
         The promotion offers ${discountInfo}. 
         This is the promotion description: ${promoDescription}.
-        Generate a catchy tagline, a short description, 3 hashtags for social media and a prompt to be fed to AI model to generate a catchy promotion poster.
+        Generate a catchy tagline, a short description, 3 hashtags for social media .
+        And also a prompt to be fed to AI model to generate a catchy promotion poster. After the prompt is generated,
+        add this line behind the image prompt: 'Dont include any text in the image'.
         
         Generate the result in the following JSON format with a tagline of string, a description of string, a hastags of array of string and an imagePrompt of string
         `
@@ -212,13 +238,7 @@ export default function PromoBuilderScreen({ navigation }) {
   }
 
   const savePromotion = () => {
-    // Here you would save the promotion to your backend
-    // For now, we'll just show a success message and navigate back
     Alert.alert("Success", "Your promotion has been created and scheduled!", [
-      {
-        text: "View Promotions",
-        onPress: () => navigation.navigate("PromoMonitor"),
-      },
       {
         text: "OK",
         onPress: () => navigation.goBack(),
@@ -539,39 +559,33 @@ export default function PromoBuilderScreen({ navigation }) {
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Image Prompt for Poster</Text>
+            <Text style={styles.label}>AI Generated Poster</Text>
             <View style={styles.imagePromptContainer}>
-              <Text style={styles.imagePromptText}>{generatedContent.imagePrompt}</Text>
-              <TouchableOpacity style={styles.generateImageButton}>
-                <Text style={styles.generateImageButtonText}>Generate Image</Text>
-                <Ionicons name="image-outline" size={16} color="#2FAE60" />
+              <Text style={styles.imagePromptText}>Create a personalized AI-generated poster to boost your promotion.</Text>
+              <TouchableOpacity 
+                style={styles.generateImageButton}
+                onPress={handleGenerateImage}
+                disabled={isGeneratingImage}
+              >
+                {isGeneratingImage ? (
+                  <ActivityIndicator size="small" color="#2FAE60" />
+              ) : (
+                <>
+                  <Text style={styles.generateImageButtonText}>Generate Image</Text>
+                  <Ionicons name="image-outline" size={16} color="#2FAE60" />
+               </>
+                )}
               </TouchableOpacity>
             </View>
-          </View>
-
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Promotion Channels</Text>
-            <View style={styles.channelsContainer}>
-              <TouchableOpacity style={styles.channelButton}>
-                <Ionicons name="restaurant-outline" size={24} color="#2FAE60" />
-                <Text style={styles.channelButtonText}>In-App</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.channelButton}>
-                <Ionicons name="notifications-outline" size={24} color="#2FAE60" />
-                <Text style={styles.channelButtonText}>Push</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.channelButton}>
-                <Ionicons name="mail-outline" size={24} color="#2FAE60" />
-                <Text style={styles.channelButtonText}>Email</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.channelButton}>
-                <Ionicons name="logo-instagram" size={24} color="#2FAE60" />
-                <Text style={styles.channelButtonText}>Social</Text>
-              </TouchableOpacity>
-            </View>
+            {generatedImage && (
+              <View style={styles.generatedImageContainer}>
+                <Image 
+                  source={{ uri: generatedImage }} 
+                  style={styles.generatedImage}
+                  resizeMode="contain"
+                />
+              </View>
+            )}
           </View>
         </View>
       )}
@@ -1181,5 +1195,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
     marginTop: 4,
+  },
+  generatedImageContainer: {
+    marginTop: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  generatedImage: {
+    width: '100%',
+    height: 300,
+    borderRadius: 8,
   },
 })
