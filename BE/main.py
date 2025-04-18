@@ -270,8 +270,47 @@ async def get_ingredients(db: Session = Depends(get_db)):
     except Exception as e:
         return {"error": str(e)}
     
+class InventoryUpdateRequest(BaseModel):
+    stock_left: int
+    last_restock: str
+
+@app.patch("/ingredients/{ingredient_id}")
+async def update_ingredient(ingredient_id: int, update_data: InventoryUpdateRequest, db: Session = Depends(get_db)):
+    """Update an ingredient's stock level and restock date"""
+    try:
+        # Get the ingredient from the database
+        ingredient = db.query(Ingredient).filter(Ingredient.ingredient_id == ingredient_id).first()
         
-    
+        if not ingredient:
+            return {
+                "status": "error",
+                "message": f"Ingredient with ID {ingredient_id} not found"
+            }
+        
+        # Update the ingredient
+        ingredient.stock_left = update_data.stock_left
+        ingredient.last_restock = update_data.last_restock
+        
+        # Commit the changes
+        db.commit()
+        
+        return {
+            "status": "success",
+            "message": f"Successfully updated ingredient {ingredient.ingredient_name}",
+            "data": {
+                "ingredient_id": ingredient.ingredient_id,
+                "ingredient_name": ingredient.ingredient_name,
+                "stock_left": ingredient.stock_left,
+                "last_restock": ingredient.last_restock
+            }
+        }
+    except Exception as e:
+        db.rollback()
+        print(f"Error updating ingredient: {str(e)}")
+        return {
+            "status": "error",
+            "message": f"Failed to update ingredient: {str(e)}"
+        }
 
 @app.get("/merchant/{merchant_id}/today")
 async def get_today_summary(merchant_id: str):

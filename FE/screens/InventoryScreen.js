@@ -249,6 +249,9 @@ export default function InventoryScreen() {
         const item = detail.item;
         const newQuantity = item.current + detail.quantity;
         
+        // Log values for debugging
+        console.log(`Updating item ${item.id} from ${item.current} to ${newQuantity}`);
+        
         // Update the item in the backend
         await updateInventoryItem(item.id, newQuantity);
       }
@@ -277,7 +280,7 @@ export default function InventoryScreen() {
       
     } catch (error) {
       console.error("Error updating inventory:", error);
-      showSnackbar("Error updating inventory. Please try again.");
+      showSnackbar(`Error updating inventory: ${error.message}`);
     } finally {
       setPaymentModalVisible(false);
       setOrderDetails(null);
