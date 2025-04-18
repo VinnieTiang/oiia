@@ -1,6 +1,7 @@
 import pandas as pd
 from datetime import datetime, timedelta
 from database import query_to_dataframe
+from date_utils import get_latest_transaction_date
 import math
 
 # Add this helper function to sanitize numerical values
@@ -39,11 +40,11 @@ def get_daily_sales_trend(merchant_id: str):
         # Convert order_time to datetime
         df["order_time"] = pd.to_datetime(df["order_time"], errors="coerce")
         
-        # Find the latest date in the data (representing "today")
-        df["date"] = df["order_time"].dt.date
-        latest_date = df["date"].max()
+        # Find the latest date using the shared function
+        latest_date = get_latest_transaction_date()
         
         # Filter today's transactions
+        df["date"] = df["order_time"].dt.date
         today_df = df[df["date"] == latest_date]
         
         # Get yesterday's date for comparison

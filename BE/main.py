@@ -14,7 +14,7 @@ import base64
 # Import our modules
 from rag import get_merchant_summary
 from forecast import load_merchant_sales_series, forecast_sales, forecast_to_summary
-from ingredient import load_all_ingredients, predict_stock_and_restock
+from ingredient import load_all_ingredients
 from database import get_db, import_csv_to_db, Ingredient
 from sales import get_merchant_today_summary, get_merchant_period_summary
 from item_service import get_items_by_merchant
@@ -412,33 +412,10 @@ async def generate_insight(prompt: str) -> str:
 async def get_merchant_items(merchant_id: str):
     return get_items_by_merchant(merchant_id)
 
-@app.get("/merchant/{merchant_id}/top-items/{period}")
-async def get_merchant_top_items(merchant_id: str, period: str):
-    """Get top selling items for a specific period (daily/weekly/monthly)"""
-    if period not in ["daily", "weekly", "monthly"]:
-        return {"error": "Period must be 'daily', 'weekly', or 'monthly'"}
-    
-    return get_top_selling_items(merchant_id, period)
-
-@app.get("/ingredients/predict")
-async def predict_ingredient_stock():
+@app.get("/merchant/{merchant_id}/top-items")
+async def get_merchant_top_items(merchant_id: str):
     """
-    Predict how many days the current stock of ingredients can last
-    and identify if restocking is needed.
+    Get top selling items for a merchant
+    it always returns monthly data (last 30 days) regardless of period
     """
-    try:
-        # Call the prediction function
-        prediction_df = predict_stock_and_restock()
-        
-        # Convert the DataFrame to a list of dictionaries for JSON response
-        prediction_data = prediction_df.to_dict(orient="records")
-        
-        return {
-            "status": "success",
-            "data": prediction_data
-        }
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+    return get_top_selling_items(merchant_id)
