@@ -28,7 +28,7 @@ export default function ProfileScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.profileHeader}>
-        <Image source={require("../assets/profile-placeholder1.png")} style={styles.profileImage} />
+        <Image source={require("../assets/taco-delight-logo.png")} style={styles.profileImage} />
         
         {isLoading ? (
           <ActivityIndicator size="small" color="#2FAE60" style={styles.loader} />
