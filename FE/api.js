@@ -54,6 +54,7 @@ export const askAI = async (question, merchantId = merchant_id) => {
 
 export const getAdvice = async (merchantId = merchant_id) => {
     try {
+      console.log('Getting advice from AI')
       const response = await fetch(`${API_URL}/advice`, {
         method: "POST",
         headers: {
@@ -71,7 +72,7 @@ export const getAdvice = async (merchantId = merchant_id) => {
       const data = await response.json()
       return data.advice
     } catch (error) {
-      console.error("Error asking AI:", error)
+      console.error("Error getting advice:", error)
       throw error
     }
   }
