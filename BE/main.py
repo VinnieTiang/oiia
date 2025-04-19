@@ -17,7 +17,7 @@ from forecast import load_merchant_sales_series, forecast_sales, forecast_to_sum
 from ingredient import load_all_ingredients, predict_stock_and_restock
 from database import get_db, import_csv_to_db, Ingredient
 from sales import get_merchant_today_summary, get_merchant_period_summary
-from item_service import get_items_by_merchant, get_frequently_bought_together
+from item_service import get_items_by_merchant, get_frequently_bought_together, get_merchant_name_by_id
 from sales_trends import get_sales_trend
 from top_items import get_top_selling_items, get_best_seller
 
@@ -57,7 +57,7 @@ class ImageRequest(BaseModel):
 @lru_cache(maxsize=100)
 def get_cached_merchant_summary(merchant_id: str) -> str:
     return get_merchant_summary(merchant_id)
-
+    
 @lru_cache(maxsize=20)
 def get_cached_bundle_suggestions(merchant_id: str):
     """Cache bundle suggestions to avoid repeated API calls and generation"""
@@ -230,6 +230,17 @@ async def generate_image(request: ImageRequest):
             "error": str(e)
         }
 
+@app.get("/merchant-name/{merchant_id}")
+async def get_merchant_name(merchant_id : str):
+    """Get the merchant name by ID"""
+    try:
+        name = get_merchant_name_by_id(merchant_id)
+        return {"merchant_id": merchant_id, "name": name}
+    except Exception as e:
+        print(f"Error fetching merchant name: {e}")
+        return {"merchant_id": merchant_id, "name": "Unknown", "error": str(e)}
+
+
 @app.get("/merchant/{merchant_id}/summary")
 async def get_merchant_summary_endpoint(merchant_id: str):
     """Get cached merchant summary for a specific merchant"""
@@ -300,8 +311,8 @@ async def personalized_advice(request: AdviceRequest, db: Session = Depends(get_
 
     Each recommendation should have the following format:
     - category: The category of the advice (only have sales, inventory, customers, finance)
-    - title: A clear, concise title for the advice
-    - impact: The potential impact of following this advice
+    - title: A clear, concise title for the advice, limit to 3 words
+    - impact: The potential impact of following this advice, make it short
     - details: A brief explanation of the recommendation and how it can help
     - icon: The name of a relevant icon
     - color: Unique color code for each advice
@@ -412,8 +423,47 @@ async def get_ingredients(db: Session = Depends(get_db)):
     except Exception as e:
         return {"error": str(e)}
     
+class InventoryUpdateRequest(BaseModel):
+    stock_left: int
+    last_restock: str
+
+@app.patch("/ingredients/{ingredient_id}")
+async def update_ingredient(ingredient_id: int, update_data: InventoryUpdateRequest, db: Session = Depends(get_db)):
+    """Update an ingredient's stock level and restock date"""
+    try:
+        # Get the ingredient from the database
+        ingredient = db.query(Ingredient).filter(Ingredient.ingredient_id == ingredient_id).first()
         
-    
+        if not ingredient:
+            return {
+                "status": "error",
+                "message": f"Ingredient with ID {ingredient_id} not found"
+            }
+        
+        # Update the ingredient
+        ingredient.stock_left = update_data.stock_left
+        ingredient.last_restock = update_data.last_restock
+        
+        # Commit the changes
+        db.commit()
+        
+        return {
+            "status": "success",
+            "message": f"Successfully updated ingredient {ingredient.ingredient_name}",
+            "data": {
+                "ingredient_id": ingredient.ingredient_id,
+                "ingredient_name": ingredient.ingredient_name,
+                "stock_left": ingredient.stock_left,
+                "last_restock": ingredient.last_restock
+            }
+        }
+    except Exception as e:
+        db.rollback()
+        print(f"Error updating ingredient: {str(e)}")
+        return {
+            "status": "error",
+            "message": f"Failed to update ingredient: {str(e)}"
+        }
 
 @app.get("/merchant/{merchant_id}/today")
 async def get_today_summary(merchant_id: str):

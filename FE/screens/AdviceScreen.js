@@ -1,4 +1,4 @@
-import { useAdviceQueryData } from "../api"
+import { useAdviceQueryData, fetchMerchantName } from "../api"
 import { ActivityIndicator, View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
@@ -11,16 +11,30 @@ export default function AdviceScreen() {
   const [showAllResources, setShowAllResources] = useState(false)
 
   const { data: adviceItems = [], refetch, isFetching } = useAdviceQueryData();
+  const [merchantName, setMerchantName] = useState("Loading...")
+    const [isLoading, setIsLoading] = useState(true)
+  
+    useEffect(() => {
+      async function loadMerchantData() {
+        try {
+          setIsLoading(true)
+          const name = await fetchMerchantName()
+          setMerchantName(name)
+        } catch (error) {
+          console.error("Error fetching merchant name:", error)
+          setMerchantName("Merchant Name Unavailable")
+        } finally {
+          setIsLoading(false)
+        }
+      }
+  
+      loadMerchantData()
+    }, [])
 
   // Mock merchant data - in a real app, this would come from an API
   const merchantData = {
     name: "Vni",
-    businessName: "Warung Makan Sedap",
-    recentPerformance: {
-      salesChange: "+12%",
-      period: "this week",
-      topSellingItem: "Nasi Lemak",
-    }
+    businessName: merchantName,
   }
 
   const adviceCategories = [
@@ -59,13 +73,13 @@ export default function AdviceScreen() {
   const learningResources = [
     {
         id: "1",
-        title: "Spicy Food Trends in Malaysia",
+        title: "Spicy Food Trends in Southeast Asia",
         type: "Report",
         duration: "10 mins read",
         icon: "document-text",
         color: "#E74C3C",
         category: "sales",
-        url: "https://www.myloveearth.com/blog/why-malaysians-love-their-chillies?srsltid=AfmBOorIdMrv0tdRXrmEh7NZTsEDdvt5Pxd7Fj1npLlHp5YXja6JKyte",
+        url: "https://www.euromonitor.com/article/spicy-food-trends-in-southeast-asia",
     },
     {
       id: "2",
@@ -176,14 +190,6 @@ export default function AdviceScreen() {
           <View style={styles.greetingContent}>
             <Text style={styles.greetingName}>Hi, {merchantData.name}</Text>
             <Text style={styles.greetingBusiness}>{merchantData.businessName}</Text>
-            <View style={styles.performanceContainer}>
-              <Text style={styles.performanceText}>
-                Sales are up <Text style={styles.highlightText}>{merchantData.recentPerformance.salesChange}</Text> {merchantData.recentPerformance.period}
-              </Text>
-              <Text style={styles.performanceText}>
-                Top seller: <Text style={styles.highlightText}>{merchantData.recentPerformance.topSellingItem}</Text>
-              </Text>
-            </View>
           </View>
           <View style={styles.greetingImageContainer}>
             <View style={styles.greetingImage}>
@@ -247,7 +253,7 @@ export default function AdviceScreen() {
             {isFetching ? (
         <View style={styles.emptyState}>
           <ActivityIndicator size="small" color="#2D9CDB" />
-          <Text>Regenerating advice...</Text>
+          <Text>Generating advice...</Text>
         </View>
       ) : (
         <>
@@ -437,8 +443,8 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   categoryCard: {
-    width: 85,
-    height: 85,
+    width: 90,
+    height: 90,
     backgroundColor: "white",
     borderRadius: 12,
     padding: 12,

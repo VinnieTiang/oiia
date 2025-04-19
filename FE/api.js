@@ -25,6 +25,24 @@ export const fetchLowStockItems = async () => {
   }
 };
 
+export const fetchMerchantName = async (merchantId = merchant_id) => {
+  try {
+    console.log(`Fetching merchant name for: ${merchantId}`);
+    const response = await fetch(`${API_URL}/merchant-name/${merchantId}`);
+    
+    if (!response.ok) {
+      throw new Error(`Network response was not ok: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(`Merchant name received:`, data);
+    return data.name;
+  } catch (error) {
+    console.error('Error fetching merchant name:', error);
+    return "Unknown Merchant";
+  }
+}; 
+
 export const askAI = async (question, merchantId = merchant_id) => {
   try {
     console.log("Sending question to AI:", question)
@@ -54,6 +72,7 @@ export const askAI = async (question, merchantId = merchant_id) => {
 
 export const getAdvice = async (merchantId = merchant_id) => {
     try {
+      console.log('Getting advice from AI')
       const response = await fetch(`${API_URL}/advice`, {
         method: "POST",
         headers: {
@@ -71,7 +90,7 @@ export const getAdvice = async (merchantId = merchant_id) => {
       const data = await response.json()
       return data.advice
     } catch (error) {
-      console.error("Error asking AI:", error)
+      console.error("Error getting advice:", error)
       throw error
     }
   }

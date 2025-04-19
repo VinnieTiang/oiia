@@ -167,3 +167,16 @@ def get_frequently_bought_together(merchant_id: str, limit: int = 3):
             "status": "error",
             "message": f"Error retrieving frequently bought together items: {str(e)}"
         }
+
+def get_merchant_name_by_id(merchant_id: str):
+    query = """
+        SELECT merchant_name
+        FROM merchants
+        WHERE merchant_id = :merchant_id
+    """
+    df = query_to_dataframe(query,{"merchant_id": merchant_id})
+    
+    if df.empty:
+        return "Unknown Merchant"
+    
+    return df['merchant_name'].iloc[0]

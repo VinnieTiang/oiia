@@ -1,21 +1,8 @@
 "use client"
-import { fetchLowStockItems, askAI, fetchSalesData, useAdviceQueryData } from "../api"
+import { fetchLowStockItems, askAI, fetchSalesData, useAdviceQueryData, fetchMerchantName, fetchSalesTrend } from "../api"
 import { useState, useRef, useEffect } from "react"
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  Image,
-  Animated,
-  Dimensions,
-  ScrollView,
-  ActivityIndicator,
-} from "react-native"
+import {View,Text,StyleSheet,TextInput,TouchableOpacity,FlatList,KeyboardAvoidingView,Platform,Image,Animated,Dimensions,ScrollView,ActivityIndicator,} from "react-native"
+import { LineChart } from "react-native-chart-kit" // Add this import
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons, Feather } from "@expo/vector-icons"
 import * as FileSystem from "expo-file-system"
@@ -25,10 +12,28 @@ import { OPENAI_API_KEY, ELEVENLABS_API_KEY } from "@env"
 // Get screen dimensions
 const { width: screenWidth } = Dimensions.get("window")
 
+// Chart configuration
+const chartConfig = {
+  backgroundGradientFrom: "#fff",
+  backgroundGradientTo: "#fff",
+  decimalPlaces: 0,
+  color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
+  labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+  style: {
+    borderRadius: 16,
+  },
+  propsForDots: {
+    r: "4",
+    strokeWidth: "2",
+    stroke: "#2FAE60",
+  },
+};
+
 // Define message types for different content
 const MESSAGE_TYPES = {
   AITEXT: "ai_text",
   TEXT: "text",
+  ADVICE: "advice",
   SALES_SUMMARY: "sales_summary",
   INVENTORY_ALERT: "inventory_alert",
   INVENTORY_ALERT2: "inventory_alert2",
@@ -43,6 +48,26 @@ export default function MainChatScreen({ navigation }) {
   const [isLoading, setIsLoading] = useState(false)
   const [isAILoading, setIsAILoading] = useState(false)
   const { data } = useAdviceQueryData(); // triggers fetch
+  const [merchantName, setMerchantName] = useState("Loading...")
+    [isLoading, setIsLoading] = useState(true)
+  
+    useEffect(() => {
+      async function loadMerchantData() {
+        try {
+          setIsLoading(true)
+          const name = await fetchMerchantName()
+          setMerchantName(name)
+        } catch (error) {
+          console.error("Error fetching merchant name:", error)
+          setMerchantName("Merchant Name Unavailable")
+        } finally {
+          setIsLoading(false)
+        }
+      }
+  
+      loadMerchantData()
+    }, [])
+  const { data: adviceItems = [], isFetching } = useAdviceQueryData(); // triggers fetch
 
   const checkInventory = async () => {
     try {
@@ -935,18 +960,21 @@ export default function MainChatScreen({ navigation }) {
           break
         case "get advice":
           addMascotMessage("Based on your recent performance, here's my advice:", MESSAGE_TYPES.TEXT)
-          addMascotMessage(
-            "💡 Consider adding more spicy options to your menu. 85% of customers in your area prefer spicy food, and restaurants with spicy options see 18% higher repeat orders in your region.",
-            MESSAGE_TYPES.TEXT,
-          )
-
-          setTimeout(() => {
+          if (adviceItems.length > 0) {
+            addMascotMessage(null, MESSAGE_TYPES.ADVICE)
+          } else {
+            addMascotMessage(
+                "💡 Consider adding more spicy options to your menu. 85% of customers in your area prefer spicy food, and restaurants with spicy options see 18% higher repeat orders in your region.",
+                MESSAGE_TYPES.TEXT,
+            )
+            setTimeout(() => {
             addMascotMessage("Would you like to see more business advice?", MESSAGE_TYPES.TEXT)
             addQuickReplies([
-              { text: "View Advice", action: "advice" },
-              { text: "Not now", action: "dismiss" },
+                { text: "View Advice", action: "advice" },
+                { text: "Not now", action: "dismiss" },
             ])
-          }, 500)
+            }, 500)
+          }
           break
         case "view leaderboard":
           addMascotMessage("Here's how you compare with other merchants:", MESSAGE_TYPES.TEXT)
@@ -999,6 +1027,26 @@ export default function MainChatScreen({ navigation }) {
     fetchSalesForChat();
   }, []);
 
+  ///////////// Fetch Sales Trend Data //////////////////
+  const [salesTrend, setSalesTrend] = useState(null);
+  const [salesTrendLoading, setSalesTrendLoading] = useState(true);
+  const [timePeriod, setTimePeriod] = useState("weekly"); // Default to weekly view
+
+  useEffect(() => {
+    const fetchTrendData = async () => {
+      try {
+        setSalesTrendLoading(true);
+        const data = await fetchSalesTrend(timePeriod);
+        setSalesTrend(data);
+      } catch (error) {
+        console.error(`Error fetching ${timePeriod} trend data:`, error);
+      } finally {
+        setSalesTrendLoading(false);
+      }
+    };
+
+    fetchTrendData();
+  }, [timePeriod]);
 
   ///////////// Main Funtion for Mascot to render message out /////////////
   const renderMessage = ({ item }) => {
@@ -1126,6 +1174,35 @@ export default function MainChatScreen({ navigation }) {
           </View>
         )
 
+      case MESSAGE_TYPES.ADVICE:
+        return (
+            <View style={styles.messageBubble}>
+                <View style={styles.mascotAvatarContainer}>
+                    <Image source={require("../assets/mascot-avatar.png")} style={styles.mascotAvatar} />
+                </View>
+                <View style={[styles.messageContent, styles.cardContent]}>
+                    <View style={styles.salesCard}>
+                    <Text style={styles.cardTitle}>{adviceItems[0].title} 💡</Text>
+                        {isFetching ? (
+                        <ActivityIndicator size="small" color="#2FAE60" style={{marginVertical: 20}} />
+                        ) : (
+                        <View>
+                            <Text style={styles.adviceImpact}>{adviceItems[0].impact}</Text>
+                            <Text style={styles.adviceDetail}>{adviceItems[0].details}</Text>
+                        </View>
+                        )}
+                    <TouchableOpacity style={styles.cardButton} onPress={() => navigation.navigate("Advice")}>
+                        <Text style={styles.cardButtonText}>View More Advice</Text>
+                        <Ionicons name="arrow-forward" size={16} color="#2FAE60" />
+                    </TouchableOpacity>
+                    </View>
+                    <Text style={styles.mascotTimestamp}>
+                    {item.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </Text>
+                </View>
+            </View>
+        )
+
       case MESSAGE_TYPES.INVENTORY_ALERT:
         return (
           <View style={styles.messageBubble}>
@@ -1138,17 +1215,17 @@ export default function MainChatScreen({ navigation }) {
                 <View style={styles.inventoryList}>
                   <View style={styles.inventoryItem}>
                     <View style={[styles.inventoryStatus, { backgroundColor: "#ffebee" }]} />
-                    <Text style={styles.inventoryName}>Chicken thigh</Text>
-                    <Text style={styles.inventoryCount}>5 left</Text>
+                    <Text style={styles.inventoryName}>Black Beans</Text>
+                    <Text style={styles.inventoryCount}>10 left</Text>
                   </View>
                   <View style={styles.inventoryItem}>
                     <View style={[styles.inventoryStatus, { backgroundColor: "#ffebee" }]} />
-                    <Text style={styles.inventoryName}>Chili sauce</Text>
-                    <Text style={styles.inventoryCount}>4 left</Text>
+                    <Text style={styles.inventoryName}>Chicken</Text>
+                    <Text style={styles.inventoryCount}>9 left</Text>
                   </View>
                   <View style={styles.inventoryItem}>
                     <View style={[styles.inventoryStatus, { backgroundColor: "#fff8e1" }]} />
-                    <Text style={styles.inventoryName}>Jasmine rice</Text>
+                    <Text style={styles.inventoryName}>Chili Powder</Text>
                     <Text style={styles.inventoryCount}>3 left</Text>
                   </View>
                 </View>
@@ -1210,10 +1287,71 @@ export default function MainChatScreen({ navigation }) {
             <View style={[styles.messageContent, styles.cardContent]}>
               <View style={styles.insightCard}>
                 <Text style={styles.cardTitle}>Weekly Performance</Text>
-                <Image source={require("../assets/chart-preview.jpg")} style={styles.chartImage} resizeMode="contain" />
+                
+                {salesTrendLoading ? (
+                  <View style={styles.chartLoadingContainer}>
+                    <ActivityIndicator size="large" color="#2FAE60" />
+                    <Text style={styles.loadingText}>Loading chart data...</Text>
+                  </View>
+                ) : (
+                  <LineChart
+                    data={{
+                      labels: salesTrend?.labels || ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+                      datasets: [
+                        {
+                          data: salesTrend?.datasets[0]?.data || [0, 0, 0, 0, 0, 0, 0],
+                          color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
+                          strokeWidth: 2,
+                        },
+                        {
+                          data: salesTrend?.comparison_data || [0, 0, 0, 0, 0, 0, 0],
+                          color: (opacity = 1) => `rgba(200, 200, 200, ${opacity})`,
+                          strokeWidth: 2,
+                        },
+                      ],
+                    }}
+                    width={screenWidth * 0.60} // Adjust width to fit in the message bubble
+                    height={190}
+                    chartConfig={chartConfig}
+                    bezier
+                    style={styles.chartStyle}
+                    withDots={true}
+                    withInnerLines={true}
+                    withOuterLines={true}
+                    withVerticalLines={false}
+                    withHorizontalLines={true}
+                    withShadow={false}
+                    segments={4}
+                  />
+                )}
+                
                 <View style={styles.insightHighlight}>
-                  <Ionicons name="trending-up" size={16} color="#2FAE60" />
-                  <Text style={styles.insightText}>Sales are up 12% this week</Text>
+                  <Ionicons 
+                    name={
+                      timePeriod === "weekly" 
+                        ? salesTrend?.peak_day_increase?.includes('-') ? "trending-down" : "trending-up"
+                        : salesTrend?.peak_week_increase?.includes('-') ? "trending-down" : "trending-up"
+                    } 
+                    size={16} 
+                    color={
+                      timePeriod === "weekly"
+                        ? salesTrend?.peak_day_increase?.includes('-') ? "#FF3D00" : "#2FAE60"
+                        : salesTrend?.peak_week_increase?.includes('-') ? "#FF3D00" : "#2FAE60"
+                    } 
+                  />
+                  
+                  {salesTrendLoading ? (
+                    <Text style={styles.insightText}>Loading sales trend data...</Text>
+                  ) : (
+                    <Text style={styles.insightText}>
+                      {timePeriod === "weekly"
+                        ? `Sales are ${salesTrend?.peak_day_increase || ""} ${salesTrend?.peak_day_increase?.includes('-') ? 'lower' : 'higher'} on ${salesTrend?.peak_day || "weekends"}`
+                        : salesTrend?.peak_week_increase?.includes('-')
+                          ? `${salesTrend?.peak_week_increase || ""} in ${salesTrend?.peak_week || "Week 4"}`
+                          : `Best performance (+${salesTrend?.peak_week_increase || ""}) in ${salesTrend?.peak_week || "Week 1"}`
+                      }
+                    </Text>
+                  )}
                 </View>
                 <TouchableOpacity
                   style={styles.cardButton}
@@ -1310,7 +1448,7 @@ export default function MainChatScreen({ navigation }) {
               <View style={styles.profileCard}>
                 <View style={styles.profileHeader}>
                   <Image source={require("../assets/profile-placeholder1.png")} style={styles.profileImage} />
-                  <Text style={styles.profileName}>Warung Makan Sedap</Text>
+                  <Text style={styles.profileName}>{merchantName}</Text>
                   <Text style={styles.profileBio}>Restaurant • Since 2018</Text>
                 </View>
                 <View style={styles.profileStats}>
@@ -1952,5 +2090,29 @@ const styles = StyleSheet.create({
   },
   feedbackButtonActive: {
     backgroundColor: "#f5fff5",
+  },
+  adviceTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "black",
+    marginBottom: 4,
+  },
+  adviceImpact: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#2FAE60",
+    marginBottom: 4,
+  },
+  adviceDetail: {
+    fontSize: 16,
+    color: "black",
+    marginBottom: 4,
+  },
+  chartStyle: {
+    marginVertical: 8,
+    marginBottom: 15, 
+    borderRadius: 8,
+    marginLeft:-16
+
   },
 })

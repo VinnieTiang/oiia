@@ -508,11 +508,19 @@ export default function InsightScreen() {
           <View style={styles.chartLegend}>
             <View style={styles.legendItem}>
               <View style={[styles.legendColor, { backgroundColor: "#2FAE60" }]} />
-              <Text style={styles.legendText}>This {timePeriod} </Text>
+              <Text style={styles.legendText}>
+                {timePeriod === "daily" ? "Today" : 
+                timePeriod === "weekly" ? "This week" : 
+                "This month"}
+              </Text>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendColor, { backgroundColor: "#E0E0E0" }]} />
-              <Text style={styles.legendText}>Last {timePeriod} </Text>
+              <View style={[styles.legendColor, {marginLeft: 6}, { backgroundColor: "#E0E0E0" }]} />
+              <Text style={[styles.legendText, ]}>
+                {timePeriod === "daily" ? "Yesterday" : 
+                timePeriod === "weekly" ? "Last week" : 
+                "Last month"}
+              </Text>
             </View>
           </View>
         </View>
@@ -568,7 +576,7 @@ export default function InsightScreen() {
             {timePeriod === "daily"
               ? `Peak at ${salesTrend?.peak_hour || summaryData.daily.peakHour}`
               : timePeriod === "weekly"
-                ? `${salesTrend?.peak_day_increase || ""} ${salesTrend?.peak_day_increase?.includes('-') ? 'lower' : 'higher'} on ${salesTrend?.peak_day || summaryData.weekly.peakDay}`
+                ? `Sales are ${salesTrend?.peak_day_increase || ""} ${salesTrend?.peak_day_increase?.includes('-') ? 'lower' : 'higher'} on ${salesTrend?.peak_day || summaryData.weekly.peakDay}`
                 : salesTrend?.peak_week_increase?.includes('-')
                   ? `${salesTrend?.peak_week_increase || ""} in ${salesTrend?.peak_week || summaryData.monthly.peakWeek}`
                   : `Best performance (+${salesTrend?.peak_week_increase || ""}) in ${salesTrend?.peak_week || summaryData.monthly.peakWeek}`
