@@ -33,6 +33,7 @@ const chartConfig = {
 const MESSAGE_TYPES = {
   AITEXT: "ai_text",
   TEXT: "text",
+  ADVICE: "advice",
   SALES_SUMMARY: "sales_summary",
   INVENTORY_ALERT: "inventory_alert",
   INVENTORY_ALERT2: "inventory_alert2",
@@ -66,6 +67,7 @@ export default function MainChatScreen({ navigation }) {
   
       loadMerchantData()
     }, [])
+  const { data: adviceItems = [], isFetching } = useAdviceQueryData(); // triggers fetch
 
   const checkInventory = async () => {
     try {
@@ -958,18 +960,21 @@ export default function MainChatScreen({ navigation }) {
           break
         case "get advice":
           addMascotMessage("Based on your recent performance, here's my advice:", MESSAGE_TYPES.TEXT)
-          addMascotMessage(
-            "💡 Consider adding more spicy options to your menu. 85% of customers in your area prefer spicy food, and restaurants with spicy options see 18% higher repeat orders in your region.",
-            MESSAGE_TYPES.TEXT,
-          )
-
-          setTimeout(() => {
+          if (adviceItems.length > 0) {
+            addMascotMessage(null, MESSAGE_TYPES.ADVICE)
+          } else {
+            addMascotMessage(
+                "💡 Consider adding more spicy options to your menu. 85% of customers in your area prefer spicy food, and restaurants with spicy options see 18% higher repeat orders in your region.",
+                MESSAGE_TYPES.TEXT,
+            )
+            setTimeout(() => {
             addMascotMessage("Would you like to see more business advice?", MESSAGE_TYPES.TEXT)
             addQuickReplies([
-              { text: "View Advice", action: "advice" },
-              { text: "Not now", action: "dismiss" },
+                { text: "View Advice", action: "advice" },
+                { text: "Not now", action: "dismiss" },
             ])
-          }, 500)
+            }, 500)
+          }
           break
         case "view leaderboard":
           addMascotMessage("Here's how you compare with other merchants:", MESSAGE_TYPES.TEXT)
@@ -1167,6 +1172,35 @@ export default function MainChatScreen({ navigation }) {
               </Text>
             </View>
           </View>
+        )
+
+      case MESSAGE_TYPES.ADVICE:
+        return (
+            <View style={styles.messageBubble}>
+                <View style={styles.mascotAvatarContainer}>
+                    <Image source={require("../assets/mascot-avatar.png")} style={styles.mascotAvatar} />
+                </View>
+                <View style={[styles.messageContent, styles.cardContent]}>
+                    <View style={styles.salesCard}>
+                    <Text style={styles.cardTitle}>{adviceItems[0].title} 💡</Text>
+                        {isFetching ? (
+                        <ActivityIndicator size="small" color="#2FAE60" style={{marginVertical: 20}} />
+                        ) : (
+                        <View>
+                            <Text style={styles.adviceImpact}>{adviceItems[0].impact}</Text>
+                            <Text style={styles.adviceDetail}>{adviceItems[0].details}</Text>
+                        </View>
+                        )}
+                    <TouchableOpacity style={styles.cardButton} onPress={() => navigation.navigate("Advice")}>
+                        <Text style={styles.cardButtonText}>View More Advice</Text>
+                        <Ionicons name="arrow-forward" size={16} color="#2FAE60" />
+                    </TouchableOpacity>
+                    </View>
+                    <Text style={styles.mascotTimestamp}>
+                    {item.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </Text>
+                </View>
+            </View>
         )
 
       case MESSAGE_TYPES.INVENTORY_ALERT:
@@ -2056,6 +2090,23 @@ const styles = StyleSheet.create({
   },
   feedbackButtonActive: {
     backgroundColor: "#f5fff5",
+  },
+  adviceTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "black",
+    marginBottom: 4,
+  },
+  adviceImpact: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#2FAE60",
+    marginBottom: 4,
+  },
+  adviceDetail: {
+    fontSize: 16,
+    color: "black",
+    marginBottom: 4,
   },
   chartStyle: {
     marginVertical: 8,
