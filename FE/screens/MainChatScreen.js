@@ -37,7 +37,7 @@ const MESSAGE_TYPES = {
   SALES_SUMMARY: "sales_summary",
   INVENTORY_ALERT: "inventory_alert",
   INVENTORY_ALERT2: "inventory_alert2",
-  INSIGHT_CHART: "insight_chart",
+  // INSIGHT_CHART: "insight_chart",
   QUICK_ACTIONS: "quick_actions",
   PROFILE_CARD: "profile_card",
 }
@@ -727,7 +727,7 @@ export default function MainChatScreen({ navigation }) {
     ) {
       // Insights related query
       setTimeout(() => {
-        addMascotMessage(null, MESSAGE_TYPES.INSIGHT_CHART)
+        addMascotMessage(null, MESSAGE_TYPES.SALES_SUMMARY)
 
         // Add option to go to insights screen
         setTimeout(() => {
@@ -933,7 +933,7 @@ export default function MainChatScreen({ navigation }) {
         case "show sales insights":
           addMascotMessage("Here's your sales summary & latest business performance data:", MESSAGE_TYPES.TEXT)
           addMascotMessage(null, MESSAGE_TYPES.SALES_SUMMARY)
-          addMascotMessage(null, MESSAGE_TYPES.INSIGHT_CHART)
+          // addMascotMessage(null, MESSAGE_TYPES.INSIGHT_CHART)
 
           setTimeout(() => {
             addMascotMessage("Would you like to see more detailed sales insights?", MESSAGE_TYPES.TEXT)
