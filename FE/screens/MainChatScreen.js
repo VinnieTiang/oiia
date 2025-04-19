@@ -2107,7 +2107,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "black",
     marginBottom: 4,
-  }
+  },
   chartStyle: {
     marginVertical: 8,
     marginBottom: 15, 
