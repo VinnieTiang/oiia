@@ -930,9 +930,18 @@ export default function MainChatScreen({ navigation }) {
     } else {
       // Handle text-based actions
       switch (action.toLowerCase()) {
-        case "show sales":
-          addMascotMessage("Here's your sales summary:", MESSAGE_TYPES.TEXT)
+        case "show sales insights":
+          addMascotMessage("Here's your sales summary & latest business performance data:", MESSAGE_TYPES.TEXT)
           addMascotMessage(null, MESSAGE_TYPES.SALES_SUMMARY)
+          addMascotMessage(null, MESSAGE_TYPES.INSIGHT_CHART)
+
+          setTimeout(() => {
+            addMascotMessage("Would you like to see more detailed sales insights?", MESSAGE_TYPES.TEXT)
+            addQuickReplies([
+              { text: "View Sales Insights", action: "insight" },
+              { text: "Not now", action: "dismiss" },
+            ])
+          }, 500)
           break
         case "check inventory":
           addMascotMessage("I noticed some items in your inventory are running low:", MESSAGE_TYPES.TEXT)
@@ -942,18 +951,6 @@ export default function MainChatScreen({ navigation }) {
             addMascotMessage("Would you like to see your full inventory?", MESSAGE_TYPES.TEXT)
             addQuickReplies([
               { text: "View Inventory", action: "inventory" },
-              { text: "Not now", action: "dismiss" },
-            ])
-          }, 500)
-          break
-        case "view insights":
-          addMascotMessage("Here's your latest business performance data:", MESSAGE_TYPES.TEXT)
-          addMascotMessage(null, MESSAGE_TYPES.INSIGHT_CHART)
-
-          setTimeout(() => {
-            addMascotMessage("Would you like to see more detailed insights?", MESSAGE_TYPES.TEXT)
-            addQuickReplies([
-              { text: "View Insights", action: "insight" },
               { text: "Not now", action: "dismiss" },
             ])
           }, 500)
@@ -1162,6 +1159,73 @@ export default function MainChatScreen({ navigation }) {
                       </View>
                     </View>
                   )}
+              <View style={styles.separator} />
+              <Text style={styles.cardTitle}>Weekly Performance</Text>
+                {salesTrendLoading ? (
+                  <View style={styles.chartLoadingContainer}>
+                    <ActivityIndicator size="large" color="#2FAE60" />
+                    <Text style={styles.loadingText}>Loading chart data...</Text>
+                  </View>
+                ) : (
+                  <LineChart
+                    data={{
+                      labels: salesTrend?.labels || ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+                      datasets: [
+                        {
+                          data: salesTrend?.datasets[0]?.data || [0, 0, 0, 0, 0, 0, 0],
+                          color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
+                          strokeWidth: 2,
+                        },
+                        {
+                          data: salesTrend?.comparison_data || [0, 0, 0, 0, 0, 0, 0],
+                          color: (opacity = 1) => `rgba(200, 200, 200, ${opacity})`,
+                          strokeWidth: 2,
+                        },
+                      ],
+                    }}
+                    width={screenWidth * 0.60} // Adjust width to fit in the message bubble
+                    height={190}
+                    chartConfig={chartConfig}
+                    bezier
+                    style={styles.chartStyle}
+                    withDots={true}
+                    withInnerLines={true}
+                    withOuterLines={true}
+                    withVerticalLines={false}
+                    withHorizontalLines={true}
+                    withShadow={false}
+                    segments={4}
+                  />
+                )}
+                
+                <View style={styles.insightHighlight}>
+                  <Ionicons 
+                    name={
+                      timePeriod === "weekly" 
+                        ? salesTrend?.peak_day_increase?.includes('-') ? "trending-down" : "trending-up"
+                        : salesTrend?.peak_week_increase?.includes('-') ? "trending-down" : "trending-up"
+                    } 
+                    size={16} 
+                    color={
+                      timePeriod === "weekly"
+                        ? salesTrend?.peak_day_increase?.includes('-') ? "#FF3D00" : "#2FAE60"
+                        : salesTrend?.peak_week_increase?.includes('-') ? "#FF3D00" : "#2FAE60"
+                    } 
+                  />
+                  
+                  {salesTrendLoading ? (
+                    <Text style={styles.insightText}>Loading sales trend data...</Text>
+                  ) : (
+                    <Text style={styles.insightText}>
+                      {timePeriod === "weekly"
+                        ? `Sales are ${salesTrend?.peak_day_increase || ""} ${salesTrend?.peak_day_increase?.includes('-') ? 'lower' : 'higher'} on ${salesTrend?.peak_day || "weekends"}`
+                        : salesTrend?.peak_week_increase?.includes('-')
+                          ? `${salesTrend?.peak_week_increase || ""} in ${salesTrend?.peak_week || "Week 4"}`
+                          : `Best performance (+${salesTrend?.peak_week_increase || ""}) in ${salesTrend?.peak_week || "Week 1"}`
+                      }
+                    </Text>
+                  )}
+                </View>
                 <TouchableOpacity style={styles.cardButton} onPress={() => navigation.navigate("Insight")}>
                   <Text style={styles.cardButtonText}>View Details</Text>
                   <Ionicons name="arrow-forward" size={16} color="#2FAE60" />
@@ -1173,6 +1237,96 @@ export default function MainChatScreen({ navigation }) {
             </View>
           </View>
         )
+
+        // case MESSAGE_TYPES.INSIGHT_CHART:
+        // return (
+        //   <View style={styles.messageBubble}>
+        //     <View style={styles.mascotAvatarContainer}>
+        //       <Image source={require("../assets/mascot-avatar.png")} style={styles.mascotAvatar} />
+        //     </View>
+        //     <View style={[styles.messageContent, styles.cardContent]}>
+        //       <View style={styles.insightCard}>
+        //         <Text style={styles.cardTitle}>Weekly Performance</Text>
+                
+        //         {salesTrendLoading ? (
+        //           <View style={styles.chartLoadingContainer}>
+        //             <ActivityIndicator size="large" color="#2FAE60" />
+        //             <Text style={styles.loadingText}>Loading chart data...</Text>
+        //           </View>
+        //         ) : (
+        //           <LineChart
+        //             data={{
+        //               labels: salesTrend?.labels || ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+        //               datasets: [
+        //                 {
+        //                   data: salesTrend?.datasets[0]?.data || [0, 0, 0, 0, 0, 0, 0],
+        //                   color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
+        //                   strokeWidth: 2,
+        //                 },
+        //                 {
+        //                   data: salesTrend?.comparison_data || [0, 0, 0, 0, 0, 0, 0],
+        //                   color: (opacity = 1) => `rgba(200, 200, 200, ${opacity})`,
+        //                   strokeWidth: 2,
+        //                 },
+        //               ],
+        //             }}
+        //             width={screenWidth * 0.60} // Adjust width to fit in the message bubble
+        //             height={190}
+        //             chartConfig={chartConfig}
+        //             bezier
+        //             style={styles.chartStyle}
+        //             withDots={true}
+        //             withInnerLines={true}
+        //             withOuterLines={true}
+        //             withVerticalLines={false}
+        //             withHorizontalLines={true}
+        //             withShadow={false}
+        //             segments={4}
+        //           />
+        //         )}
+                
+        //         <View style={styles.insightHighlight}>
+        //           <Ionicons 
+        //             name={
+        //               timePeriod === "weekly" 
+        //                 ? salesTrend?.peak_day_increase?.includes('-') ? "trending-down" : "trending-up"
+        //                 : salesTrend?.peak_week_increase?.includes('-') ? "trending-down" : "trending-up"
+        //             } 
+        //             size={16} 
+        //             color={
+        //               timePeriod === "weekly"
+        //                 ? salesTrend?.peak_day_increase?.includes('-') ? "#FF3D00" : "#2FAE60"
+        //                 : salesTrend?.peak_week_increase?.includes('-') ? "#FF3D00" : "#2FAE60"
+        //             } 
+        //           />
+                  
+        //           {salesTrendLoading ? (
+        //             <Text style={styles.insightText}>Loading sales trend data...</Text>
+        //           ) : (
+        //             <Text style={styles.insightText}>
+        //               {timePeriod === "weekly"
+        //                 ? `Sales are ${salesTrend?.peak_day_increase || ""} ${salesTrend?.peak_day_increase?.includes('-') ? 'lower' : 'higher'} on ${salesTrend?.peak_day || "weekends"}`
+        //                 : salesTrend?.peak_week_increase?.includes('-')
+        //                   ? `${salesTrend?.peak_week_increase || ""} in ${salesTrend?.peak_week || "Week 4"}`
+        //                   : `Best performance (+${salesTrend?.peak_week_increase || ""}) in ${salesTrend?.peak_week || "Week 1"}`
+        //               }
+        //             </Text>
+        //           )}
+        //         </View>
+        //         <TouchableOpacity
+        //           style={styles.cardButton}
+        //           onPress={() => navigation.navigate("Insight", { scrollToBottom: true })}
+        //         >
+        //           <Text style={styles.cardButtonText}>View Full Insights</Text>
+        //           <Ionicons name="arrow-forward" size={16} color="#2FAE60" />
+        //         </TouchableOpacity>
+        //       </View>
+        //       <Text style={styles.mascotTimestamp}>
+        //         {item.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+        //       </Text>
+        //     </View>
+        //   </View>
+        // )
 
       case MESSAGE_TYPES.ADVICE:
         return (
@@ -1278,113 +1432,23 @@ export default function MainChatScreen({ navigation }) {
           </View>
         )
 
-      case MESSAGE_TYPES.INSIGHT_CHART:
-        return (
-          <View style={styles.messageBubble}>
-            <View style={styles.mascotAvatarContainer}>
-              <Image source={require("../assets/mascot-avatar.png")} style={styles.mascotAvatar} />
-            </View>
-            <View style={[styles.messageContent, styles.cardContent]}>
-              <View style={styles.insightCard}>
-                <Text style={styles.cardTitle}>Weekly Performance</Text>
-                
-                {salesTrendLoading ? (
-                  <View style={styles.chartLoadingContainer}>
-                    <ActivityIndicator size="large" color="#2FAE60" />
-                    <Text style={styles.loadingText}>Loading chart data...</Text>
-                  </View>
-                ) : (
-                  <LineChart
-                    data={{
-                      labels: salesTrend?.labels || ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-                      datasets: [
-                        {
-                          data: salesTrend?.datasets[0]?.data || [0, 0, 0, 0, 0, 0, 0],
-                          color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
-                          strokeWidth: 2,
-                        },
-                        {
-                          data: salesTrend?.comparison_data || [0, 0, 0, 0, 0, 0, 0],
-                          color: (opacity = 1) => `rgba(200, 200, 200, ${opacity})`,
-                          strokeWidth: 2,
-                        },
-                      ],
-                    }}
-                    width={screenWidth * 0.60} // Adjust width to fit in the message bubble
-                    height={190}
-                    chartConfig={chartConfig}
-                    bezier
-                    style={styles.chartStyle}
-                    withDots={true}
-                    withInnerLines={true}
-                    withOuterLines={true}
-                    withVerticalLines={false}
-                    withHorizontalLines={true}
-                    withShadow={false}
-                    segments={4}
-                  />
-                )}
-                
-                <View style={styles.insightHighlight}>
-                  <Ionicons 
-                    name={
-                      timePeriod === "weekly" 
-                        ? salesTrend?.peak_day_increase?.includes('-') ? "trending-down" : "trending-up"
-                        : salesTrend?.peak_week_increase?.includes('-') ? "trending-down" : "trending-up"
-                    } 
-                    size={16} 
-                    color={
-                      timePeriod === "weekly"
-                        ? salesTrend?.peak_day_increase?.includes('-') ? "#FF3D00" : "#2FAE60"
-                        : salesTrend?.peak_week_increase?.includes('-') ? "#FF3D00" : "#2FAE60"
-                    } 
-                  />
-                  
-                  {salesTrendLoading ? (
-                    <Text style={styles.insightText}>Loading sales trend data...</Text>
-                  ) : (
-                    <Text style={styles.insightText}>
-                      {timePeriod === "weekly"
-                        ? `Sales are ${salesTrend?.peak_day_increase || ""} ${salesTrend?.peak_day_increase?.includes('-') ? 'lower' : 'higher'} on ${salesTrend?.peak_day || "weekends"}`
-                        : salesTrend?.peak_week_increase?.includes('-')
-                          ? `${salesTrend?.peak_week_increase || ""} in ${salesTrend?.peak_week || "Week 4"}`
-                          : `Best performance (+${salesTrend?.peak_week_increase || ""}) in ${salesTrend?.peak_week || "Week 1"}`
-                      }
-                    </Text>
-                  )}
-                </View>
-                <TouchableOpacity
-                  style={styles.cardButton}
-                  onPress={() => navigation.navigate("Insight", { scrollToBottom: true })}
-                >
-                  <Text style={styles.cardButtonText}>View Full Insights</Text>
-                  <Ionicons name="arrow-forward" size={16} color="#2FAE60" />
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.mascotTimestamp}>
-                {item.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-              </Text>
-            </View>
-          </View>
-        )
-
       case MESSAGE_TYPES.QUICK_ACTIONS:
         return (
           <View style={styles.quickActionsContainer}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("Show Sales")}>
+              <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("Show Sales Insights")}>
                 <View style={[styles.quickActionIcon, { backgroundColor: "#E8F5FF" }]}>
                   <Ionicons name="cash-outline" size={20} color="#2D9CDB" />
                 </View>
-                <Text style={styles.quickActionText}>Show Sales</Text>
+                <Text style={styles.quickActionText}>Show Sales Insights</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("View Insights")}>
+              {/* <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("View Insights")}>
                 <View style={[styles.quickActionIcon, { backgroundColor: "#F0FFF4" }]}>
                   <Ionicons name="bar-chart-outline" size={20} color="#2FAE60" />
                 </View>
                 <Text style={styles.quickActionText}>View Insights</Text>
-              </TouchableOpacity>
+              </TouchableOpacity> */}
 
               <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("Get Advice")}>
                 <View style={[styles.quickActionIcon, { backgroundColor: "#FFF8E8" }]}>
@@ -1400,19 +1464,18 @@ export default function MainChatScreen({ navigation }) {
                 <Text style={styles.quickActionText}>Check Inventory</Text>
               </TouchableOpacity>
 
+              <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("Manage Promotions")}>
+                <View style={[styles.quickActionIcon, { backgroundColor: "#F0FFF4" }]}>
+                  <Ionicons name="pricetag-outline" size={20} color="#2FAE60" />
+                </View>
+                <Text style={styles.quickActionText}>Promotions</Text>
+              </TouchableOpacity>
+
               <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("View Leaderboard")}>
                 <View style={[styles.quickActionIcon, { backgroundColor: "#FFF0F5" }]}>
                   <Ionicons name="trophy-outline" size={20} color="#E91E63" />
                 </View>
                 <Text style={styles.quickActionText}>View Leaderboard</Text>
-              </TouchableOpacity>
-
-              {/* Add new button for Promotions */}
-              <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("Manage Promotions")}>
-                <View style={[styles.quickActionIcon, { backgroundColor: "#FFF0E0" }]}>
-                  <Ionicons name="pricetag-outline" size={20} color="#FF9800" />
-                </View>
-                <Text style={styles.quickActionText}>Promotions</Text>
               </TouchableOpacity>
 
               {/* <TouchableOpacity style={styles.quickActionButton} onPress={checkInventory} disabled={isLoading}>
@@ -2113,6 +2176,11 @@ const styles = StyleSheet.create({
     marginBottom: 15, 
     borderRadius: 8,
     marginLeft:-16
-
+  },
+  separator: {
+    height: 1,
+    backgroundColor: "#f0f0f0",
+    marginVertical: 15,
+    width: "100%",
   },
 })
