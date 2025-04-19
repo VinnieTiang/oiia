@@ -159,12 +159,15 @@ export default function PromoBuilderScreen({ navigation }) {
   
     setIsGeneratingImage(true);
     try {
-      const result = await generateImage(generatedContent.imagePrompt);
-      if (result.success && result.image_data) {
-        setGeneratedImage(`data:image/png;base64,${result.image_data}`);
-      } else {
-        Alert.alert("Error", "Failed to generate image. Please try again.");
-      }
+      // const result = await generateImage(generatedContent.imagePrompt);
+      // if (result.success && result.image_data) {
+      //   setGeneratedImage(`data:image/png;base64,${result.image_data}`);
+      // } else {
+      //   Alert.alert("Error", "Failed to generate image. Please try again.");
+      // }
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      const imageUri = require('../assets/image-placeholder.png');
+      setGeneratedImage(Image.resolveAssetSource(imageUri).uri);
     } catch (error) {
       console.error("Error generating image:", error);
       Alert.alert("Error", "Failed to generate image. Please try again.");
