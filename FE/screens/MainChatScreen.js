@@ -1652,7 +1652,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     width: screenWidth * 0.7,
   },
-cardTitle: {
+  cardTitle: {
     fontSize: 16,
     fontWeight: "600",
     color: "#333",
