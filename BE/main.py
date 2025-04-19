@@ -10,6 +10,7 @@ from functools import lru_cache
 import asyncio
 from typing import List
 import base64
+from insights import get_category_distribution
 
 # Import our modules
 from rag import get_merchant_summary
@@ -76,6 +77,12 @@ def get_cached_bundle_suggestions(merchant_id: str):
 async def get_bundle_suggestions(merchant_id: str):
     """Get cached bundle promotion suggestions"""
     return get_cached_bundle_suggestions(merchant_id)
+
+@app.get("/merchant/{merchant_id}/category-distribution")
+async def merchant_category_distribution(merchant_id: str):
+    """Get the distribution of sales by category for a merchant"""
+    result = get_category_distribution(merchant_id)
+    return result
 
 def generate_bundle_suggestions(merchant_id: str):
     """Generate bundle promotion suggestions based on frequently bought together items"""

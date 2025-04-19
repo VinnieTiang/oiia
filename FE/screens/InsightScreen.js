@@ -1,119 +1,143 @@
-"use client"
+"use client";
 
-import {View,Text,StyleSheet,ScrollView,TouchableOpacity,useWindowDimensions,ActivityIndicator,} from "react-native"
-import { Ionicons } from "@expo/vector-icons"
-import { LineChart, BarChart, PieChart, ProgressChart } from "react-native-chart-kit"
-import { useRef, useEffect, useState } from "react"
-import { useRoute } from "@react-navigation/native"
-import { fetchForecast, fetchSalesData, fetchSalesTrend, fetchInsights, fetchTopSellingItems, fetchBestSeller } from "../api"
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  useWindowDimensions,
+  ActivityIndicator,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  LineChart,
+  BarChart,
+  PieChart,
+  ProgressChart,
+} from "react-native-chart-kit";
+import { useRef, useEffect, useState } from "react";
+import { useRoute } from "@react-navigation/native";
+import {
+  fetchForecast,
+  fetchSalesData,
+  fetchSalesTrend,
+  fetchInsights,
+  fetchTopSellingItems,
+  fetchBestSeller,
+  fetchCategoryDistribution,
+} from "../api";
 
 export default function InsightScreen() {
-  const [timePeriod, setTimePeriod] = useState("weekly")
-  const [forecastData, setForecastData] = useState(null)
-  const [isLoadingForecast, setIsLoadingForecast] = useState(false)
-  const [forecastError, setForecastError] = useState(null)
-  const { width: windowWidth } = useWindowDimensions()
-  const chartWidth = windowWidth - 32 - 32
-  const scrollViewRef = useRef(null)
-  const route = useRoute()
-  const [todaySales, setTodaySales] = useState(null)
-  const [todayLoading, setTodayLoading] = useState(true)
-  const [todayError, setTodayError] = useState(null)
-  const [weeklySales, setWeeklySales] = useState(null)
-  const [weeklyLoading, setWeeklyLoading] = useState(true)
-  const [weeklyError, setWeeklyError] = useState(null)
-  const [monthlySales, setMonthlySales] = useState(null)
-  const [monthlyLoading, setMonthlyLoading] = useState(true)
-  const [monthlyError, setMonthlyError] = useState(null)
-  const [salesTrend, setSalesTrend] = useState(null)
-  const [salesTrendLoading, setSalesTrendLoading] = useState(true)
-  const [salesTrendError, setSalesTrendError] = useState(null)
-  const [insights, setInsights] = useState(null)
-  const [insightsLoading, setInsightsLoading] = useState(true)
+  const [timePeriod, setTimePeriod] = useState("weekly");
+  const [forecastData, setForecastData] = useState(null);
+  const [isLoadingForecast, setIsLoadingForecast] = useState(false);
+  const [forecastError, setForecastError] = useState(null);
+  const { width: windowWidth } = useWindowDimensions();
+  const chartWidth = windowWidth - 32 - 32;
+  const scrollViewRef = useRef(null);
+  const route = useRoute();
+  const [todaySales, setTodaySales] = useState(null);
+  const [todayLoading, setTodayLoading] = useState(true);
+  const [todayError, setTodayError] = useState(null);
+  const [weeklySales, setWeeklySales] = useState(null);
+  const [weeklyLoading, setWeeklyLoading] = useState(true);
+  const [weeklyError, setWeeklyError] = useState(null);
+  const [monthlySales, setMonthlySales] = useState(null);
+  const [monthlyLoading, setMonthlyLoading] = useState(true);
+  const [monthlyError, setMonthlyError] = useState(null);
+  const [salesTrend, setSalesTrend] = useState(null);
+  const [salesTrendLoading, setSalesTrendLoading] = useState(true);
+  const [salesTrendError, setSalesTrendError] = useState(null);
+  const [insights, setInsights] = useState(null);
+  const [insightsLoading, setInsightsLoading] = useState(true);
   const [topItems, setTopItems] = useState(null);
   const [topItemsLoading, setTopItemsLoading] = useState(true);
   const [bestSeller, setBestSeller] = useState(null);
   const [bestSellerLoading, setBestSellerLoading] = useState(true);
+  const [categoryData, setCategoryData] = useState([]);
+  const [categoryDataLoading, setCategoryDataLoading] = useState(true);
 
   useEffect(() => {
     if (route.params?.scrollToBottom) {
       setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true })
-      }, 100) // Small delay to ensure content is rendered
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100); // Small delay to ensure content is rendered
     }
-  }, [route.params])
+  }, [route.params]);
 
   // Fetch forecast data when component mounts
   useEffect(() => {
     const loadForecastData = async () => {
       try {
-        setIsLoadingForecast(true)
-        setForecastError(null)
-        const data = await fetchForecast()
-        setForecastData(data)
+        setIsLoadingForecast(true);
+        setForecastError(null);
+        const data = await fetchForecast();
+        setForecastData(data);
       } catch (error) {
-        console.error("Error loading forecast data:", error)
-        setForecastError("Unable to load forecast data. Please try again later.")
+        console.error("Error loading forecast data:", error);
+        setForecastError(
+          "Unable to load forecast data. Please try again later."
+        );
       } finally {
-        setIsLoadingForecast(false)
+        setIsLoadingForecast(false);
       }
-    }
+    };
 
-    loadForecastData()
-  }, [])
+    loadForecastData();
+  }, []);
 
   useEffect(() => {
     const fetchAllSalesData = async () => {
       try {
         // Fetch today's data
-        setTodayLoading(true)
-        const todaySales = await fetchSalesData('today')
-        setTodaySales(todaySales)
-        setTodayLoading(false)
-        
+        setTodayLoading(true);
+        const todaySales = await fetchSalesData("today");
+        setTodaySales(todaySales);
+        setTodayLoading(false);
+
         // Fetch weekly data
-        setWeeklyLoading(true)
-        const weeklySales = await fetchSalesData('week');
-        setWeeklySales(weeklySales)
-        setWeeklyLoading(false)
-        
+        setWeeklyLoading(true);
+        const weeklySales = await fetchSalesData("week");
+        setWeeklySales(weeklySales);
+        setWeeklyLoading(false);
+
         // Fetch monthly data
-        setMonthlyLoading(true)
-        const monthlySales = await fetchSalesData('month');
-        setMonthlySales(monthlySales)
-        setMonthlyLoading(false)
+        setMonthlyLoading(true);
+        const monthlySales = await fetchSalesData("month");
+        setMonthlySales(monthlySales);
+        setMonthlyLoading(false);
       } catch (error) {
-        console.error("Error fetching sales data:", error)
-        setTodayError(error.message)
-        setWeeklyError(error.message)
-        setMonthlyError(error.message)
+        console.error("Error fetching sales data:", error);
+        setTodayError(error.message);
+        setWeeklyError(error.message);
+        setMonthlyError(error.message);
       } finally {
-        setTodayLoading(false)
-        setWeeklyLoading(false)
-        setMonthlyLoading(false)
+        setTodayLoading(false);
+        setWeeklyLoading(false);
+        setMonthlyLoading(false);
       }
-    }
-    fetchAllSalesData()
-  }, []) // Empty dependency array - run once on mount
+    };
+    fetchAllSalesData();
+  }, []); // Empty dependency array - run once on mount
 
   useEffect(() => {
     const fetchTrendData = async () => {
       try {
-        setSalesTrendLoading(true)
-        setSalesTrendError(null)
-        const data = await fetchSalesTrend(timePeriod)
-        setSalesTrend(data)
+        setSalesTrendLoading(true);
+        setSalesTrendError(null);
+        const data = await fetchSalesTrend(timePeriod);
+        setSalesTrend(data);
       } catch (error) {
-        console.error(`Error fetching ${timePeriod} trend data:`, error)
-        setSalesTrendError(error.message)
+        console.error(`Error fetching ${timePeriod} trend data:`, error);
+        setSalesTrendError(error.message);
       } finally {
-        setSalesTrendLoading(false)
+        setSalesTrendLoading(false);
       }
-    }
+    };
 
-    fetchTrendData()
-  }, [timePeriod])
-
+    fetchTrendData();
+  }, [timePeriod]);
 
   useEffect(() => {
     const fetchTopItems = async () => {
@@ -131,7 +155,7 @@ export default function InsightScreen() {
         setTopItemsLoading(false);
       }
     };
-  
+
     fetchTopItems();
   }, []);
 
@@ -147,10 +171,9 @@ export default function InsightScreen() {
         setBestSellerLoading(false);
       }
     };
-  
+
     loadBestSeller();
   }, []);
-  
 
   useEffect(() => {
     const loadInsights = async () => {
@@ -164,7 +187,7 @@ export default function InsightScreen() {
         setInsightsLoading(false);
       }
     };
-    
+
     loadInsights();
   }, [timePeriod]);
 
@@ -175,7 +198,9 @@ export default function InsightScreen() {
       datasets: [
         {
           data: [],
-          color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
+          color: function (opacity = 1) {
+            return `rgba(47, 174, 96, ${opacity})`;
+          },
           strokeWidth: 2,
         },
       ],
@@ -185,7 +210,9 @@ export default function InsightScreen() {
       datasets: [
         {
           data: [],
-          color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
+          color: function (opacity = 1) {
+            return `rgba(47, 174, 96, ${opacity})`;
+          },
           strokeWidth: 2,
         },
       ],
@@ -195,37 +222,36 @@ export default function InsightScreen() {
       datasets: [
         {
           data: [],
-          color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
+          color: function (opacity = 1) {
+            return `rgba(47, 174, 96, ${opacity})`;
+          },
           strokeWidth: 2,
         },
       ],
     },
-  }
+  };
 
+  useEffect(() => {
+    const fetchCategoryData = async () => {
+      try {
+        setCategoryDataLoading(true);
+        const result = await fetchCategoryDistribution();
+        if (
+          result.status === "success" &&
+          result.data &&
+          result.data.length > 0
+        ) {
+          setCategoryData(result.data);
+        }
+      } catch (error) {
+        console.error("Error fetching category distribution:", error);
+      } finally {
+        setCategoryDataLoading(false);
+      }
+    };
 
-  const categoryData = [
-    {
-      name: "Main Course",
-      population: 65,
-      color: "#2FAE60",
-      legendFontColor: "#7F7F7F",
-      legendFontSize: 12,
-    },
-    {
-      name: "Beverages",
-      population: 20,
-      color: "#FFA726",
-      legendFontColor: "#7F7F7F",
-      legendFontSize: 12,
-    },
-    {
-      name: "Desserts",
-      population: 15,
-      color: "#42A5F5",
-      legendFontColor: "#7F7F7F",
-      legendFontSize: 12,
-    },
-  ]
+    fetchCategoryData();
+  }, []);
 
   const summaryData = {
     daily: {
@@ -252,7 +278,7 @@ export default function InsightScreen() {
       avgOrderValue: monthlySales?.avg_order_value_formatted || "RM0.00",
       peakWeek: salesTrend?.peak_week || "...",
     },
-  }
+  };
 
   const chartConfig = {
     backgroundGradientFrom: "#fff",
@@ -269,7 +295,7 @@ export default function InsightScreen() {
       strokeWidth: "2",
       stroke: "#2FAE60",
     },
-  }
+  };
 
   const pieChartConfig = {
     backgroundGradientFrom: "#fff",
@@ -280,18 +306,18 @@ export default function InsightScreen() {
     propsForLabels: {
       fontSize: 10,
     },
-  }
+  };
 
   // Format forecast data for chart
   const prepareForecastChart = () => {
-    if (!forecastData || !forecastData.forecast) return null
+    if (!forecastData || !forecastData.forecast) return null;
 
     const labels = forecastData.forecast.map((item) => {
-      const date = new Date(item.ds)
-      return date.toLocaleDateString("en-US", { weekday: "short" })
-    })
+      const date = new Date(item.ds);
+      return date.toLocaleDateString("en-US", { weekday: "short" });
+    });
 
-    const data = forecastData.forecast.map((item) => Math.round(item.yhat))
+    const data = forecastData.forecast.map((item) => Math.round(item.yhat));
 
     return {
       labels,
@@ -302,42 +328,43 @@ export default function InsightScreen() {
           strokeWidth: 2,
         },
       ],
-    }
-  }
+    };
+  };
 
-  const forecastChartData = prepareForecastChart()
+  const forecastChartData = prepareForecastChart();
 
   // Ensure your chart data has valid defaults
   const chartData = {
     labels: salesData[timePeriod]?.labels || [],
     datasets: [
       {
-        data: (salesData[timePeriod]?.datasets?.[0]?.data || [])
-          .filter(value => isFinite(value)), // Filter out Infinity values
+        data: (salesData[timePeriod]?.datasets?.[0]?.data || []).filter(
+          (value) => isFinite(value)
+        ), // Filter out Infinity values
         color: (opacity = 1) => `rgba(47, 174, 96, ${opacity})`,
         strokeWidth: 2,
-      }
-    ]
+      },
+    ],
   };
 
   ///////////// Define a reusable SummaryCard (Second Row) ////////////
-  const SummaryCard = ({ 
-    title, 
-    value, 
-    isLoading, 
-    trendPercentage, 
-    trendValue, 
-    customStyles = {} 
+  const SummaryCard = ({
+    title,
+    value,
+    isLoading,
+    trendPercentage,
+    trendValue,
+    customStyles = {},
   }) => {
     // Changed: Consider 0% as positive (or neutral) for UI purposes
     // This ensures 0% always shows trending up icon
     const isTrendPositive = trendValue >= 0;
     const trendIconName = isTrendPositive ? "trending-up" : "trending-down";
     const trendColor = isTrendPositive ? "#2FAE60" : "#FF3D00";
-    
+
     // Determine the comparison text based on time period using proper nouns
     let comparisonText;
-    switch(timePeriod) {
+    switch (timePeriod) {
       case "daily":
         comparisonText = "yesterday";
         break;
@@ -350,7 +377,7 @@ export default function InsightScreen() {
       default:
         comparisonText = `last ${timePeriod}`;
     }
-    
+
     return (
       <View style={styles.summaryCard}>
         <Text style={styles.cardTitle}>{title}</Text>
@@ -358,7 +385,11 @@ export default function InsightScreen() {
           <ActivityIndicator size="small" color="#2FAE60" />
         ) : (
           <>
-            <Text style={[styles.summaryValue, customStyles]} numberOfLines={1} adjustsFontSizeToFit>
+            <Text
+              style={[styles.summaryValue, customStyles]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
               {value}
             </Text>
             <View style={styles.trendContainer}>
@@ -378,7 +409,10 @@ export default function InsightScreen() {
       {/* Time period selector */}
       <View style={styles.periodSelector}>
         <TouchableOpacity
-          style={[styles.periodButton, timePeriod === "daily" && styles.activePeriodButton]}
+          style={[
+            styles.periodButton,
+            timePeriod === "daily" && styles.activePeriodButton,
+          ]}
           onPress={() => setTimePeriod("daily")}
         >
           <Ionicons
@@ -387,10 +421,20 @@ export default function InsightScreen() {
             color={timePeriod === "daily" ? "#2FAE60" : "#666"}
             style={{ marginRight: 4 }}
           />
-          <Text style={[styles.periodText, timePeriod === "daily" && styles.activePeriodText]}>Daily</Text>
+          <Text
+            style={[
+              styles.periodText,
+              timePeriod === "daily" && styles.activePeriodText,
+            ]}
+          >
+            Daily
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.periodButton, timePeriod === "weekly" && styles.activePeriodButton]}
+          style={[
+            styles.periodButton,
+            timePeriod === "weekly" && styles.activePeriodButton,
+          ]}
           onPress={() => setTimePeriod("weekly")}
         >
           <Ionicons
@@ -399,10 +443,20 @@ export default function InsightScreen() {
             color={timePeriod === "weekly" ? "#2FAE60" : "#666"}
             style={{ marginRight: 4 }}
           />
-          <Text style={[styles.periodText, timePeriod === "weekly" && styles.activePeriodText]}>Weekly</Text>
+          <Text
+            style={[
+              styles.periodText,
+              timePeriod === "weekly" && styles.activePeriodText,
+            ]}
+          >
+            Weekly
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.periodButton, timePeriod === "monthly" && styles.activePeriodButton]}
+          style={[
+            styles.periodButton,
+            timePeriod === "monthly" && styles.activePeriodButton,
+          ]}
           onPress={() => setTimePeriod("monthly")}
         >
           <Ionicons
@@ -411,7 +465,14 @@ export default function InsightScreen() {
             color={timePeriod === "monthly" ? "#2FAE60" : "#666"}
             style={{ marginRight: 4 }}
           />
-          <Text style={[styles.periodText, timePeriod === "monthly" && styles.activePeriodText]}>Monthly</Text>
+          <Text
+            style={[
+              styles.periodText,
+              timePeriod === "monthly" && styles.activePeriodText,
+            ]}
+          >
+            Monthly
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -421,22 +482,24 @@ export default function InsightScreen() {
         <SummaryCard
           title="Total Sales"
           value={summaryData[timePeriod].totalSales}
-          isLoading={(timePeriod === "daily" && todayLoading) ||
-                    (timePeriod === "weekly" && weeklyLoading) ||
-                    (timePeriod === "monthly" && monthlyLoading)}
+          isLoading={
+            (timePeriod === "daily" && todayLoading) ||
+            (timePeriod === "weekly" && weeklyLoading) ||
+            (timePeriod === "monthly" && monthlyLoading)
+          }
           trendValue={
             timePeriod === "daily"
               ? todaySales?.vs_last_period
               : timePeriod === "weekly"
-                ? weeklySales?.vs_last_period
-                : monthlySales?.vs_last_period
+              ? weeklySales?.vs_last_period
+              : monthlySales?.vs_last_period
           }
           trendPercentage={
-            timePeriod === "daily" 
-              ? todaySales?.vs_last_period_formatted || "+0%" 
-              : timePeriod === "weekly" 
-                ? weeklySales?.vs_last_period_formatted || "+0%"
-                : monthlySales?.vs_last_period_formatted || "+0%"
+            timePeriod === "daily"
+              ? todaySales?.vs_last_period_formatted || "+0%"
+              : timePeriod === "weekly"
+              ? weeklySales?.vs_last_period_formatted || "+0%"
+              : monthlySales?.vs_last_period_formatted || "+0%"
           }
           customStyles={{ fontSize: 18 }}
         />
@@ -445,22 +508,24 @@ export default function InsightScreen() {
         <SummaryCard
           title="Total Orders"
           value={summaryData[timePeriod].totalOrders}
-          isLoading={(timePeriod === "daily" && todayLoading) ||
-                    (timePeriod === "weekly" && weeklyLoading) ||
-                    (timePeriod === "monthly" && monthlyLoading)}
+          isLoading={
+            (timePeriod === "daily" && todayLoading) ||
+            (timePeriod === "weekly" && weeklyLoading) ||
+            (timePeriod === "monthly" && monthlyLoading)
+          }
           trendValue={
             timePeriod === "daily"
               ? todaySales?.orders_vs_last_period
               : timePeriod === "weekly"
-                ? weeklySales?.orders_vs_last_period
-                : monthlySales?.orders_vs_last_period
+              ? weeklySales?.orders_vs_last_period
+              : monthlySales?.orders_vs_last_period
           }
           trendPercentage={
-            timePeriod === "daily" 
-              ? todaySales?.orders_vs_last_period_formatted || "+0%" 
-              : timePeriod === "weekly" 
-                ? weeklySales?.orders_vs_last_period_formatted || "+0%"
-                : monthlySales?.orders_vs_last_period_formatted || "+0%"
+            timePeriod === "daily"
+              ? todaySales?.orders_vs_last_period_formatted || "+0%"
+              : timePeriod === "weekly"
+              ? weeklySales?.orders_vs_last_period_formatted || "+0%"
+              : monthlySales?.orders_vs_last_period_formatted || "+0%"
           }
         />
 
@@ -471,32 +536,39 @@ export default function InsightScreen() {
             timePeriod === "daily"
               ? todaySales?.avg_order_value_formatted || "RM0.00"
               : timePeriod === "weekly"
-                ? weeklySales?.avg_order_value_formatted || "RM0.00"
-                : monthlySales?.avg_order_value_formatted || "RM0.00"
+              ? weeklySales?.avg_order_value_formatted || "RM0.00"
+              : monthlySales?.avg_order_value_formatted || "RM0.00"
           }
           isLoading={false} // This card doesn't show a loader
           trendValue={
             timePeriod === "daily"
               ? todaySales?.avg_order_vs_last_period
               : timePeriod === "weekly"
-                ? weeklySales?.avg_order_vs_last_period
-                : monthlySales?.avg_order_vs_last_period
+              ? weeklySales?.avg_order_vs_last_period
+              : monthlySales?.avg_order_vs_last_period
           }
           trendPercentage={
             timePeriod === "daily"
               ? todaySales?.avg_order_vs_last_period_formatted || "+0%"
               : timePeriod === "weekly"
-                ? weeklySales?.avg_order_vs_last_period_formatted || "+0%"
-                : monthlySales?.avg_order_vs_last_period_formatted || "+0%"
+              ? weeklySales?.avg_order_vs_last_period_formatted || "+0%"
+              : monthlySales?.avg_order_vs_last_period_formatted || "+0%"
           }
           customStyles={{
-            label: { 
-              color: timePeriod === "daily"
-                ? todaySales?.avg_order_vs_last_period >= 0 ? "#2FAE60" : "#FF3D00" 
-                : timePeriod === "weekly"
-                  ? weeklySales?.avg_order_vs_last_period >= 0 ? "#2FAE60" : "#FF3D00"
-                  : monthlySales?.avg_order_vs_last_period >= 0 ? "#2FAE60" : "#FF3D00"
-            }
+            label: {
+              color:
+                timePeriod === "daily"
+                  ? todaySales?.avg_order_vs_last_period >= 0
+                    ? "#2FAE60"
+                    : "#FF3D00"
+                  : timePeriod === "weekly"
+                  ? weeklySales?.avg_order_vs_last_period >= 0
+                    ? "#2FAE60"
+                    : "#FF3D00"
+                  : monthlySales?.avg_order_vs_last_period >= 0
+                  ? "#2FAE60"
+                  : "#FF3D00",
+            },
           }}
         />
       </View>
@@ -507,19 +579,31 @@ export default function InsightScreen() {
           <Text style={styles.chartTitle}>Sales Trend</Text>
           <View style={styles.chartLegend}>
             <View style={styles.legendItem}>
-              <View style={[styles.legendColor, { backgroundColor: "#2FAE60" }]} />
+              <View
+                style={[styles.legendColor, { backgroundColor: "#2FAE60" }]}
+              />
               <Text style={styles.legendText}>
-                {timePeriod === "daily" ? "Today" : 
-                timePeriod === "weekly" ? "This week" : 
-                "This month"}
+                {timePeriod === "daily"
+                  ? "Today"
+                  : timePeriod === "weekly"
+                  ? "This week"
+                  : "This month"}
               </Text>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendColor, {marginLeft: 6}, { backgroundColor: "#E0E0E0" }]} />
-              <Text style={[styles.legendText, ]}>
-                {timePeriod === "daily" ? "Yesterday" : 
-                timePeriod === "weekly" ? "Last week" : 
-                "Last month"}
+              <View
+                style={[
+                  styles.legendColor,
+                  { marginLeft: 6 },
+                  { backgroundColor: "#E0E0E0" },
+                ]}
+              />
+              <Text style={[styles.legendText]}>
+                {timePeriod === "daily"
+                  ? "Yesterday"
+                  : timePeriod === "weekly"
+                  ? "Last week"
+                  : "Last month"}
               </Text>
             </View>
           </View>
@@ -529,19 +613,28 @@ export default function InsightScreen() {
             labels: chartData.labels,
             datasets: [
               {
-                data: chartData.datasets[0].data.length > 0 ? 
-                      chartData.datasets[0].data : 
-                      [0], // Provide fallback data if empty
-                color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
+                data:
+                  chartData.datasets[0].data.length > 0
+                    ? chartData.datasets[0].data
+                    : [0], // Provide fallback data if empty
+                color: function (opacity = 1) {
+                  return `rgba(47, 174, 96, ${opacity})`;
+                },
                 strokeWidth: 2,
               },
               {
-                data: salesTrend && Array.isArray(salesTrend.comparison_data) ? 
-                      salesTrend.comparison_data.filter(value => 
-                        typeof value === 'number' && isFinite(value) && !isNaN(value)
-                      ) : 
-                      [0], // More robust filtering and fallback
-                color: function(opacity = 1) { return `rgba(224, 224, 224, ${opacity})`; },
+                data:
+                  salesTrend && Array.isArray(salesTrend.comparison_data)
+                    ? salesTrend.comparison_data.filter(
+                        (value) =>
+                          typeof value === "number" &&
+                          isFinite(value) &&
+                          !isNaN(value)
+                      )
+                    : [0], // More robust filtering and fallback
+                color: function (opacity = 1) {
+                  return `rgba(224, 224, 224, ${opacity})`;
+                },
                 strokeWidth: 2,
               },
             ],
@@ -552,7 +645,9 @@ export default function InsightScreen() {
             backgroundGradientFrom: "#fff",
             backgroundGradientTo: "#fff",
             decimalPlaces: 0,
-            color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
+            color: function (opacity = 1) {
+              return `rgba(47, 174, 96, ${opacity})`;
+            },
             labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
             propsForDots: {
               r: "5",
@@ -564,23 +659,44 @@ export default function InsightScreen() {
           style={styles.chart}
         />
         <View style={styles.insightBadge}>
-          <Ionicons 
-            name={salesTrend?.peak_week_increase?.includes('-') ? "trending-down" : "trending-up"} 
-            size={16} 
-            color={salesTrend?.peak_week_increase?.includes('-') ? "#FF3D00" : "#2FAE60"} 
+          <Ionicons
+            name={
+              salesTrend?.peak_week_increase?.includes("-")
+                ? "trending-down"
+                : "trending-up"
+            }
+            size={16}
+            color={
+              salesTrend?.peak_week_increase?.includes("-")
+                ? "#FF3D00"
+                : "#2FAE60"
+            }
           />
-          <Text style={[
-            styles.insightText, 
-            {color: salesTrend?.peak_week_increase?.includes('-') ? "#FF3D00" : "#2FAE60"}
-          ]}>
+          <Text
+            style={[
+              styles.insightText,
+              {
+                color: salesTrend?.peak_week_increase?.includes("-")
+                  ? "#FF3D00"
+                  : "#2FAE60",
+              },
+            ]}
+          >
             {timePeriod === "daily"
               ? `Peak at ${salesTrend?.peak_hour || summaryData.daily.peakHour}`
               : timePeriod === "weekly"
-                ? `Sales are ${salesTrend?.peak_day_increase || ""} ${salesTrend?.peak_day_increase?.includes('-') ? 'lower' : 'higher'} on ${salesTrend?.peak_day || summaryData.weekly.peakDay}`
-                : salesTrend?.peak_week_increase?.includes('-')
-                  ? `${salesTrend?.peak_week_increase || ""} in ${salesTrend?.peak_week || summaryData.monthly.peakWeek}`
-                  : `Best performance (+${salesTrend?.peak_week_increase || ""}) in ${salesTrend?.peak_week || summaryData.monthly.peakWeek}`
-            }
+              ? `Sales are ${salesTrend?.peak_day_increase || ""} ${
+                  salesTrend?.peak_day_increase?.includes("-")
+                    ? "lower"
+                    : "higher"
+                } on ${salesTrend?.peak_day || summaryData.weekly.peakDay}`
+              : salesTrend?.peak_week_increase?.includes("-")
+              ? `${salesTrend?.peak_week_increase || ""} in ${
+                  salesTrend?.peak_week || summaryData.monthly.peakWeek
+                }`
+              : `Best performance (+${
+                  salesTrend?.peak_week_increase || ""
+                }) in ${salesTrend?.peak_week || summaryData.monthly.peakWeek}`}
           </Text>
         </View>
       </View>
@@ -588,7 +704,7 @@ export default function InsightScreen() {
       {/* Top Selling Items Chart */}
       <View style={styles.chartCard}>
         <Text style={styles.chartTitle}>Top Selling Items (Last 30 Days)</Text>
-        
+
         {topItemsLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#2FAE60" />
@@ -597,19 +713,23 @@ export default function InsightScreen() {
         ) : (
           <>
             <BarChart
-              data={topItems?.chart_data || {
-                labels: [],
-                datasets: [{ data: [] }]
-              }}
+              data={
+                topItems?.chart_data || {
+                  labels: [],
+                  datasets: [{ data: [] }],
+                }
+              }
               width={chartWidth}
               height={220}
               chartConfig={{
                 ...chartConfig,
-                barPercentage: 1.3, 
+                barPercentage: 1.3,
                 categoryPercentage: 1.6, // Added this property
                 barRadius: 5, // Optional: adds rounded corners to bars
-                color: function(opacity = 1) { return `rgba(47, 174, 96, ${opacity})`; },
-                fillShadowGradient: '#2FAE60', // gradient fill
+                color: function (opacity = 1) {
+                  return `rgba(47, 174, 96, ${opacity})`;
+                },
+                fillShadowGradient: "#2FAE60", // gradient fill
                 fillShadowGradientOpacity: 1,
                 propsForBackgroundLines: {
                   strokeWidth: 1,
@@ -629,28 +749,28 @@ export default function InsightScreen() {
             <View style={styles.insightBadge}>
               <Ionicons name="star" size={16} color="#2FAE60" />
               <Text style={styles.insightText}>
-                {bestSellerLoading ? (
-                  "Loading best seller..."
-                ) : bestSeller && bestSeller.name ? (
-                  `${bestSeller.name} is your best seller (${bestSeller.percentage}%)`
-                ) : topItems && topItems.best_seller ? (
-                  `${topItems.best_seller} is your best seller (${topItems.best_seller_percent}%)`
-                ) : (
-                  "No top seller data available"
-                )}
+                {bestSellerLoading
+                  ? "Loading best seller..."
+                  : bestSeller && bestSeller.name
+                  ? `${bestSeller.name} is your best seller (${bestSeller.percentage}%)`
+                  : topItems && topItems.best_seller
+                  ? `${topItems.best_seller} is your best seller (${topItems.best_seller_percent}%)`
+                  : "No top seller data available"}
               </Text>
             </View>
           </>
         )}
       </View>
 
-       {/* Sales Forecast Section */}
-       <View style={styles.chartCard}>
+      {/* Sales Forecast Section */}
+      <View style={styles.chartCard}>
         <View style={styles.chartHeader}>
           <Text style={styles.chartTitle}>Sales Forecast (Next 7 Days)</Text>
           <View style={styles.forecastBadge}>
             <Ionicons name="analytics" size={14} color="#4285F4" />
-            <Text style={[styles.insightText, { color: "#4285F4" }]}>AI Powered</Text>
+            <Text style={[styles.insightText, { color: "#4285F4" }]}>
+              AI Powered
+            </Text>
           </View>
         </View>
 
@@ -676,7 +796,7 @@ export default function InsightScreen() {
                 color: (opacity = 1) => `rgba(66, 133, 244, ${opacity})`,
                 propsForDots: {
                   r: "5",
-                  yAxisMin:"0",
+                  yAxisMin: "0",
                   strokeWidth: "2",
                   stroke: "#4285F4",
                 },
@@ -688,39 +808,77 @@ export default function InsightScreen() {
               {forecastData && forecastData.summary && (
                 <>
                   <View style={styles.forecastCardRow}>
-                    <View style={[styles.forecastMetricCard, styles.avgSalesCard]}>
+                    <View
+                      style={[styles.forecastMetricCard, styles.avgSalesCard]}
+                    >
                       <View style={styles.forecastMetricIconContainer}>
-                        <Ionicons name="calculator-outline" size={20} color="#4285F4" />
+                        <Ionicons
+                          name="calculator-outline"
+                          size={20}
+                          color="#4285F4"
+                        />
                       </View>
-                      <Text style={styles.forecastMetricLabel}>Average Daily</Text>
+                      <Text style={styles.forecastMetricLabel}>
+                        Average Daily
+                      </Text>
                       <Text style={styles.forecastMetricValue}>
-                        {forecastData.summary.match(/Average predicted daily sales: (RM[\d,.]+)/)?.[1] || "N/A"}
+                        {forecastData.summary.match(
+                          /Average predicted daily sales: (RM[\d,.]+)/
+                        )?.[1] || "N/A"}
                       </Text>
                     </View>
 
-                    <View style={[styles.forecastMetricCard, styles.highSalesCard]}>
+                    <View
+                      style={[styles.forecastMetricCard, styles.highSalesCard]}
+                    >
                       <View style={styles.forecastMetricIconContainer}>
-                        <Ionicons name="trending-up" size={20} color="#2FAE60" />
+                        <Ionicons
+                          name="trending-up"
+                          size={20}
+                          color="#2FAE60"
+                        />
                       </View>
-                      <Text style={styles.forecastMetricLabel}>Highest Sales</Text>
+                      <Text style={styles.forecastMetricLabel}>
+                        Highest Sales
+                      </Text>
                       <Text style={styles.forecastMetricValue}>
-                        {forecastData.summary.match(/Highest predicted sales: (RM[\d,.]+)/)?.[1] || "N/A"}
+                        {forecastData.summary.match(
+                          /Highest predicted sales: (RM[\d,.]+)/
+                        )?.[1] || "N/A"}
                       </Text>
                       <Text style={styles.forecastMetricDate}>
-                        {forecastData.summary.match(/Highest predicted sales: RM[\d,.]+ on ([^\n]+)/)?.[1]}
+                        {
+                          forecastData.summary.match(
+                            /Highest predicted sales: RM[\d,.]+ on ([^\n]+)/
+                          )?.[1]
+                        }
                       </Text>
                     </View>
 
-                    <View style={[styles.forecastMetricCard, styles.lowSalesCard]}>
+                    <View
+                      style={[styles.forecastMetricCard, styles.lowSalesCard]}
+                    >
                       <View style={styles.forecastMetricIconContainer}>
-                        <Ionicons name="trending-down" size={20} color="#FF3D00" />
+                        <Ionicons
+                          name="trending-down"
+                          size={20}
+                          color="#FF3D00"
+                        />
                       </View>
-                      <Text style={styles.forecastMetricLabel}>Lowest Sales</Text>
+                      <Text style={styles.forecastMetricLabel}>
+                        Lowest Sales
+                      </Text>
                       <Text style={styles.forecastMetricValue}>
-                        {forecastData.summary.match(/Lowest predicted sales: (RM[\d,.]+)/)?.[1] || "N/A"}
+                        {forecastData.summary.match(
+                          /Lowest predicted sales: (RM[\d,.]+)/
+                        )?.[1] || "N/A"}
                       </Text>
                       <Text style={styles.forecastMetricDate}>
-                        {forecastData.summary.match(/Lowest predicted sales: RM[\d,.]+ on ([^\n]+)/)?.[1]}
+                        {
+                          forecastData.summary.match(
+                            /Lowest predicted sales: RM[\d,.]+ on ([^\n]+)/
+                          )?.[1]
+                        }
                       </Text>
                     </View>
                   </View>
@@ -778,11 +936,15 @@ export default function InsightScreen() {
           {/* Custom legend */}
           <View style={styles.customLegend}>
             <View style={styles.legendItem}>
-              <View style={[styles.legendColor, { backgroundColor: "#2FAE60" }]} />
+              <View
+                style={[styles.legendColor, { backgroundColor: "#2FAE60" }]}
+              />
               <Text style={styles.legendText}>Repeat (70%)</Text>
             </View>
             <View style={styles.legendItem}>
-              <View style={[styles.legendColor, { backgroundColor: "#FFA726" }]} />
+              <View
+                style={[styles.legendColor, { backgroundColor: "#FFA726" }]}
+              />
               <Text style={styles.legendText}>New (30%)</Text>
             </View>
           </View>
@@ -792,37 +954,53 @@ export default function InsightScreen() {
           </View>
         </View>
 
-
         {/* Category Distribution Pie Chart */}
         <View style={[styles.chartCard, { flex: 1, marginLeft: 8 }]}>
           <Text style={styles.chartTitle}>Category Sales</Text>
           <View style={styles.pieChartContainer}>
-            <PieChart
-              data={categoryData}
-              width={chartWidth / 2 - 40} // Reduced width
-              height={130}
-              chartConfig={pieChartConfig}
-              accessor="population"
-              backgroundColor="transparent"
-              paddingLeft="25" // Remove padding to maximize space
-              absolute
-              hasLegend={false}
-            />
-          </View>
-          {/* Custom legend */}
-          <View style={styles.customLegend}>
-            {categoryData.map((item, index) => (
-              <View key={index} style={styles.legendItem}>
-                <View style={[styles.legendColor, { backgroundColor: item.color }]} />
-                <Text style={styles.legendText}>
-                  {item.name} ({item.population}%)
-                </Text>
+            {categoryDataLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="#2FAE60" />
+                <Text style={styles.loadingText}>Loading category data...</Text>
               </View>
-            ))}
-          </View>
-          <View style={styles.insightBadge}>
-            <Ionicons name="pricetags" size={16} color="#2FAE60" />
-            <Text style={styles.insightText}>65% from Main Course</Text>
+            ) : (
+              <>
+                <PieChart
+                  data={categoryData}
+                  width={chartWidth / 2 - 40}
+                  height={130}
+                  chartConfig={pieChartConfig}
+                  accessor="population"
+                  backgroundColor="transparent"
+                  paddingLeft="25"
+                  absolute
+                  hasLegend={false}
+                />
+                <View style={styles.customLegend}>
+                  {categoryData.map((item, index) => (
+                    <View key={index} style={styles.legendItem}>
+                      <View
+                        style={[
+                          styles.legendColor,
+                          { backgroundColor: item.color },
+                        ]}
+                      />
+                      <Text style={styles.legendText}>
+                        {item.name} ({item.population}%)
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+                <View style={styles.insightBadge}>
+                  <Ionicons name="pricetags" size={16} color="#2FAE60" />
+                  <Text style={styles.insightText}>
+                    {categoryData.length > 0
+                      ? `${categoryData[0].population}% from ${categoryData[0].name}`
+                      : "Category breakdown"}
+                  </Text>
+                </View>
+              </>
+            )}
           </View>
         </View>
       </View>
@@ -836,44 +1014,64 @@ export default function InsightScreen() {
         ) : (
           <>
             <View style={styles.insightCard}>
-              <View style={[styles.insightIconContainer, { backgroundColor: "#E3F2FD" }]}>
+              <View
+                style={[
+                  styles.insightIconContainer,
+                  { backgroundColor: "#E3F2FD" },
+                ]}
+              >
                 <Ionicons name="time" size={20} color="#1976D2" />
               </View>
               <View style={styles.insightContent}>
-                <Text style={styles.insightTitle}>{insights?.best_selling_time?.title || "Best Selling Time"}</Text>
+                <Text style={styles.insightTitle}>
+                  {insights?.best_selling_time?.title || "Best Selling Time"}
+                </Text>
                 <Text style={styles.insightDescription}>
-                  {insights?.best_selling_time?.description || 
+                  {insights?.best_selling_time?.description ||
                     (timePeriod === "daily"
                       ? "Lunch hours (12PM-2PM) account for 35% of daily sales"
                       : timePeriod === "weekly"
-                        ? "Weekends generate 40% more revenue than weekdays"
-                        : "The last week of the month sees a 20% sales increase")
-                  }
+                      ? "Weekends generate 40% more revenue than weekdays"
+                      : "The last week of the month sees a 20% sales increase")}
                 </Text>
               </View>
             </View>
 
             <View style={styles.insightCard}>
-              <View style={[styles.insightIconContainer, { backgroundColor: "#E8F5E9" }]}>
+              <View
+                style={[
+                  styles.insightIconContainer,
+                  { backgroundColor: "#E8F5E9" },
+                ]}
+              >
                 <Ionicons name="restaurant" size={20} color="#2FAE60" />
               </View>
               <View style={styles.insightContent}>
-                <Text style={styles.insightTitle}>{insights?.menu_performance?.title || "Menu Performance"}</Text>
+                <Text style={styles.insightTitle}>
+                  {insights?.menu_performance?.title || "Menu Performance"}
+                </Text>
                 <Text style={styles.insightDescription}>
-                  {insights?.menu_performance?.description || 
+                  {insights?.menu_performance?.description ||
                     "Nasi Lemak with Ayam Goreng combo accounts for 45% of main course orders. Consider promoting it as a bundle deal."}
                 </Text>
               </View>
             </View>
 
             <View style={styles.insightCard}>
-              <View style={[styles.insightIconContainer, { backgroundColor: "#FFF8E1" }]}>
+              <View
+                style={[
+                  styles.insightIconContainer,
+                  { backgroundColor: "#FFF8E1" },
+                ]}
+              >
                 <Ionicons name="alert-circle" size={20} color="#FFA000" />
               </View>
               <View style={styles.insightContent}>
-                <Text style={styles.insightTitle}>{insights?.opportunity?.title || "Opportunity"}</Text>
+                <Text style={styles.insightTitle}>
+                  {insights?.opportunity?.title || "Opportunity"}
+                </Text>
                 <Text style={styles.insightDescription}>
-                  {insights?.opportunity?.description || 
+                  {insights?.opportunity?.description ||
                     "Beverage sales are lower than industry average. Consider introducing new drinks or combo meals to boost this category."}
                 </Text>
               </View>
@@ -882,7 +1080,7 @@ export default function InsightScreen() {
         )}
       </View>
     </ScrollView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -1179,7 +1377,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
     marginBottom: 4,
-    height:30,
+    height: 30,
     textAlign: "center",
   },
   forecastMetricValue: {
@@ -1193,4 +1391,4 @@ const styles = StyleSheet.create({
     color: "#888",
     textAlign: "center",
   },
-})
+});
