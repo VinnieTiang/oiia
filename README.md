@@ -23,7 +23,7 @@
 👉 [Grablet GitBook](https://oiia-oiia.gitbook.io/grablet)
 
 📽️ **Presentation Slide:**  
-👉 [Google Drive Link]
+👉 [Google Drive Link](https://drive.google.com/drive/folders/1P293hC8aNkBvJSaa9cK2QPs3M_6CRXfF?usp=sharing)
 
 ---
 
