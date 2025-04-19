@@ -57,6 +57,7 @@ export default function InsightScreen() {
   const [bestSellerLoading, setBestSellerLoading] = useState(true);
   const [categoryData, setCategoryData] = useState([]);
   const [categoryDataLoading, setCategoryDataLoading] = useState(true);
+  const [customerTypeLoading, setCustomerTypeLoading] = useState(true);
 
   useEffect(() => {
     if (route.params?.scrollToBottom) {
@@ -85,6 +86,14 @@ export default function InsightScreen() {
     };
 
     loadForecastData();
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCustomerTypeLoading(false);
+    }, 4000);
+
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -906,51 +915,65 @@ export default function InsightScreen() {
         <View style={[styles.chartCard, { flex: 1, marginRight: 8 }]}>
           <Text style={styles.chartTitle}>Customer Type</Text>
           <View style={styles.pieChartContainer}>
-            <PieChart
-              data={[
-                {
-                  name: "Repeat",
-                  population: 70,
-                  color: "#2FAE60",
-                  legendFontColor: "#7F7F7F",
-                  legendFontSize: 12,
-                },
-                {
-                  name: "New",
-                  population: 30,
-                  color: "#FFA726",
-                  legendFontColor: "#7F7F7F",
-                  legendFontSize: 12,
-                },
-              ]}
-              width={chartWidth / 2 - 40} // Reduced width
-              height={130} // Reduced height (should match width for circle)
-              chartConfig={pieChartConfig}
-              accessor="population"
-              backgroundColor="transparent"
-              paddingLeft="25" // Remove padding to maximize space
-              absolute
-              hasLegend={false}
-            />
-          </View>
-          {/* Custom legend */}
-          <View style={styles.customLegend}>
-            <View style={styles.legendItem}>
-              <View
-                style={[styles.legendColor, { backgroundColor: "#2FAE60" }]}
-              />
-              <Text style={styles.legendText}>Repeat (70%)</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View
-                style={[styles.legendColor, { backgroundColor: "#FFA726" }]}
-              />
-              <Text style={styles.legendText}>New (30%)</Text>
-            </View>
-          </View>
-          <View style={styles.insightBadge}>
-            <Ionicons name="people" size={16} color="#2FAE60" />
-            <Text style={styles.insightText}>70% repeat customers</Text>
+            {customerTypeLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="small" color="#2FAE60" />
+                <Text style={styles.loadingText}>Loading customer data...</Text>
+              </View>
+            ) : (
+              <>
+                <PieChart
+                  data={[
+                    {
+                      name: "Repeat",
+                      population: 70,
+                      color: "#2FAE60",
+                      legendFontColor: "#7F7F7F",
+                      legendFontSize: 12,
+                    },
+                    {
+                      name: "New",
+                      population: 30,
+                      color: "#FFA726",
+                      legendFontColor: "#7F7F7F",
+                      legendFontSize: 12,
+                    },
+                  ]}
+                  width={chartWidth / 2 - 40}
+                  height={130}
+                  chartConfig={pieChartConfig}
+                  accessor="population"
+                  backgroundColor="transparent"
+                  paddingLeft="25"
+                  absolute
+                  hasLegend={false}
+                />
+                <View style={styles.customLegend}>
+                  <View style={styles.legendItem}>
+                    <View
+                      style={[
+                        styles.legendColor,
+                        { backgroundColor: "#2FAE60" },
+                      ]}
+                    />
+                    <Text style={styles.legendText}>Repeat (70%)</Text>
+                  </View>
+                  <View style={styles.legendItem}>
+                    <View
+                      style={[
+                        styles.legendColor,
+                        { backgroundColor: "#FFA726" },
+                      ]}
+                    />
+                    <Text style={styles.legendText}>New (30%)</Text>
+                  </View>
+                </View>
+                <View style={styles.insightBadge}>
+                  <Ionicons name="people" size={16} color="#2FAE60" />
+                  <Text style={styles.insightText}>70% repeat customers</Text>
+                </View>
+              </>
+            )}
           </View>
         </View>
 
