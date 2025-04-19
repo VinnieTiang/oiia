@@ -1,4 +1,4 @@
-import { useAdviceQueryData } from "../api"
+import { useAdviceQueryData, fetchMerchantName } from "../api"
 import { ActivityIndicator, View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons"
@@ -11,11 +11,30 @@ export default function AdviceScreen() {
   const [showAllResources, setShowAllResources] = useState(false)
 
   const { data: adviceItems = [], refetch, isFetching } = useAdviceQueryData();
+  const [merchantName, setMerchantName] = useState("Loading...")
+    const [isLoading, setIsLoading] = useState(true)
+  
+    useEffect(() => {
+      async function loadMerchantData() {
+        try {
+          setIsLoading(true)
+          const name = await fetchMerchantName()
+          setMerchantName(name)
+        } catch (error) {
+          console.error("Error fetching merchant name:", error)
+          setMerchantName("Merchant Name Unavailable")
+        } finally {
+          setIsLoading(false)
+        }
+      }
+  
+      loadMerchantData()
+    }, [])
 
   // Mock merchant data - in a real app, this would come from an API
   const merchantData = {
     name: "Vni",
-    businessName: "Warung Makan Sedap",
+    businessName: merchantName,
     recentPerformance: {
       salesChange: "+12%",
       period: "this week",
