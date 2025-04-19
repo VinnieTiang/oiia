@@ -452,6 +452,12 @@ export default function PromoBuilderScreen({ navigation }) {
           onConfirm={handleStartDateConfirm}
           onCancel={() => setStartDatePickerVisibility(false)}
           minimumDate={new Date()}
+          display="spinner"
+          // Add these styling properties to improve visibility
+          textColor="#000000"
+          backgroundColor="white"
+          isDarkModeEnabled={false}
+          pickerContainerStyleIOS={{backgroundColor: "white"}}
         />
 
         <DateTimePickerModal
@@ -460,6 +466,12 @@ export default function PromoBuilderScreen({ navigation }) {
           onConfirm={handleEndDateConfirm}
           onCancel={() => setEndDatePickerVisibility(false)}
           minimumDate={startDate}
+          display="spinner"
+          // Add these styling properties to improve visibility
+          textColor="#000000"
+          backgroundColor="white"
+          isDarkModeEnabled={false}
+          pickerContainerStyleIOS={{backgroundColor: "white"}}
         />
       </View>
 
