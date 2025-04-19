@@ -169,8 +169,8 @@ async def personalized_advice(request: AdviceRequest, db: Session = Depends(get_
 
     Each recommendation should have the following format:
     - category: The category of the advice (only have sales, inventory, customers, finance)
-    - title: A clear, concise title for the advice
-    - impact: The potential impact of following this advice
+    - title: A clear, concise title for the advice, limit to 3 words
+    - impact: The potential impact of following this advice, make it short
     - details: A brief explanation of the recommendation and how it can help
     - icon: The name of a relevant icon
     - color: Unique color code for each advice
