@@ -108,6 +108,7 @@ export default function App() {
         await Asset.loadAsync([
           require("./assets/adaptive-icon.png"),
           require("./assets/chart-preview.jpg"),
+          require("./assets/chart-preview-taco-delight.jpg"),
           require("./assets/chat-icon.png"),
           require("./assets/favicon.png"),
           require("./assets/icon.png"),
