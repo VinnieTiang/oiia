@@ -67,7 +67,7 @@ def get_top_selling_items(merchant_id: str, limit: int = 5):
         
         # Abbreviated name
         df["abbreviated_name"] = df["item_name"].apply(
-            lambda name: name[:5] + "." if len(name) > 5 else name
+            lambda name: name[:11] + "." if len(name) > 11 else name
         )
 
         items = []
