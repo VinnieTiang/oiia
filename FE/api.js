@@ -126,17 +126,35 @@ export const generatePromoContent = async (prompt) => {
 export const preloadMerchantData = async (merchantId = merchant_id) => {
   try {
     console.log('Preloading merchant data for:', merchantId);
-    const endpoint = `${API_URL}/merchant/${merchantId}/summary`;
     
-    const response = await fetch(endpoint);
+    // Preload merchant summary
+    const summaryEndpoint = `${API_URL}/merchant/${merchantId}/summary`;
+    console.log('Fetching merchant summary from:', summaryEndpoint);
+    const summaryResponse = await fetch(summaryEndpoint);
     
-    if (!response.ok) {
-      throw new Error(`Network response was not ok: ${response.status}`);
+    if (!summaryResponse.ok) {
+      throw new Error(`Failed to fetch merchant summary: ${summaryResponse.status}`);
     }
     
-    const data = await response.json();
+    const summaryData = await summaryResponse.json();
+    
+    // Preload bundle suggestions
+    const bundleEndpoint = `${API_URL}/merchant/${merchantId}/bundle-suggestions`;
+    console.log('Preloading bundle suggestions from:', bundleEndpoint);
+    const bundleResponse = await fetch(bundleEndpoint);
+    
+    if (!bundleResponse.ok) {
+      console.warn(`Bundle suggestions preload failed: ${bundleResponse.status}`);
+    } else {
+      const bundleData = await bundleResponse.json();
+      console.log('Bundle suggestions preloaded successfully');
+    }
+    
     console.log('Merchant data preloaded successfully');
-    return data;
+    return {
+      status: 'success',
+      summary: summaryData
+    };
   } catch (error) {
     console.error('Error preloading merchant data:', error);
     // Don't throw the error - just log it since this is a preloading operation
@@ -546,5 +564,35 @@ export const generateImage = async (prompt, size = "1024x1024") => {
     throw error;
   }
 };
+
+export const fetchBundleSuggestions = async (merchantId = merchant_id) => {
+  try {
+    console.log('Fetching bundle suggestions from:', `${API_URL}/merchant/${merchantId}/bundle-suggestions`);
+    const response = await fetch(`${API_URL}/merchant/${merchantId}/bundle-suggestions`);
+    
+    if (!response.ok) {
+      throw new Error(`Network response was not ok: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.status === "error") {
+      console.error("Error from server:", data.message);
+      return { status: "error", message: data.message };
+    }
+    
+    return {
+      status: "success",
+      suggestions: data.suggestions
+    };
+  } catch (error) {
+    console.error("Error fetching bundle suggestions:", error);
+    return {
+      status: "error",
+      message: error.message
+    };
+  }
+};
+
 
 

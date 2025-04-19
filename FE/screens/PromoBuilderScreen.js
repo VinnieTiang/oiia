@@ -16,7 +16,7 @@ import {
 import { Ionicons } from "@expo/vector-icons"
 import { SafeAreaView } from "react-native-safe-area-context"
 import DateTimePickerModal from "react-native-modal-datetime-picker"
-import { generatePromoContent, fetchForecast, getMerchantItems, generateImage } from "../api"
+import { generatePromoContent, fetchForecast, getMerchantItems, generateImage, fetchBundleSuggestions } from "../api"
 
 export default function PromoBuilderScreen({ navigation }) {
   // Promo details
@@ -50,6 +50,7 @@ export default function PromoBuilderScreen({ navigation }) {
     fetchData();
   }, []);
 
+  
   // Sample bundle suggestions
   const sampleBundleSuggestions = [
     {
@@ -93,11 +94,33 @@ export default function PromoBuilderScreen({ navigation }) {
     },
   ]
 
-  // Load bundle suggestions and optimal times on component mount
   useEffect(() => {
-    setBundleSuggestions(sampleBundleSuggestions)
-    loadOptimalTimes()
-  }, [])
+    const loadBundleData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch bundle suggestions from API
+        const result = await fetchBundleSuggestions();
+        if (result.status === "success" && result.suggestions) {
+          setBundleSuggestions(result.suggestions);
+        } else {
+          // Fall back to sample data if API call fails
+          console.warn("Using sample bundle suggestions due to API error:", result.message);
+          setBundleSuggestions(sampleBundleSuggestions);
+        }
+        
+        // Load optimal times
+        await loadOptimalTimes();
+      } catch (error) {
+        console.error("Error loading bundle suggestions:", error);
+        // Fall back to sample data
+        setBundleSuggestions(sampleBundleSuggestions);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
+    loadBundleData();
+  }, []);
 
   const loadOptimalTimes = async () => {
     setIsLoading(true)
@@ -271,14 +294,14 @@ export default function PromoBuilderScreen({ navigation }) {
             </Text>
           </TouchableOpacity>
 
-          {/* <TouchableOpacity
+          <TouchableOpacity
             style={[styles.discountTypeButton, discountType === "bundle" && styles.discountTypeButtonActive]}
             onPress={() => setDiscountType("bundle")}
           >
             <Text style={[styles.discountTypeText, discountType === "bundle" && styles.discountTypeTextActive]}>
               Bundle
             </Text>
-          </TouchableOpacity> */}
+          </TouchableOpacity>
         </View>
       </View>
 

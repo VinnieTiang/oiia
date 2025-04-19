@@ -17,7 +17,7 @@ from forecast import load_merchant_sales_series, forecast_sales, forecast_to_sum
 from ingredient import load_all_ingredients, predict_stock_and_restock
 from database import get_db, import_csv_to_db, Ingredient
 from sales import get_merchant_today_summary, get_merchant_period_summary
-from item_service import get_items_by_merchant
+from item_service import get_items_by_merchant, get_frequently_bought_together
 from sales_trends import get_sales_trend
 from top_items import get_top_selling_items, get_best_seller
 
@@ -44,6 +44,7 @@ class PromptRequest(BaseModel):
     prompt: str
 
 class Item(BaseModel):
+    id: int
     item_name: str
     item_price: float
     cuisine_tag: str
@@ -56,6 +57,147 @@ class ImageRequest(BaseModel):
 @lru_cache(maxsize=100)
 def get_cached_merchant_summary(merchant_id: str) -> str:
     return get_merchant_summary(merchant_id)
+
+@lru_cache(maxsize=20)
+def get_cached_bundle_suggestions(merchant_id: str):
+    """Cache bundle suggestions to avoid repeated API calls and generation"""
+    try:
+        # Get frequently bought together items and generate bundle suggestions
+        result = generate_bundle_suggestions(merchant_id)
+        return result
+    except Exception as e:
+        print(f"Error in cache function for bundle suggestions: {str(e)}")
+        return {
+            "status": "error",
+            "message": f"Failed to cache bundle suggestions: {str(e)}"
+        }
+
+@app.get("/merchant/{merchant_id}/bundle-suggestions")
+async def get_bundle_suggestions(merchant_id: str):
+    """Get cached bundle promotion suggestions"""
+    return get_cached_bundle_suggestions(merchant_id)
+
+def generate_bundle_suggestions(merchant_id: str):
+    """Generate bundle promotion suggestions based on frequently bought together items"""
+    try:
+        # Get frequently bought together items
+        frequent_pairs = get_frequently_bought_together(merchant_id)
+        
+        # Check if we got valid data
+        if frequent_pairs.get("status") == "error":
+            return {
+                "status": "error",
+                "message": frequent_pairs.get("message", "Failed to get frequently bought together items")
+            }
+        
+        # Extract the pairs from the response
+        pairs = frequent_pairs.get("pairs", [])
+        
+        # If no valid pairs were found, return early
+        if not pairs or len(pairs) == 0 or pairs[0]["count"] == 0:
+            return {
+                "status": "error", 
+                "message": "No valid item pairs found for bundle suggestions"
+            }
+        
+        # Build prompt for OpenAI
+        prompt = f"""
+        Create exactly 3 attractive bundle promotions for a food merchant based on the following frequently bought together items.
+        For each pair, suggest:
+        1. A catchy bundle name
+        2. A short description explaining the bundle's appeal
+        3. An appropriate discount percentage (between 5% and 25%)
+        
+        Here are the item pairs that customers frequently buy together:
+        
+        {json.dumps(pairs, indent=2)}
+        
+        Return your suggestions in the following JSON format with the key "suggestions" containing exactly 3 bundle suggestions:
+        {{
+          "suggestions": [
+            {{
+              "id": 1,
+              "name": "catchy bundle name",
+              "description": "short appealing description",
+              "items": [
+                {{ "id": item_id1, "name": "item1_name", "price": item1_price }},
+                {{ "id": item_id2, "name": "item2_name", "price": item2_price }}
+              ],
+              "discount": discount_percentage,
+              "originalPrice": sum_of_individual_prices,
+              "discountedPrice": price_after_discount,
+              "popularity": popularity_score
+            }},
+            {{
+              "id": 2,
+              ...
+            }},
+            {{
+              "id": 3,
+              ...
+            }}
+          ]
+        }}
+        
+        Notes:
+        - Always create exactly 3 bundles
+        - Use the provided pairs data to create the bundles
+        - If there aren't enough unique pairs, you can reuse pairs or creatively combine items
+        - "id" should be sequential numbers 1, 2, and 3
+        - "discount" should be a number between 5 and 25
+        - "originalPrice" should be the sum of the individual item prices
+        - "discountedPrice" should be the originalPrice minus the discount amount
+        - "popularity" should be a number between 75 and 95
+        """
+        
+        # Call OpenAI API
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.7,
+            response_format={"type": "json_object"}
+        )
+        
+        # Parse the response
+        result_content = response.choices[0].message.content
+        result_json = json.loads(result_content)
+        
+        # Extract suggestions
+        bundle_suggestions = result_json.get("suggestions", [])
+        
+        # Ensure we have exactly 3 bundles
+        if len(bundle_suggestions) < 3:
+            # Fill with dummy suggestions if needed
+            for i in range(len(bundle_suggestions), 3):
+                bundle_suggestions.append({
+                    "id": i + 1,
+                    "name": f"Value Bundle {i + 1}",
+                    "description": "A special combination of our popular items",
+                    "items": [
+                        {"id": 1, "name": "Menu Item 1", "price": 8.99},
+                        {"id": 2, "name": "Menu Item 2", "price": 5.99}
+                    ],
+                    "discount": 10,
+                    "originalPrice": 14.98,
+                    "discountedPrice": 13.48,
+                    "popularity": 80
+                })
+        elif len(bundle_suggestions) > 3:
+            # Keep only the first 3
+            bundle_suggestions = bundle_suggestions[:3]
+        
+        # Return the suggestions
+        return {
+            "status": "success",
+            "suggestions": bundle_suggestions
+        }
+        
+    except Exception as e:
+        print(f"Error generating bundle suggestions: {str(e)}")
+        return {
+            "status": "error",
+            "message": f"Failed to generate bundle suggestions: {str(e)}"
+        }
 
 @app.post("/generate-image")
 async def generate_image(request: ImageRequest):
