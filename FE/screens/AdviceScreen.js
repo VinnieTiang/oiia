@@ -59,13 +59,13 @@ export default function AdviceScreen() {
   const learningResources = [
     {
         id: "1",
-        title: "Spicy Food Trends in Malaysia",
+        title: "Spicy Food Trends in Southeast Asia",
         type: "Report",
         duration: "10 mins read",
         icon: "document-text",
         color: "#E74C3C",
         category: "sales",
-        url: "https://www.myloveearth.com/blog/why-malaysians-love-their-chillies?srsltid=AfmBOorIdMrv0tdRXrmEh7NZTsEDdvt5Pxd7Fj1npLlHp5YXja6JKyte",
+        url: "https://www.euromonitor.com/article/spicy-food-trends-in-southeast-asia",
     },
     {
       id: "2",
@@ -247,7 +247,7 @@ export default function AdviceScreen() {
             {isFetching ? (
         <View style={styles.emptyState}>
           <ActivityIndicator size="small" color="#2D9CDB" />
-          <Text>Regenerating advice...</Text>
+          <Text>Generating advice...</Text>
         </View>
       ) : (
         <>
