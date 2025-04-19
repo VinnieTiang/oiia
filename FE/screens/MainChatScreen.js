@@ -1456,19 +1456,19 @@ export default function MainChatScreen({ navigation }) {
                 </View>
                 <Text style={styles.quickActionText}>Get Advice</Text>
               </TouchableOpacity>
-
-              <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("Check Inventory")}>
-                <View style={[styles.quickActionIcon, { backgroundColor: "#F3F0FF" }]}>
-                  <Ionicons name="cube-outline" size={20} color="#9B51E0" />
-                </View>
-                <Text style={styles.quickActionText}>Check Inventory</Text>
-              </TouchableOpacity>
-
+              
               <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("Manage Promotions")}>
                 <View style={[styles.quickActionIcon, { backgroundColor: "#F0FFF4" }]}>
                   <Ionicons name="pricetag-outline" size={20} color="#2FAE60" />
                 </View>
                 <Text style={styles.quickActionText}>Promotions</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("Check Inventory")}>
+                <View style={[styles.quickActionIcon, { backgroundColor: "#F3F0FF" }]}>
+                  <Ionicons name="cube-outline" size={20} color="#9B51E0" />
+                </View>
+                <Text style={styles.quickActionText}>Check Inventory</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.quickActionButton} onPress={() => handleQuickAction("View Leaderboard")}>
