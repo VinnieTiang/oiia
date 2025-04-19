@@ -35,11 +35,6 @@ export default function AdviceScreen() {
   const merchantData = {
     name: "Vni",
     businessName: merchantName,
-    recentPerformance: {
-      salesChange: "+12%",
-      period: "this week",
-      topSellingItem: "Nasi Lemak",
-    }
   }
 
   const adviceCategories = [
@@ -195,14 +190,6 @@ export default function AdviceScreen() {
           <View style={styles.greetingContent}>
             <Text style={styles.greetingName}>Hi, {merchantData.name}</Text>
             <Text style={styles.greetingBusiness}>{merchantData.businessName}</Text>
-            <View style={styles.performanceContainer}>
-              <Text style={styles.performanceText}>
-                Sales are up <Text style={styles.highlightText}>{merchantData.recentPerformance.salesChange}</Text> {merchantData.recentPerformance.period}
-              </Text>
-              <Text style={styles.performanceText}>
-                Top seller: <Text style={styles.highlightText}>{merchantData.recentPerformance.topSellingItem}</Text>
-              </Text>
-            </View>
           </View>
           <View style={styles.greetingImageContainer}>
             <View style={styles.greetingImage}>
