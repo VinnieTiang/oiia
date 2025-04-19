@@ -443,8 +443,8 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   categoryCard: {
-    width: 85,
-    height: 85,
+    width: 90,
+    height: 90,
     backgroundColor: "white",
     borderRadius: 12,
     padding: 12,
