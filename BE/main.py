@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import os
@@ -9,6 +10,7 @@ from sqlalchemy.orm import Session
 from functools import lru_cache
 import asyncio
 from typing import List
+import base64
 
 
 # Import our modules
@@ -20,6 +22,7 @@ from sales import get_merchant_today_summary, get_merchant_period_summary
 from item_service import get_items_by_merchant
 from sales_trends import get_sales_trend
 from top_items import get_top_selling_items
+from app.utils.plot_utils import parse_graph_request
 
 
 # Load API key from .env
@@ -42,6 +45,9 @@ class AdviceRequest(BaseModel):
 
 class PromptRequest(BaseModel):
     prompt: str
+
+class QueryInput(BaseModel):
+    query: str
 
 class Item(BaseModel):
     item_name: str
@@ -68,7 +74,7 @@ async def get_merchant_summary_endpoint(merchant_id: str):
             "summary": "",
             "status": f"Error: {str(e)}"
         }
-    
+
 # POST endpoint
 @app.post("/ask")
 async def ask_advice(request: ChatRequest, db: Session = Depends(get_db)):
@@ -76,8 +82,51 @@ async def ask_advice(request: ChatRequest, db: Session = Depends(get_db)):
     # Step 1: Get summary for merchant
     summary = get_cached_merchant_summary(request.merchant_id)
     print("Summary:", summary)
+    
+    # Ask OpenAI whether this requires a graph
+    detection_prompt = f"""
+    Determine if the following user query about a food merchant's business requires a plot or chart to answer effectively.
+    
+    Answer with "GRAPH" if ANY of these apply:
+    - The question asks about trends over time
+    - The question compares multiple items, categories, or time periods
+    - The question is about distribution, proportions, or patterns
+    - The question explicitly requests a visual representation
+    - A chart would significantly enhance understanding of the answer
+    
+    Otherwise, answer with "TEXT".
 
-    # Step 2: Build prompt
+    Business context:
+    {summary}
+
+    User question:
+    {request.question}
+    """
+    detection_response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": detection_prompt}],
+        temperature=0
+    )
+
+    decision = detection_response.choices[0].message.content.strip().upper()
+
+    # If graph is needed, use our new approach
+    if decision == "GRAPH":
+        print("Graph generation needed")
+        graph_data = parse_graph_request(request.question, request.merchant_id)
+        
+        if "error" not in graph_data:
+            # Return graph data for frontend rendering
+            return {
+                "reply": graph_data["caption"],
+                "graph_data": graph_data["chart_data"],
+                "graph_type": graph_data["graph_type"]
+            }
+        else:
+            # If graph generation failed, fall back to text response
+            print(f"Graph generation failed: {graph_data['error']}")
+
+    # Step 2: Build prompt for text response
     prompt = f"""
     Answer the question based on the question language.
 
@@ -85,14 +134,14 @@ async def ask_advice(request: ChatRequest, db: Session = Depends(get_db)):
 
     Based on the business data below, answer the question. 
 
-Be friendly, practical, and concise.
+    Be friendly, practical, and concise.
 
-{summary} 
+    {summary} 
 
-Question: {request.question}
+    Question: {request.question}
 
-Suggestions:
-"""
+    Suggestions:
+    """
 
     # Step 3: Send to OpenAI
     response = client.chat.completions.create(
@@ -105,6 +154,16 @@ Suggestions:
     return {
         "reply": response.choices[0].message.content
     }
+
+# Add a dedicated endpoint for graph generation
+@app.post("/generate-graph")
+async def generate_graph(request: ChatRequest):
+    """Generate graph data based on user question"""
+    try:
+        graph_data = parse_graph_request(request.question, request.merchant_id)
+        return graph_data
+    except Exception as e:
+        return {"error": str(e)}
 
 # POST endpoint
 @app.post("/advice")

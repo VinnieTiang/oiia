@@ -453,10 +453,7 @@ export default function ChatScreen({ navigation }) {
 
       setMessages((prevMessages) => [...prevMessages, aiMessage])
 
-      // Auto-play the AI response if hands-free mode is detected
-      // (This could be based on a setting or if the user used voice input)
       if (isRecording || isListening) {
-        // Wait a bit for the UI to update before playing
         setTimeout(() => {
           textToSpeech(responseText, newMessageId)
         }, 500)

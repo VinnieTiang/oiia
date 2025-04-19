@@ -45,36 +45,26 @@ export const askAI = async (question, merchantId = merchant_id) => {
 
     const data = await response.json()
     console.log("AI response:", data)
-    return data.reply
+    
+    // Handle response with graph data
+    if (data.graph_data && data.graph_type) {
+      return {
+        text: data.reply,
+        graphData: data.graph_data,
+        graphType: data.graph_type
+      }
+    }
+    
+    // Handle traditional text response (or response with image URL)
+    return {
+      text: data.reply,
+      imageUrl: data.image_url || null
+    }
   } catch (error) {
     console.error("Error asking AI:", error)
     throw error
   }
 }
-
-export const getAdvice = async (merchantId = merchant_id) => {
-    try {
-      const response = await fetch(`${API_URL}/advice`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          merchant_id: merchantId,
-        }),
-      })
-  
-      if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response.status}`)
-      }
-  
-      const data = await response.json()
-      return data.advice
-    } catch (error) {
-      console.error("Error asking AI:", error)
-      throw error
-    }
-  }
 
 export const fetchForecast = async (merchantId = merchant_id, days = 7) => {
   try {

@@ -35,6 +35,8 @@ const MESSAGE_TYPES = {
   INSIGHT_CHART: "insight_chart",
   QUICK_ACTIONS: "quick_actions",
   PROFILE_CARD: "profile_card",
+  IMAGE: "image",
+  GRAPH: "graph", // New message type for graphs
 }
 
 export default function MainChatScreen({ navigation }) {
@@ -523,7 +525,7 @@ export default function MainChatScreen({ navigation }) {
   ///////////// Handle User Send Message Function /////////////
   const handleSend = async () => {
     if (message.trim() === "") return
-
+  
     // Add user message
     const userMessage = {
       id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -532,11 +534,11 @@ export default function MainChatScreen({ navigation }) {
       sender: "user",
       timestamp: new Date(),
     }
-
+  
     setMessages((prevMessages) => [...prevMessages, userMessage])
     const userQuery = message
     setMessage("")
-
+  
     if (userQuery.trim().toLowerCase() === "start over") {
       addMascotMessage(
         "I'm here to boost your business! Ask me about sales trends, inventory status, or business advice.",
@@ -545,21 +547,32 @@ export default function MainChatScreen({ navigation }) {
       addMascotMessage(null, MESSAGE_TYPES.QUICK_ACTIONS)
       return
     }
-
+  
     // Show typing indicator
     setIsTyping(true)
     setIsAILoading(true)
-
+  
     try {
-      // Call the AI API
-      const aiResponse = await askAI(userQuery)
-
-      // Animate mascot when responding
-      //animateMascot()
-
-      // Add the AI response
-      addMascotMessage(aiResponse, MESSAGE_TYPES.AITEXT)
-
+      // Call the AI API with updated response format
+      const response = await askAI(userQuery)
+     
+      // First add the AI text response
+      addMascotMessage(response.text, MESSAGE_TYPES.AITEXT)
+      
+      // Check if response contains graph data
+      if (response.graphData && response.graphType) {
+        // Add graph as a separate message
+        addMascotMessage({
+          graphData: response.graphData,
+          graphType: response.graphType
+        }, MESSAGE_TYPES.GRAPH)
+      } 
+      // Check if response contains an image URL
+      else if (response.imageUrl) {
+        // Add the image as a separate message
+        addMascotMessage(response.imageUrl, MESSAGE_TYPES.IMAGE)
+      }
+  
       // Process the message to add relevant UI components
       processUserMessage(userQuery)
     } catch (error) {
@@ -784,17 +797,34 @@ export default function MainChatScreen({ navigation }) {
   }
 
   ///////////// Function to show Mascot chat /////////////
-  const addMascotMessage = (text, type) => {
+  const addMascotMessage = (content, type) => {
     const newMessage = {
       id: `mascot-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       type: type,
-      text: text,
       sender: "mascot",
       timestamp: new Date(),
+    };
+  
+    // For text message types
+    if (type === MESSAGE_TYPES.TEXT || type === MESSAGE_TYPES.AITEXT) {
+      newMessage.text = content;
     }
-
-    setMessages((prevMessages) => [...prevMessages, newMessage])
-  }
+    // For image messages
+    else if (type === MESSAGE_TYPES.IMAGE) {
+      newMessage.imageUrl = content;
+    }
+    // For graph messages
+    else if (type === MESSAGE_TYPES.GRAPH) {
+      newMessage.graphData = content.graphData;
+      newMessage.graphType = content.graphType;
+    }
+    // For other message types
+    else {
+      newMessage.text = content;
+    }
+  
+    setMessages((prevMessages) => [...prevMessages, newMessage]);
+  };
 
   ///////////// Function to show the QuickReplies (the squares) /////////////
   const addQuickReplies = (replies) => {
@@ -1086,6 +1116,46 @@ export default function MainChatScreen({ navigation }) {
             )}
           </View>
         )
+        case MESSAGE_TYPES.GRAPH:
+          return (
+            <View style={styles.messageContainer}>
+              <View style={styles.mascotBubble}>
+                <View style={styles.graphContainer}>
+                  <Text style={styles.graphInfo}>
+                    Graph Type: {item.graphType}
+                  </Text>
+                  <Text style={styles.graphInfo}>
+                    Data: {JSON.stringify(item.graphData)}
+                  </Text>
+                  {/* TODO: Implement actual graph rendering with chart library */}
+                  <Text style={styles.graphNote}>
+                    Graph will be rendered here in the next phase using {item.graphType} chart type
+                  </Text>
+                </View>
+                <Text style={styles.timestamp}>
+                  {item.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </Text>
+              </View>
+            </View>
+          );
+        case MESSAGE_TYPES.IMAGE:
+          return (
+            <View style={styles.messageBubble}>
+              <View style={styles.mascotAvatarContainer}>
+                <Image source={require("../assets/mascot-avatar.png")} style={styles.mascotAvatar} />
+              </View>
+              <View style={[styles.messageContent, styles.cardContent]}>
+                <Image 
+                  source={{ uri: `${API_URL}${item.imageUrl}` }}  // Construct full URL using API_URL
+                  style={styles.image}
+                  resizeMode="contain"
+                />
+                <Text style={styles.mascotTimestamp}>
+                  {item.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </Text>
+              </View>
+            </View>
+          );
 
       case MESSAGE_TYPES.SALES_SUMMARY:
         return (
