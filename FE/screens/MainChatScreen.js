@@ -1,21 +1,7 @@
 "use client"
-import { fetchLowStockItems, askAI, fetchSalesData, useAdviceQueryData } from "../api"
+import { fetchLowStockItems, askAI, fetchSalesData, useAdviceQueryData,fetchMerchantName } from "../api"
 import { useState, useRef, useEffect } from "react"
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  Image,
-  Animated,
-  Dimensions,
-  ScrollView,
-  ActivityIndicator,
-} from "react-native"
+import {View,Text,StyleSheet,TextInput,TouchableOpacity,FlatList,KeyboardAvoidingView,Platform,Image,Animated,Dimensions,ScrollView,ActivityIndicator,} from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { Ionicons, Feather } from "@expo/vector-icons"
 import * as FileSystem from "expo-file-system"
@@ -43,6 +29,25 @@ export default function MainChatScreen({ navigation }) {
   const [isLoading, setIsLoading] = useState(false)
   const [isAILoading, setIsAILoading] = useState(false)
   const { data } = useAdviceQueryData(); // triggers fetch
+  const [merchantName, setMerchantName] = useState("Loading...")
+    [isLoading, setIsLoading] = useState(true)
+  
+    useEffect(() => {
+      async function loadMerchantData() {
+        try {
+          setIsLoading(true)
+          const name = await fetchMerchantName()
+          setMerchantName(name)
+        } catch (error) {
+          console.error("Error fetching merchant name:", error)
+          setMerchantName("Merchant Name Unavailable")
+        } finally {
+          setIsLoading(false)
+        }
+      }
+  
+      loadMerchantData()
+    }, [])
 
   const checkInventory = async () => {
     try {
@@ -1310,7 +1315,7 @@ export default function MainChatScreen({ navigation }) {
               <View style={styles.profileCard}>
                 <View style={styles.profileHeader}>
                   <Image source={require("../assets/profile-placeholder1.png")} style={styles.profileImage} />
-                  <Text style={styles.profileName}>Warung Makan Sedap</Text>
+                  <Text style={styles.profileName}>{merchantName}</Text>
                   <Text style={styles.profileBio}>Restaurant • Since 2018</Text>
                 </View>
                 <View style={styles.profileStats}>

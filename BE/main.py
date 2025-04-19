@@ -17,7 +17,7 @@ from forecast import load_merchant_sales_series, forecast_sales, forecast_to_sum
 from ingredient import load_all_ingredients, predict_stock_and_restock
 from database import get_db, import_csv_to_db, Ingredient
 from sales import get_merchant_today_summary, get_merchant_period_summary
-from item_service import get_items_by_merchant
+from item_service import get_items_by_merchant, get_merchant_name_by_id
 from sales_trends import get_sales_trend
 from top_items import get_top_selling_items, get_best_seller
 
@@ -56,7 +56,7 @@ class ImageRequest(BaseModel):
 @lru_cache(maxsize=100)
 def get_cached_merchant_summary(merchant_id: str) -> str:
     return get_merchant_summary(merchant_id)
-
+    
 @app.post("/generate-image")
 async def generate_image(request: ImageRequest):
     """Generate an image using OpenAI DALL-E 3"""
@@ -87,6 +87,17 @@ async def generate_image(request: ImageRequest):
             "success": False,
             "error": str(e)
         }
+
+@app.get("/merchant-name/{merchant_id}")
+async def get_merchant_name(merchant_id : str):
+    """Get the merchant name by ID"""
+    try:
+        name = get_merchant_name_by_id(merchant_id)
+        return {"merchant_id": merchant_id, "name": name}
+    except Exception as e:
+        print(f"Error fetching merchant name: {e}")
+        return {"merchant_id": merchant_id, "name": "Unknown", "error": str(e)}
+
 
 @app.get("/merchant/{merchant_id}/summary")
 async def get_merchant_summary_endpoint(merchant_id: str):

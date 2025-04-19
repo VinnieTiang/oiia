@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { fetchMerchantName } from "../api"
 import {
   View,
   Text,
@@ -16,231 +17,6 @@ import { Ionicons } from "@expo/vector-icons"
 
 const { width } = Dimensions.get("window")
 
-// Mock data with point system instead of sales
-const mockLeaderboardData = {
-  overall: [
-    {
-      id: 1,
-      name: "Warung Makan Sedap",
-      rating: 4.9,
-      points: 1580,
-      orders: 320,
-      category: "Local Food",
-      rank: 1,
-      badges: ["Top Rated", "Fast Delivery", "Customer Favorite"],
-    },
-    {
-      id: 2,
-      name: "Restoran Selera Kampung",
-      rating: 4.8,
-      points: 1420,
-      orders: 290,
-      category: "Local Food",
-      rank: 2,
-      badges: ["Consistent Quality"],
-    },
-    {
-      id: 3,
-      name: "Nasi Kandar Subang",
-      rating: 4.7,
-      points: 1350,
-      orders: 275,
-      category: "Local Food",
-      rank: 3,
-      badges: ["Popular Choice"],
-    },
-    {
-      id: 4,
-      name: "Ayam Penyet Pak Ali",
-      rating: 4.7,
-      points: 1280,
-      orders: 260,
-      category: "Local Food",
-      rank: 4,
-      badges: ["Consistent Quality"],
-    },
-    {
-      id: 5,
-      name: "Mee Tarik Warisan",
-      rating: 4.6,
-      points: 1200,
-      orders: 245,
-      category: "Noodles",
-      rank: 5,
-      badges: ["Popular Choice"],
-    },
-    {
-      id: 6,
-      name: "Restoran Cili Padi",
-      rating: 4.6,
-      points: 1150,
-      orders: 235,
-      category: "Local Food",
-      rank: 6,
-      badges: ["Fast Delivery"],
-    },
-    {
-      id: 7,
-      name: "Nasi Lemak Corner",
-      rating: 4.5,
-      points: 1100,
-      orders: 225,
-      category: "Local Food",
-      rank: 7,
-      badges: ["Popular Choice"],
-    },
-    {
-      id: 8,
-      name: "Roti Canai Pak Din",
-      rating: 4.5,
-      points: 1050,
-      orders: 215,
-      category: "Breakfast",
-      rank: 8,
-      badges: ["Early Bird"],
-    },
-    {
-      id: 9,
-      name: "Char Kuey Teow Stall",
-      rating: 4.4,
-      points: 1000,
-      orders: 205,
-      category: "Street Food",
-      rank: 9,
-      badges: ["Consistent Quality"],
-    },
-    {
-      id: 10,
-      name: "Satay Station",
-      rating: 4.4,
-      points: 950,
-      orders: 195,
-      category: "BBQ",
-      rank: 10,
-      badges: ["Popular Choice"],
-    },
-  ],
-  nearby: [
-    {
-      id: 1,
-      name: "Warung Makan Sedap",
-      rating: 4.9,
-      points: 1580,
-      orders: 320,
-      category: "Local Food",
-      distance: "0 km",
-      rank: 1,
-      badges: ["Top Rated", "Fast Delivery", "Customer Favorite"],
-    },
-    {
-      id: 3,
-      name: "Nasi Kandar Subang",
-      rating: 4.7,
-      points: 1350,
-      orders: 275,
-      category: "Local Food",
-      distance: "0.5 km",
-      rank: 2,
-      badges: ["Popular Choice"],
-    },
-    {
-      id: 6,
-      name: "Restoran Cili Padi",
-      rating: 4.6,
-      points: 1150,
-      orders: 235,
-      category: "Local Food",
-      distance: "0.8 km",
-      rank: 3,
-      badges: ["Fast Delivery"],
-    },
-    {
-      id: 8,
-      name: "Roti Canai Pak Din",
-      rating: 4.5,
-      points: 1050,
-      orders: 215,
-      category: "Breakfast",
-      distance: "1.2 km",
-      rank: 4,
-      badges: ["Early Bird"],
-    },
-    {
-      id: 10,
-      name: "Satay Station",
-      rating: 4.4,
-      points: 950,
-      orders: 195,
-      category: "BBQ",
-      distance: "1.5 km",
-      rank: 5,
-      badges: ["Popular Choice"],
-    },
-  ],
-  category: [
-    {
-      id: 1,
-      name: "Warung Makan Sedap",
-      rating: 4.9,
-      points: 1580,
-      orders: 320,
-      category: "Local Food",
-      rank: 1,
-      badges: ["Top Rated", "Fast Delivery", "Customer Favorite"],
-    },
-    {
-      id: 2,
-      name: "Restoran Selera Kampung",
-      rating: 4.8,
-      points: 1420,
-      orders: 290,
-      category: "Local Food",
-      rank: 2,
-      badges: ["Consistent Quality"],
-    },
-    {
-      id: 3,
-      name: "Nasi Kandar Subang",
-      rating: 4.7,
-      points: 1350,
-      orders: 275,
-      category: "Local Food",
-      rank: 3,
-      badges: ["Popular Choice"],
-    },
-    {
-      id: 4,
-      name: "Ayam Penyet Pak Ali",
-      rating: 4.7,
-      points: 1280,
-      orders: 260,
-      category: "Local Food",
-      rank: 4,
-      badges: ["Consistent Quality"],
-    },
-    {
-      id: 6,
-      name: "Restoran Cili Padi",
-      rating: 4.6,
-      points: 1150,
-      orders: 235,
-      category: "Local Food",
-      rank: 5,
-      badges: ["Fast Delivery"],
-    },
-    {
-      id: 7,
-      name: "Nasi Lemak Corner",
-      rating: 4.5,
-      points: 1100,
-      orders: 225,
-      category: "Local Food",
-      rank: 6,
-      badges: ["Popular Choice"],
-    },
-  ],
-}
-
 // Badge colors
 const badgeColors = {
   "Top Rated": { bg: "#FFF9C4", text: "#F57F17" },
@@ -255,36 +31,283 @@ export default function LeaderboardScreen() {
   const [activeTab, setActiveTab] = useState("overall")
   const [timeFilter, setTimeFilter] = useState("week")
   const [sortBy, setSortBy] = useState("points")
-  const [isLoading, setIsLoading] = useState(false)
-  const [leaderboardData, setLeaderboardData] = useState(mockLeaderboardData)
+  const [isLoading, setIsLoading] = useState(true)
   const [showFilterOptions, setShowFilterOptions] = useState(false)
   const [showPointsInfo, setShowPointsInfo] = useState(false)
+  const [merchantName, setMerchantName] = useState("Loading...")
+  const [leaderboardData, setLeaderboardData] = useState(null)
 
-  // Simulate loading data when changing tabs or filters
   useEffect(() => {
-    setIsLoading(true)
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 800)
-    return () => clearTimeout(timer)
-  }, [activeTab, timeFilter, sortBy])
+    async function loadMerchantData() {
+      try {
+        setIsLoading(true)
+        const name = await fetchMerchantName()
+        setMerchantName(name)
+        initializeLeaderboardData(name)
+      } catch (error) {
+        console.error("Error fetching merchant name:", error)
+        setMerchantName("Unknown Merchant")
+        initializeLeaderboardData("Unknown Merchant")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadMerchantData()
+  }, [])
+
+  const initializeLeaderboardData = (name) => {
+    const data = {
+      overall: [
+        {
+          id: 1,
+          name: name,
+          rating: 4.9,
+          points: 1580,
+          orders: 320,
+          category: "Local Food",
+          rank: 1,
+          badges: ["Top Rated", "Fast Delivery", "Customer Favorite"],
+        },
+        {
+          id: 2,
+          name: "Restoran Selera Kampung",
+          rating: 4.8,
+          points: 1420,
+          orders: 290,
+          category: "Local Food",
+          rank: 2,
+          badges: ["Consistent Quality"],
+        },
+        {
+          id: 3,
+          name: "Nasi Kandar Subang",
+          rating: 4.7,
+          points: 1350,
+          orders: 275,
+          category: "Local Food",
+          rank: 3,
+          badges: ["Popular Choice"],
+        },
+        {
+          id: 4,
+          name: "Ayam Penyet Pak Ali",
+          rating: 4.7,
+          points: 1280,
+          orders: 260,
+          category: "Local Food",
+          rank: 4,
+          badges: ["Consistent Quality"],
+        },
+        {
+          id: 5,
+          name: "Mee Tarik Warisan",
+          rating: 4.6,
+          points: 1200,
+          orders: 245,
+          category: "Noodles",
+          rank: 5,
+          badges: ["Popular Choice"],
+        },
+        {
+          id: 6,
+          name: "Restoran Cili Padi",
+          rating: 4.6,
+          points: 1150,
+          orders: 235,
+          category: "Local Food",
+          rank: 6,
+          badges: ["Fast Delivery"],
+        },
+        {
+          id: 7,
+          name: "Nasi Lemak Corner",
+          rating: 4.5,
+          points: 1100,
+          orders: 225,
+          category: "Local Food",
+          rank: 7,
+          badges: ["Popular Choice"],
+        },
+        {
+          id: 8,
+          name: "Roti Canai Pak Din",
+          rating: 4.5,
+          points: 1050,
+          orders: 215,
+          category: "Breakfast",
+          rank: 8,
+          badges: ["Early Bird"],
+        },
+        {
+          id: 9,
+          name: "Char Kuey Teow Stall",
+          rating: 4.4,
+          points: 1000,
+          orders: 205,
+          category: "Street Food",
+          rank: 9,
+          badges: ["Consistent Quality"],
+        },
+        {
+          id: 10,
+          name: "Satay Station",
+          rating: 4.4,
+          points: 950,
+          orders: 195,
+          category: "BBQ",
+          rank: 10,
+          badges: ["Popular Choice"],
+        },
+      ],
+      nearby: [
+        {
+          id: 1,
+          name: name,
+          rating: 4.9,
+          points: 1580,
+          orders: 320,
+          category: "Local Food",
+          distance: "0 km",
+          rank: 1,
+          badges: ["Top Rated", "Fast Delivery", "Customer Favorite"],
+        },
+        {
+          id: 3,
+          name: "Nasi Kandar Subang",
+          rating: 4.7,
+          points: 1350,
+          orders: 275,
+          category: "Local Food",
+          distance: "0.5 km",
+          rank: 2,
+          badges: ["Popular Choice"],
+        },
+        {
+          id: 6,
+          name: "Restoran Cili Padi",
+          rating: 4.6,
+          points: 1150,
+          orders: 235,
+          category: "Local Food",
+          distance: "0.8 km",
+          rank: 3,
+          badges: ["Fast Delivery"],
+        },
+        {
+          id: 8,
+          name: "Roti Canai Pak Din",
+          rating: 4.5,
+          points: 1050,
+          orders: 215,
+          category: "Breakfast",
+          distance: "1.2 km",
+          rank: 4,
+          badges: ["Early Bird"],
+        },
+        {
+          id: 10,
+          name: "Satay Station",
+          rating: 4.4,
+          points: 950,
+          orders: 195,
+          category: "BBQ",
+          distance: "1.5 km",
+          rank: 5,
+          badges: ["Popular Choice"],
+        },
+      ],
+      category: [
+        {
+          id: 1,
+          name: name,
+          rating: 4.9,
+          points: 1580,
+          orders: 320,
+          category: "Local Food",
+          rank: 1,
+          badges: ["Top Rated", "Fast Delivery", "Customer Favorite"],
+        },
+        {
+          id: 2,
+          name: "Restoran Selera Kampung",
+          rating: 4.8,
+          points: 1420,
+          orders: 290,
+          category: "Local Food",
+          rank: 2,
+          badges: ["Consistent Quality"],
+        },
+        {
+          id: 3,
+          name: "Nasi Kandar Subang",
+          rating: 4.7,
+          points: 1350,
+          orders: 275,
+          category: "Local Food",
+          rank: 3,
+          badges: ["Popular Choice"],
+        },
+        {
+          id: 4,
+          name: "Ayam Penyet Pak Ali",
+          rating: 4.7,
+          points: 1280,
+          orders: 260,
+          category: "Local Food",
+          rank: 4,
+          badges: ["Consistent Quality"],
+        },
+        {
+          id: 6,
+          name: "Restoran Cili Padi",
+          rating: 4.6,
+          points: 1150,
+          orders: 235,
+          category: "Local Food",
+          rank: 5,
+          badges: ["Fast Delivery"],
+        },
+        {
+          id: 7,
+          name: "Nasi Lemak Corner",
+          rating: 4.5,
+          points: 1100,
+          orders: 225,
+          category: "Local Food",
+          rank: 6,
+          badges: ["Popular Choice"],
+        },
+      ],
+    }
+
+    setLeaderboardData(data)
+  }
+
+  useEffect(() => {
+    if (leaderboardData) {
+      setIsLoading(true)
+      const timer = setTimeout(() => {
+        setIsLoading(false)
+      }, 800)
+      return () => clearTimeout(timer)
+    }
+  }, [activeTab, timeFilter, sortBy, leaderboardData])
 
   const renderMerchantRank = (merchant, index) => {
-    // Determine if this is the current merchant (for highlighting)
     const isCurrentMerchant = merchant.id === 1
     const rankStyles = [styles.rankContainer]
     let rankColor = "#666"
     let rankBgColor = "#f5f5f5"
 
-    // Style based on rank
     if (merchant.rank === 1) {
-      rankColor = "#FFD700" // Gold
+      rankColor = "#FFD700"
       rankBgColor = "#FFF9E6"
     } else if (merchant.rank === 2) {
-      rankColor = "#C0C0C0" // Silver
+      rankColor = "#C0C0C0"
       rankBgColor = "#F5F5F5"
     } else if (merchant.rank === 3) {
-      rankColor = "#CD7F32" // Bronze
+      rankColor = "#CD7F32"
       rankBgColor = "#FFF1E6"
     }
 
@@ -302,7 +325,7 @@ export default function LeaderboardScreen() {
         </View>
 
         <View style={styles.merchantInfo}>
-          <Text style={styles.merchantName} numberOfLines={1}>
+          <Text style={styles.merchantNameStyle} numberOfLines={1}>
             {merchant.name}
             {isCurrentMerchant && <Text style={styles.youLabel}> (You)</Text>}
           </Text>
@@ -311,7 +334,6 @@ export default function LeaderboardScreen() {
             {activeTab === "nearby" && <Text style={styles.merchantDistance}> • {merchant.distance}</Text>}
           </View>
 
-          {/* Badges */}
           <View style={styles.badgesContainer}>
             {merchant.badges &&
               merchant.badges.slice(0, 2).map((badge, idx) => (
@@ -471,8 +493,8 @@ export default function LeaderboardScreen() {
           <Text style={[styles.tabText, activeTab === "category" && styles.activeTabText]}>Same Category</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.infoButton} onPress={() => setShowPointsInfo(!showPointsInfo)}>
-            <Ionicons name="information-circle-outline" size={22} color="#333" />
-          </TouchableOpacity>
+          <Ionicons name="information-circle-outline" size={22} color="#333" />
+        </TouchableOpacity>
       </View>
       {renderPointsInfo()}
 
@@ -498,7 +520,7 @@ export default function LeaderboardScreen() {
       </View>
 
       <View style={styles.leaderboardContainer}>
-        {isLoading ? (
+        {isLoading || !leaderboardData ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#2FAE60" />
             <Text style={styles.loadingText}>Loading leaderboard...</Text>
@@ -510,15 +532,15 @@ export default function LeaderboardScreen() {
                 {activeTab === "overall"
                   ? "Top Merchants"
                   : activeTab === "nearby"
-                    ? "Nearby Competitors"
-                    : "Local Food Category"}
+                  ? "Nearby Competitors"
+                  : "Local Food Category"}
               </Text>
               <Text style={styles.leaderboardSubtitle}>
                 {timeFilter === "day"
                   ? "Today's Rankings"
                   : timeFilter === "week"
-                    ? "This Week's Rankings"
-                    : "This Month's Rankings"}
+                  ? "This Week's Rankings"
+                  : "This Month's Rankings"}
               </Text>
             </View>
 
@@ -629,7 +651,6 @@ export default function LeaderboardScreen() {
 
             <ScrollView style={styles.rankingsList}>
               {leaderboardData[activeTab].map((merchant, index) => {
-                // Skip the top 3 in overall view since they're shown in the podium
                 if (activeTab === "overall" && index < 3) return null
                 return renderMerchantRank(merchant, index)
               })}
@@ -808,7 +829,7 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   activeTimeFilterText: {
-    color: "#2FA E60",
+    color: "#2FAE60",
     fontWeight: "500",
   },
   leaderboardContainer: {
@@ -986,7 +1007,7 @@ const styles = StyleSheet.create({
   merchantInfo: {
     flex: 1,
   },
-  merchantName: {
+  merchantNameStyle: {
     fontSize: 14,
     fontWeight: "600",
     color: "#333",
