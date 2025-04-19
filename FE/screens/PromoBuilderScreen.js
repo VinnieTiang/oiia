@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -12,31 +12,40 @@ import {
   ActivityIndicator,
   Alert,
   Switch,
-} from "react-native"
-import { Ionicons } from "@expo/vector-icons"
-import { SafeAreaView } from "react-native-safe-area-context"
-import DateTimePickerModal from "react-native-modal-datetime-picker"
-import { generatePromoContent, fetchForecast, getMerchantItems, generateImage, fetchBundleSuggestions } from "../api"
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import {
+  generatePromoContent,
+  fetchForecast,
+  getMerchantItems,
+  generateImage,
+  fetchBundleSuggestions,
+} from "../api";
 
 export default function PromoBuilderScreen({ navigation }) {
   // Promo details
-  const [promoName, setPromoName] = useState("")
-  const [promoDescription, setPromoDescription] = useState("")
-  const [discountType, setDiscountType] = useState("percentage") // percentage, fixed, bundle
-  const [discountValue, setDiscountValue] = useState("")
-  const [startDate, setStartDate] = useState(new Date())
-  const [endDate, setEndDate] = useState(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)) // Default 1 week
-  const [isStartDatePickerVisible, setStartDatePickerVisibility] = useState(false)
-  const [isEndDatePickerVisible, setEndDatePickerVisibility] = useState(false)
-  const [selectedItems, setSelectedItems] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [generatedContent, setGeneratedContent] = useState(null)
-  const [optimalTimes, setOptimalTimes] = useState(null)
-  const [useOptimalTimes, setUseOptimalTimes] = useState(false)
-  const [currentStep, setCurrentStep] = useState(1)
-  const [bundleSuggestions, setBundleSuggestions] = useState([])
-  const [selectedBundle, setSelectedBundle] = useState(null)
+  const [promoName, setPromoName] = useState("");
+  const [promoDescription, setPromoDescription] = useState("");
+  const [discountType, setDiscountType] = useState("percentage"); // percentage, fixed, bundle
+  const [discountValue, setDiscountValue] = useState("");
+  const [startDate, setStartDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(
+    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+  ); // Default 1 week
+  const [isStartDatePickerVisible, setStartDatePickerVisibility] =
+    useState(false);
+  const [isEndDatePickerVisible, setEndDatePickerVisibility] = useState(false);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedContent, setGeneratedContent] = useState(null);
+  const [optimalTimes, setOptimalTimes] = useState(null);
+  const [useOptimalTimes, setUseOptimalTimes] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [bundleSuggestions, setBundleSuggestions] = useState([]);
+  const [selectedBundle, setSelectedBundle] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [generatedImage, setGeneratedImage] = useState(null);
@@ -50,7 +59,6 @@ export default function PromoBuilderScreen({ navigation }) {
     fetchData();
   }, []);
 
-  
   // Sample bundle suggestions
   const sampleBundleSuggestions = [
     {
@@ -92,7 +100,7 @@ export default function PromoBuilderScreen({ navigation }) {
       discountedPrice: 14.0,
       popularity: 78,
     },
-  ]
+  ];
 
   useEffect(() => {
     const loadBundleData = async () => {
@@ -104,10 +112,13 @@ export default function PromoBuilderScreen({ navigation }) {
           setBundleSuggestions(result.suggestions);
         } else {
           // Fall back to sample data if API call fails
-          console.warn("Using sample bundle suggestions due to API error:", result.message);
+          console.warn(
+            "Using sample bundle suggestions due to API error:",
+            result.message
+          );
           setBundleSuggestions(sampleBundleSuggestions);
         }
-        
+
         // Load optimal times
         await loadOptimalTimes();
       } catch (error) {
@@ -118,56 +129,71 @@ export default function PromoBuilderScreen({ navigation }) {
         setIsLoading(false);
       }
     };
-  
+
     loadBundleData();
   }, []);
 
   const loadOptimalTimes = async () => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const forecastData = await fetchForecast()
+      const forecastData = await fetchForecast();
 
       // Process forecast data to find optimal times
       // This is a simplified example - in a real app, you would analyze the forecast data
       const optimal = {
         days: [
-          { day: "Monday", score: 85, reason: "High foot traffic between 12-2 PM" },
-          { day: "Friday", score: 92, reason: "Payday increases spending by 25%" },
+          {
+            day: "Monday",
+            score: 85,
+            reason: "High foot traffic between 12-2 PM",
+          },
+          {
+            day: "Friday",
+            score: 92,
+            reason: "Payday increases spending by 25%",
+          },
           { day: "Saturday", score: 88, reason: "Weekend family dining trend" },
         ],
         times: [
           { time: "12:00 PM - 2:00 PM", score: 95, reason: "Lunch rush hour" },
           { time: "6:00 PM - 8:00 PM", score: 90, reason: "Dinner peak time" },
-          { time: "9:00 AM - 11:00 AM", score: 75, reason: "Breakfast/brunch period" },
+          {
+            time: "9:00 AM - 11:00 AM",
+            score: 75,
+            reason: "Breakfast/brunch period",
+          },
         ],
-      }
+      };
 
-      setOptimalTimes(optimal)
+      setOptimalTimes(optimal);
     } catch (error) {
-      console.error("Error loading optimal times:", error)
-      Alert.alert("Error", "Failed to load optimal promotion times. Please try again.")
+      console.error("Error loading optimal times:", error);
+      Alert.alert(
+        "Error",
+        "Failed to load optimal promotion times. Please try again."
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleGenerateImage = async () => {
     if (!generatedContent?.imagePrompt) {
       Alert.alert("Missing Prompt", "No image prompt available.");
       return;
     }
-  
+
     setIsGeneratingImage(true);
     try {
-      // const result = await generateImage(generatedContent.imagePrompt);
-      // if (result.success && result.image_data) {
-      //   setGeneratedImage(`data:image/png;base64,${result.image_data}`);
-      // } else {
-      //   Alert.alert("Error", "Failed to generate image. Please try again.");
-      // }
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      const imageUri = require('../assets/image-placeholder.png');
-      setGeneratedImage(Image.resolveAssetSource(imageUri).uri);
+      const result = await generateImage(generatedContent.imagePrompt);
+      if (result.success && result.image_data) {
+        setGeneratedImage(`data:image/png;base64,${result.image_data}`);
+      } else {
+        Alert.alert("Error", "Failed to generate image. Please try again.");
+      }
+      // await new Promise(resolve => setTimeout(resolve, 3000));
+      // const imageUri = require('../assets/image-placeholder.png');
+      // setGeneratedImage(Image.resolveAssetSource(imageUri).uri);
     } catch (error) {
       console.error("Error generating image:", error);
       Alert.alert("Error", "Failed to generate image. Please try again.");
@@ -177,55 +203,58 @@ export default function PromoBuilderScreen({ navigation }) {
   };
 
   const handleStartDateConfirm = (date) => {
-    setStartDate(date)
-    setStartDatePickerVisibility(false)
-  }
+    setStartDate(date);
+    setStartDatePickerVisibility(false);
+  };
 
   const handleEndDateConfirm = (date) => {
-    setEndDate(date)
-    setEndDatePickerVisibility(false)
-  }
+    setEndDate(date);
+    setEndDatePickerVisibility(false);
+  };
 
   const toggleItemSelection = (item) => {
     if (selectedItems.some((i) => i.id === item.id)) {
-      setSelectedItems(selectedItems.filter((i) => i.id !== item.id))
+      setSelectedItems(selectedItems.filter((i) => i.id !== item.id));
     } else {
-      setSelectedItems([...selectedItems, item])
+      setSelectedItems([...selectedItems, item]);
     }
-  }
+  };
 
   const selectBundle = (bundle) => {
-    setSelectedBundle(bundle)
-    setDiscountType("bundle")
-    setDiscountValue(bundle.discount.toString())
-    setSelectedItems(bundle.items)
-    setPromoName(bundle.name)
-    setPromoDescription(bundle.description)
-  }
+    setSelectedBundle(bundle);
+    setDiscountType("bundle");
+    setDiscountValue(bundle.discount.toString());
+    setSelectedItems(bundle.items);
+    setPromoName(bundle.name);
+    setPromoDescription(bundle.description);
+  };
 
   const cleanJSON = (text) => {
     const jsonText = text
-      .replace(/```json\n?/gi, '')
-      .replace(/```/g, '') 
-      .trim()
-    return JSON.parse(jsonText)
-  }
+      .replace(/```json\n?/gi, "")
+      .replace(/```/g, "")
+      .trim();
+    return JSON.parse(jsonText);
+  };
 
   const generateContent = async () => {
     if (!promoName || selectedItems.length === 0) {
-      Alert.alert("Missing Information", "Please provide a promotion name and select at least one item.")
-      return
+      Alert.alert(
+        "Missing Information",
+        "Please provide a promotion name and select at least one item."
+      );
+      return;
     }
 
-    setIsGenerating(true)
+    setIsGenerating(true);
     try {
-      const itemNames = selectedItems.map((item) => item.name).join(", ")
+      const itemNames = selectedItems.map((item) => item.name).join(", ");
       const discountInfo =
         discountType === "percentage"
           ? `${discountValue}% off`
           : discountType === "fixed"
-            ? `RM${discountValue} off`
-            : `Special bundle price`
+          ? `RM${discountValue} off`
+          : `Special bundle price`;
 
       const prompt = `Create a food promotion for ${promoName} featuring ${itemNames}. 
         The promotion offers ${discountInfo}. 
@@ -235,33 +264,35 @@ export default function PromoBuilderScreen({ navigation }) {
         Add this line behind the image prompt: 'Dont include any text in the image'.
         
         Generate the result in the following JSON format with a tagline of string, a description of string, a hastags of array of string and an imagePrompt of string
-        `
+        `;
 
-        const rawReply = await generatePromoContent(prompt)
-        const content = cleanJSON(rawReply)
+      const rawReply = await generatePromoContent(prompt);
+      const content = cleanJSON(rawReply);
 
       // Parse the response
       setGeneratedContent({
         tagline: content.tagline,
-        description:
-          content.description,
+        description: content.description,
         hashtags: content.hashtags,
         imagePrompt: content.imagePrompt,
-      })
-        console.log("Tagline:", content.tagline)
-        console.log("Description:", content.description)
-        console.log("Hashtags:", content.hashtags)
-        console.log("Image Prompt:", content.imagePrompt)
+      });
+      console.log("Tagline:", content.tagline);
+      console.log("Description:", content.description);
+      console.log("Hashtags:", content.hashtags);
+      console.log("Image Prompt:", content.imagePrompt);
 
       // Move to next step
-      setCurrentStep(3)
+      setCurrentStep(3);
     } catch (error) {
-      console.error("Error generating content:", error)
-      Alert.alert("Error", "Failed to generate promotion content. Please try again.")
+      console.error("Error generating content:", error);
+      Alert.alert(
+        "Error",
+        "Failed to generate promotion content. Please try again."
+      );
     } finally {
-      setIsGenerating(false)
+      setIsGenerating(false);
     }
-  }
+  };
 
   const savePromotion = () => {
     Alert.alert("Success", "Your promotion has been created and scheduled!", [
@@ -269,8 +300,8 @@ export default function PromoBuilderScreen({ navigation }) {
         text: "OK",
         onPress: () => navigation.goBack(),
       },
-    ])
-  }
+    ]);
+  };
 
   const renderStep1 = () => (
     <View style={styles.stepContainer}>
@@ -280,28 +311,52 @@ export default function PromoBuilderScreen({ navigation }) {
         <Text style={styles.label}>Discount Type</Text>
         <View style={styles.discountTypeContainer}>
           <TouchableOpacity
-            style={[styles.discountTypeButton, discountType === "percentage" && styles.discountTypeButtonActive]}
+            style={[
+              styles.discountTypeButton,
+              discountType === "percentage" && styles.discountTypeButtonActive,
+            ]}
             onPress={() => setDiscountType("percentage")}
           >
-            <Text style={[styles.discountTypeText, discountType === "percentage" && styles.discountTypeTextActive]}>
+            <Text
+              style={[
+                styles.discountTypeText,
+                discountType === "percentage" && styles.discountTypeTextActive,
+              ]}
+            >
               Percentage
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.discountTypeButton, discountType === "fixed" && styles.discountTypeButtonActive]}
+            style={[
+              styles.discountTypeButton,
+              discountType === "fixed" && styles.discountTypeButtonActive,
+            ]}
             onPress={() => setDiscountType("fixed")}
           >
-            <Text style={[styles.discountTypeText, discountType === "fixed" && styles.discountTypeTextActive]}>
+            <Text
+              style={[
+                styles.discountTypeText,
+                discountType === "fixed" && styles.discountTypeTextActive,
+              ]}
+            >
               Fixed Amount
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.discountTypeButton, discountType === "bundle" && styles.discountTypeButtonActive]}
+            style={[
+              styles.discountTypeButton,
+              discountType === "bundle" && styles.discountTypeButtonActive,
+            ]}
             onPress={() => setDiscountType("bundle")}
           >
-            <Text style={[styles.discountTypeText, discountType === "bundle" && styles.discountTypeTextActive]}>
+            <Text
+              style={[
+                styles.discountTypeText,
+                discountType === "bundle" && styles.discountTypeTextActive,
+              ]}
+            >
               Bundle
             </Text>
           </TouchableOpacity>
@@ -312,13 +367,17 @@ export default function PromoBuilderScreen({ navigation }) {
         <View style={styles.formGroup}>
           <Text style={styles.label}>Discount Value</Text>
           <View style={styles.inputWithPrefix}>
-            <Text style={styles.inputPrefix}>{discountType === "percentage" ? "%" : "RM"}</Text>
+            <Text style={styles.inputPrefix}>
+              {discountType === "percentage" ? "%" : "RM"}
+            </Text>
             <TextInput
               style={styles.discountInput}
               value={discountValue}
               onChangeText={setDiscountValue}
               keyboardType="numeric"
-              placeholder={discountType === "percentage" ? "e.g. 15" : "e.g. 5.00"}
+              placeholder={
+                discountType === "percentage" ? "e.g. 15" : "e.g. 5.00"
+              }
             />
           </View>
         </View>
@@ -327,18 +386,29 @@ export default function PromoBuilderScreen({ navigation }) {
       {discountType === "bundle" && (
         <View style={styles.formGroup}>
           <Text style={styles.label}>Recommended Bundles</Text>
-          <Text style={styles.helperText}>Based on your sales data and customer preferences</Text>
+          <Text style={styles.helperText}>
+            Based on your sales data and customer preferences
+          </Text>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bundleContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.bundleContainer}
+          >
             {bundleSuggestions.map((bundle) => (
               <TouchableOpacity
                 key={bundle.id}
-                style={[styles.bundleCard, selectedBundle?.id === bundle.id && styles.bundleCardSelected]}
+                style={[
+                  styles.bundleCard,
+                  selectedBundle?.id === bundle.id && styles.bundleCardSelected,
+                ]}
                 onPress={() => selectBundle(bundle)}
               >
                 <View style={styles.bundlePopularity}>
                   <Ionicons name="star" size={12} color="#FFD700" />
-                  <Text style={styles.bundlePopularityText}>{bundle.popularity}%</Text>
+                  <Text style={styles.bundlePopularityText}>
+                    {bundle.popularity}%
+                  </Text>
                 </View>
 
                 <Text style={styles.bundleName}>{bundle.name}</Text>
@@ -355,12 +425,18 @@ export default function PromoBuilderScreen({ navigation }) {
                 </View>
 
                 <View style={styles.bundlePricing}>
-                  <Text style={styles.bundleOriginalPrice}>RM{bundle.originalPrice.toFixed(2)}</Text>
-                  <Text style={styles.bundleDiscountedPrice}>RM{bundle.discountedPrice.toFixed(2)}</Text>
+                  <Text style={styles.bundleOriginalPrice}>
+                    RM{bundle.originalPrice.toFixed(2)}
+                  </Text>
+                  <Text style={styles.bundleDiscountedPrice}>
+                    RM{bundle.discountedPrice.toFixed(2)}
+                  </Text>
                 </View>
 
                 <View style={styles.bundleDiscount}>
-                  <Text style={styles.bundleDiscountText}>{bundle.discount}% OFF</Text>
+                  <Text style={styles.bundleDiscountText}>
+                    {bundle.discount}% OFF
+                  </Text>
                 </View>
               </TouchableOpacity>
             ))}
@@ -374,7 +450,11 @@ export default function PromoBuilderScreen({ navigation }) {
           {menuItems.map((item) => (
             <TouchableOpacity
               key={item.id}
-              style={[styles.itemCard, selectedItems.some((i) => i.id === item.id) && styles.itemCardSelected]}
+              style={[
+                styles.itemCard,
+                selectedItems.some((i) => i.id === item.id) &&
+                  styles.itemCardSelected,
+              ]}
               onPress={() => toggleItemSelection(item)}
             >
               <View style={styles.itemDetails}>
@@ -393,7 +473,10 @@ export default function PromoBuilderScreen({ navigation }) {
       </View>
 
       <TouchableOpacity
-        style={[styles.nextButton, selectedItems.length === 0 && styles.nextButtonDisabled]}
+        style={[
+          styles.nextButton,
+          selectedItems.length === 0 && styles.nextButtonDisabled,
+        ]}
         onPress={() => setCurrentStep(2)}
         disabled={selectedItems.length === 0}
       >
@@ -401,7 +484,7 @@ export default function PromoBuilderScreen({ navigation }) {
         <Ionicons name="arrow-forward" size={20} color="white" />
       </TouchableOpacity>
     </View>
-  )
+  );
 
   const renderStep2 = () => (
     <View style={styles.stepContainer}>
@@ -433,16 +516,26 @@ export default function PromoBuilderScreen({ navigation }) {
         <Text style={styles.label}>Promotion Period</Text>
 
         <View style={styles.dateRow}>
-          <TouchableOpacity style={styles.dateButton} onPress={() => setStartDatePickerVisibility(true)}>
+          <TouchableOpacity
+            style={styles.dateButton}
+            onPress={() => setStartDatePickerVisibility(true)}
+          >
             <Ionicons name="calendar-outline" size={20} color="#666" />
-            <Text style={styles.dateButtonText}>{startDate.toLocaleDateString()}</Text>
+            <Text style={styles.dateButtonText}>
+              {startDate.toLocaleDateString()}
+            </Text>
           </TouchableOpacity>
 
           <Text style={styles.dateToText}>to</Text>
 
-          <TouchableOpacity style={styles.dateButton} onPress={() => setEndDatePickerVisibility(true)}>
+          <TouchableOpacity
+            style={styles.dateButton}
+            onPress={() => setEndDatePickerVisibility(true)}
+          >
             <Ionicons name="calendar-outline" size={20} color="#666" />
-            <Text style={styles.dateButtonText}>{endDate.toLocaleDateString()}</Text>
+            <Text style={styles.dateButtonText}>
+              {endDate.toLocaleDateString()}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -457,7 +550,7 @@ export default function PromoBuilderScreen({ navigation }) {
           textColor="#000000"
           backgroundColor="white"
           isDarkModeEnabled={false}
-          pickerContainerStyleIOS={{backgroundColor: "white"}}
+          pickerContainerStyleIOS={{ backgroundColor: "white" }}
         />
 
         <DateTimePickerModal
@@ -471,7 +564,7 @@ export default function PromoBuilderScreen({ navigation }) {
           textColor="#000000"
           backgroundColor="white"
           isDarkModeEnabled={false}
-          pickerContainerStyleIOS={{backgroundColor: "white"}}
+          pickerContainerStyleIOS={{ backgroundColor: "white" }}
         />
       </View>
 
@@ -484,7 +577,9 @@ export default function PromoBuilderScreen({ navigation }) {
                 {optimalTimes.days.map((day, index) => (
                   <View key={index} style={styles.optimalTimeItem}>
                     <View style={styles.optimalTimeScore}>
-                      <Text style={styles.optimalTimeScoreText}>{day.score}</Text>
+                      <Text style={styles.optimalTimeScoreText}>
+                        {day.score}
+                      </Text>
                     </View>
                     <View style={styles.optimalTimeDetails}>
                       <Text style={styles.optimalTimeDay}>{day.day}</Text>
@@ -498,12 +593,26 @@ export default function PromoBuilderScreen({ navigation }) {
                 <Text style={styles.optimalTimesTitle}>Best Hours</Text>
                 {optimalTimes.times.map((time, index) => (
                   <View key={index} style={styles.optimalTimeItem}>
-                    <View style={[styles.optimalTimeScore, { backgroundColor: "#E8F5FF" }]}>
-                      <Text style={[styles.optimalTimeScoreText, { color: "#2D9CDB" }]}>{time.score}</Text>
+                    <View
+                      style={[
+                        styles.optimalTimeScore,
+                        { backgroundColor: "#E8F5FF" },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.optimalTimeScoreText,
+                          { color: "#2D9CDB" },
+                        ]}
+                      >
+                        {time.score}
+                      </Text>
                     </View>
                     <View style={styles.optimalTimeDetails}>
                       <Text style={styles.optimalTimeDay}>{time.time}</Text>
-                      <Text style={styles.optimalTimeReason}>{time.reason}</Text>
+                      <Text style={styles.optimalTimeReason}>
+                        {time.reason}
+                      </Text>
                     </View>
                   </View>
                 ))}
@@ -514,7 +623,10 @@ export default function PromoBuilderScreen({ navigation }) {
       )}
 
       <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.backButton} onPress={() => setCurrentStep(1)}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => setCurrentStep(1)}
+        >
           <Ionicons name="arrow-back" size={20} color="#666" />
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
@@ -535,7 +647,7 @@ export default function PromoBuilderScreen({ navigation }) {
         </TouchableOpacity>
       </View>
     </View>
-  )
+  );
 
   const renderStep3 = () => (
     <View style={styles.stepContainer}>
@@ -551,13 +663,15 @@ export default function PromoBuilderScreen({ navigation }) {
                   {discountType === "percentage"
                     ? `${discountValue}% OFF`
                     : discountType === "fixed"
-                      ? `RM${discountValue} OFF`
-                      : "BUNDLE DEAL"}
+                    ? `RM${discountValue} OFF`
+                    : "BUNDLE DEAL"}
                 </Text>
               </View>
             </View>
 
-            <Text style={styles.previewTagline}>{generatedContent.tagline}</Text>
+            <Text style={styles.previewTagline}>
+              {generatedContent.tagline}
+            </Text>
 
             <View style={styles.previewItems}>
               {selectedItems.map((item) => (
@@ -568,12 +682,15 @@ export default function PromoBuilderScreen({ navigation }) {
               ))}
             </View>
 
-            <Text style={styles.previewDescription}>{generatedContent.description}</Text>
+            <Text style={styles.previewDescription}>
+              {generatedContent.description}
+            </Text>
 
             <View style={styles.previewDates}>
               <Ionicons name="calendar-outline" size={16} color="#666" />
               <Text style={styles.previewDateText}>
-                {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
+                {startDate.toLocaleDateString()} -{" "}
+                {endDate.toLocaleDateString()}
               </Text>
             </View>
 
@@ -589,26 +706,31 @@ export default function PromoBuilderScreen({ navigation }) {
           <View style={styles.formGroup}>
             <Text style={styles.label}>AI Generated Poster</Text>
             <View style={styles.imagePromptContainer}>
-              <Text style={styles.imagePromptText}>Create a personalized AI-generated poster to boost your promotion.</Text>
-              <TouchableOpacity 
+              <Text style={styles.imagePromptText}>
+                Create a personalized AI-generated poster to boost your
+                promotion.
+              </Text>
+              <TouchableOpacity
                 style={styles.generateImageButton}
                 onPress={handleGenerateImage}
                 disabled={isGeneratingImage}
               >
                 {isGeneratingImage ? (
                   <ActivityIndicator size="small" color="#2FAE60" />
-              ) : (
-                <>
-                  <Text style={styles.generateImageButtonText}>Generate Image</Text>
-                  <Ionicons name="image-outline" size={16} color="#2FAE60" />
-               </>
+                ) : (
+                  <>
+                    <Text style={styles.generateImageButtonText}>
+                      Generate Image
+                    </Text>
+                    <Ionicons name="image-outline" size={16} color="#2FAE60" />
+                  </>
                 )}
               </TouchableOpacity>
             </View>
             {generatedImage && (
               <View style={styles.generatedImageContainer}>
-                <Image 
-                  source={{ uri: generatedImage }} 
+                <Image
+                  source={{ uri: generatedImage }}
                   style={styles.generatedImage}
                   resizeMode="contain"
                 />
@@ -619,7 +741,10 @@ export default function PromoBuilderScreen({ navigation }) {
       )}
 
       <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.backButton} onPress={() => setCurrentStep(2)}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => setCurrentStep(2)}
+        >
           <Ionicons name="arrow-back" size={20} color="#666" />
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
@@ -630,36 +755,80 @@ export default function PromoBuilderScreen({ navigation }) {
         </TouchableOpacity>
       </View>
     </View>
-  )
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.progressContainer}>
         <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: `${(currentStep / 3) * 100}%` }]} />
+          <View
+            style={[
+              styles.progressFill,
+              { width: `${(currentStep / 3) * 100}%` },
+            ]}
+          />
         </View>
         <View style={styles.stepsIndicator}>
-          <View style={[styles.stepIndicator, currentStep >= 1 && styles.stepIndicatorActive]}>
-            <Text style={[styles.stepIndicatorText, currentStep >= 1 && styles.stepIndicatorTextActive]}>1</Text>
+          <View
+            style={[
+              styles.stepIndicator,
+              currentStep >= 1 && styles.stepIndicatorActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.stepIndicatorText,
+                currentStep >= 1 && styles.stepIndicatorTextActive,
+              ]}
+            >
+              1
+            </Text>
           </View>
           <View style={styles.stepConnector} />
-          <View style={[styles.stepIndicator, currentStep >= 2 && styles.stepIndicatorActive]}>
-            <Text style={[styles.stepIndicatorText, currentStep >= 2 && styles.stepIndicatorTextActive]}>2</Text>
+          <View
+            style={[
+              styles.stepIndicator,
+              currentStep >= 2 && styles.stepIndicatorActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.stepIndicatorText,
+                currentStep >= 2 && styles.stepIndicatorTextActive,
+              ]}
+            >
+              2
+            </Text>
           </View>
           <View style={styles.stepConnector} />
-          <View style={[styles.stepIndicator, currentStep >= 3 && styles.stepIndicatorActive]}>
-            <Text style={[styles.stepIndicatorText, currentStep >= 3 && styles.stepIndicatorTextActive]}>3</Text>
+          <View
+            style={[
+              styles.stepIndicator,
+              currentStep >= 3 && styles.stepIndicatorActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.stepIndicatorText,
+                currentStep >= 3 && styles.stepIndicatorTextActive,
+              ]}
+            >
+              3
+            </Text>
           </View>
         </View>
       </View>
 
-      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}
+      >
         {currentStep === 1 && renderStep1()}
         {currentStep === 2 && renderStep2()}
         {currentStep === 3 && renderStep3()}
       </ScrollView>
     </SafeAreaView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -1226,17 +1395,17 @@ const styles = StyleSheet.create({
   },
   generatedImageContainer: {
     marginTop: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#f9f9f9',
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#f9f9f9",
     borderRadius: 8,
     padding: 8,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: "#e0e0e0",
   },
   generatedImage: {
-    width: '100%',
+    width: "100%",
     height: 300,
     borderRadius: 8,
   },
-})
+});
